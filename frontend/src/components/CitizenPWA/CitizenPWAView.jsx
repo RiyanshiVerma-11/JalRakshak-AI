@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import CVBoundingBoxOverlay from './CVBoundingBoxOverlay';
 import { 
@@ -26,14 +26,13 @@ import {
   Navigation,
   Bot,
   MessageSquareQuote,
-  Trash2,
-  UserPlus
+  Trash2
 } from 'lucide-react';
 
 export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenLogin }) {
   const [showCVModal, setShowCVModal] = useState(false);
   const [category, setCategory] = useState('waterlogging');
-  const [wardId, setWardId] = useState('WARD-17');
+  const [wardId] = useState('WARD-17');
   const [address, setAddress] = useState('');
   const [description, setDescription] = useState('');
   const [reporterName, setReporterName] = useState(currentUser?.name || 'Resident Citizen');
@@ -95,12 +94,21 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
     }
   }, [activeTab]);
 
+  // Stop Webcam stream
+  const stopCamera = useCallback(() => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+    setIsCameraActive(false);
+  }, []);
+
   // Clean up camera on unmount
   useEffect(() => {
     return () => {
       stopCamera();
     };
-  }, []);
+  }, [stopCamera]);
 
   // Real File Upload Handler
   const handleFileSelect = (e) => {
@@ -177,14 +185,7 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
     }
   };
 
-  // Stop Webcam stream
-  const stopCamera = () => {
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      mediaStreamRef.current = null;
-    }
-    setIsCameraActive(false);
-  };
+
 
   // GPS Geolocation Auto-Detection
   const detectGPSLocation = () => {
@@ -355,6 +356,16 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                   <PhoneCall className="h-3 w-3 text-rose-400" />
                   <span>SOS 1077</span>
                 </a>
+                {onOpenLogin && (
+                  <button
+                    type="button"
+                    onClick={onOpenLogin}
+                    className="flex items-center gap-1 rounded-xl bg-slate-800 hover:bg-slate-700 px-2.5 py-1 text-slate-300 hover:text-white border border-slate-700 text-[10px] font-bold transition-all shadow-xs cursor-pointer"
+                    title="Switch to Municipal Officer / Official Login"
+                  >
+                    <span>Staff Portal ➔</span>
+                  </button>
+                )}
               </div>
             </div>
 

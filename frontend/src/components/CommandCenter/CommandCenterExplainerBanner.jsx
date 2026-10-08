@@ -21,7 +21,8 @@ export default function CommandCenterExplainerBanner({
 }) {
   const [showHelpModal, setShowHelpModal] = useState(false);
 
-  const allApproved = (selectedIncident?.recommended_actions || []).every(a => a.status === 'APPROVED');
+  const actions = selectedIncident?.recommended_actions || [];
+  const allApproved = actions.length > 0 && actions.every(a => a.status === 'APPROVED');
 
   return (
     <div className="space-y-3">

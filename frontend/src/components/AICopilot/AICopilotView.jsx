@@ -276,7 +276,7 @@ export default function AICopilotView({ onApproveAction, currentUser, onNavigate
                               )
                             ) : (
                               <button
-                                onClick={() => onApproveAction && onApproveAction(act.resource_id || 'RES-GENERIC')}
+                                onClick={() => onApproveAction && onApproveAction(act.id || act.resource_id || 'RES-GENERIC')}
                                 className="rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-[11px] font-bold text-white shrink-0 active:scale-95 transition-all shadow-xs"
                               >
                                 Dispatch

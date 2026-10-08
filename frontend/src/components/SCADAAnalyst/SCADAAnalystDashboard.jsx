@@ -351,8 +351,12 @@ export default function SCADAAnalystDashboard({
               </div>
               <div className="text-right">
                 <button
-                  onClick={() => onSimulate(selectedWard === 'WARD-17' ? 'flood' : selectedWard === 'WARD-08' ? 'leak' : selectedWard === 'WARD-04' ? 'heatwave' : 'water_shortage')}
-                  className="rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black px-3 py-1.5 text-xs shadow-md transition-all active:scale-95"
+                  type="button"
+                  onClick={() => onSimulate(
+                    selectedWard === 'WARD-17' ? 'flood' : selectedWard === 'WARD-08' ? 'leak' : selectedWard === 'WARD-04' ? 'heatwave' : 'water_shortage',
+                    selectedWard === 'WARD-17' ? liveRainfall : null
+                  )}
+                  className="rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black px-3 py-1.5 text-xs shadow-md transition-all active:scale-95 cursor-pointer"
                 >
                   ⚡ Fire Live Simulation ➔
                 </button>

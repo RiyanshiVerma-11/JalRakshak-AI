@@ -238,7 +238,7 @@ def approve_action(
 
         for inc in db.incidents:
             for act in inc.get("recommended_actions", []):
-                if act["id"] == action_id:
+                if act.get("id") == action_id or act.get("resource_id") == action_id:
                     target_action = act
                     parent_incident = inc
                     break
@@ -328,7 +328,7 @@ def modify_action(
         target_action = None
         for inc in db.incidents:
             for act in inc.get("recommended_actions", []):
-                if act["id"] == action_id:
+                if act.get("id") == action_id or act.get("resource_id") == action_id:
                     act["action"] = req.modified_action
                     if req.modified_resource_id:
                         act["resource_id"] = req.modified_resource_id

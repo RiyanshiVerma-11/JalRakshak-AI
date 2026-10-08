@@ -7,6 +7,8 @@ class EmergencyAudioSystem {
   constructor() {
     this.audioCtx = null;
     this.isPlaying = false;
+    this.currentOsc = null;
+    this.currentTimeout = null;
   }
 
   initAudioContext() {
@@ -36,6 +38,7 @@ class EmergencyAudioSystem {
         const now = this.audioCtx.currentTime;
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
+        this.currentOsc = osc;
 
         osc.type = 'sawtooth';
         
@@ -58,7 +61,9 @@ class EmergencyAudioSystem {
         osc.start(now);
         osc.stop(now + 2.5);
 
-        setTimeout(() => {
+        this.currentTimeout = setTimeout(() => {
+          this.currentOsc = null;
+          this.currentTimeout = null;
           resolve();
         }, 2500);
       } catch (err) {
@@ -66,6 +71,13 @@ class EmergencyAudioSystem {
         resolve();
       }
     });
+  }
+
+  /**
+   * Alias method for siren / alarm trigger
+   */
+  playAlarm() {
+    return this.playEmergencySiren();
   }
 
   /**
@@ -104,6 +116,9 @@ class EmergencyAudioSystem {
       // 1. Play siren tone
       await this.playEmergencySiren();
 
+      // Ensure stopAll wasn't called during siren
+      if (!this.isPlaying) return;
+
       // 2. Play speech in Hindi (or English)
       const speechText = hindiAlert || englishAlert;
       const lang = hindiAlert ? 'hi-IN' : 'en-US';
@@ -116,6 +131,19 @@ class EmergencyAudioSystem {
 
   stopAll() {
     this.isPlaying = false;
+    if (this.currentOsc) {
+      try {
+        this.currentOsc.stop();
+        this.currentOsc.disconnect();
+      } catch (e) {
+        // Ignore if already stopped
+      }
+      this.currentOsc = null;
+    }
+    if (this.currentTimeout) {
+      clearTimeout(this.currentTimeout);
+      this.currentTimeout = null;
+    }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }

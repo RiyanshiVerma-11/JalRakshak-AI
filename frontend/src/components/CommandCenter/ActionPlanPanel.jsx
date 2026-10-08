@@ -265,13 +265,15 @@ export default function ActionPlanPanel({
               PLAN FULLY AUTHORIZED & DISPATCHED
             </span>
           ) : !canApprove ? (
-            <div
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black bg-amber-50 text-amber-800 border border-amber-300 shadow-xs select-none"
-              title={`Logged in as ${currentUser?.title || 'User'}. Incident Commander sign-off required (NDMA Sec 4.3).`}
+            <button
+              type="button"
+              onClick={onOpenLogin}
+              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 shadow-xs transition-all cursor-pointer"
+              title={`Logged in as ${currentUser?.title || 'User'}. Click to sign in as Incident Commander (NDMA Sec 4.3).`}
             >
               <Lock className="h-3.5 w-3.5 text-amber-600" />
-              <span>🔒 Incident Commander Sign-Off Required (NDMA Sec 4.3)</span>
-            </div>
+              <span>🔒 Incident Commander Sign-Off Required — Switch Role ➔</span>
+            </button>
           ) : (
             <button
               onClick={handleApproveSelected}

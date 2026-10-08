@@ -97,7 +97,6 @@ export default function App() {
   const [commandMode, setCommandMode] = useState('decision'); // 'decision', 'gis', 'dag', 'all'
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [incidents, setIncidents] = useState([]);
   const [selectedIncident, setSelectedIncident] = useState(null);
   const [resources, setResources] = useState([]);
@@ -647,7 +646,7 @@ export default function App() {
                       if (action) setFocusedGISAction(action);
                     }}
                     currentUser={currentUser}
-                    onOpenLogin={() => setIsAuthOpen(true)}
+                    onOpenLogin={() => navigateWithGuard('login')}
                     onSwitchToFieldOps={() => setActiveTab('field_ops')}
                   />
 
@@ -728,10 +727,11 @@ export default function App() {
                 <div className="space-y-4 animate-fade-in">
                   <CommandCenterExplainerBanner
                     selectedIncident={selectedIncident}
-                    onApproveAll={() => {
-                      (selectedIncident?.recommended_actions || []).forEach(a => {
-                        if (a.status !== 'APPROVED') handleApproveAction(a.id);
-                      });
+                    onApproveAll={async () => {
+                      const pending = (selectedIncident?.recommended_actions || []).filter(a => a.status !== 'APPROVED');
+                      for (const a of pending) {
+                        await handleApproveAction(a.id);
+                      }
                     }}
                     isApproving={isSimulating}
                   />
@@ -764,7 +764,7 @@ export default function App() {
                       if (action) setFocusedGISAction(action);
                     }}
                     currentUser={currentUser}
-                    onOpenLogin={() => setIsAuthOpen(true)}
+                    onOpenLogin={() => navigateWithGuard('login')}
                     onSwitchToFieldOps={() => setActiveTab('field_ops')}
                   />
 
