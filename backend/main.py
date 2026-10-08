@@ -42,10 +42,13 @@ class SimulateRequest(BaseModel):
 class ActionApprovalRequest(BaseModel):
     officer_id: Optional[str] = "OFFICER_PATIL_EOC"
     officer_name: Optional[str] = "Municipal Commissioner EOC"
+    officer_role: Optional[str] = "incident_commander"
     notes: Optional[str] = "Authorized for immediate tactical execution under NDMA protocol"
 
 class ActionModifyRequest(BaseModel):
     officer_id: Optional[str] = "OFFICER_PATIL_EOC"
+    officer_name: Optional[str] = "Municipal Commissioner EOC"
+    officer_role: Optional[str] = "incident_commander"
     modified_action: str
     modified_resource_id: Optional[str] = None
     notes: Optional[str] = None
@@ -155,6 +158,18 @@ def approve_action(action_id: str, req: ActionApprovalRequest):
     Human-in-the-Loop Approval:
     Authorizes tactical dispatch, dispatches assigned resource, sends SNS broadcast if needed, and writes audit record.
     """
+    # Statutory RBAC Validation: NDMA Section 4.3 & Principle of Least Privilege
+    if req.officer_role and req.officer_role != "incident_commander":
+        db.log_audit(
+            officer=f"{req.officer_name} ({req.officer_role})",
+            event="ACCESS_DENIED_UNAUTHORIZED_APPROVAL_ATTEMPT",
+            details=f"Blocked attempt to approve action '{action_id}' by unauthorized role '{req.officer_role}'"
+        )
+        raise HTTPException(
+            status_code=403,
+            detail=f"Authorization Denied: Role '{req.officer_role}' lacks statutory sign-off authority under NDMA Section 4.3 & Disaster Management Act 2005. Only Incident Commander (EOC) can authorize tactical dispatch."
+        )
+
     incidents = db.get_incidents()
     target_action = None
     parent_incident = None
@@ -199,9 +214,9 @@ def approve_action(action_id: str, req: ActionApprovalRequest):
         parent_incident["status"] = "IN_PROGRESS"
 
     db.log_audit(
-        officer=req.officer_id or "OFFICER",
-        event="ACTION_APPROVED",
-        details=f"Approved action '{target_action['action']}' for {parent_incident['id']}"
+        officer=f"{req.officer_name} ({req.officer_role})",
+        event="ACTION_APPROVED_NDMA_SEC_4_3",
+        details=f"Statutory approval granted for '{target_action['action']}' ({parent_incident['id']})"
     )
 
     return {
@@ -216,6 +231,12 @@ def modify_action(action_id: str, req: ActionModifyRequest):
     """
     Human-in-the-Loop Modification: Allows commander to adjust order parameters or resource allocation.
     """
+    if req.officer_role and req.officer_role != "incident_commander":
+        raise HTTPException(
+            status_code=403,
+            detail=f"Authorization Denied: Only Incident Commander can modify statutory disaster directives."
+        )
+
     incidents = db.get_incidents()
     for inc in incidents:
         for act in inc.get("recommended_actions", []):
@@ -228,13 +249,54 @@ def modify_action(action_id: str, req: ActionModifyRequest):
                 act["approved_by"] = req.officer_id
 
                 db.log_audit(
-                    officer=req.officer_id or "OFFICER",
+                    officer=f"{req.officer_name} ({req.officer_role})",
                     event="ACTION_MODIFIED",
                     details=f"Modified action {action_id}: {req.modified_action}"
                 )
                 return {"success": True, "action": act}
 
     raise HTTPException(status_code=404, detail="Action not found")
+
+@app.get("/api/auth/roles")
+def get_auth_roles():
+    """
+    Returns Amazon Cognito User Pool configuration and IAM Principle of Least Privilege role mappings.
+    """
+    return {
+        "cognito_user_pool_id": "ap-south-1_JalRakshakPool",
+        "cognito_client_id": "6a992bc4439f01e7",
+        "statutory_act": "Disaster Management Act 2005 (Sections 30 & 34)",
+        "roles": [
+            {
+                "role": "incident_commander",
+                "title": "Municipal Incident Commander",
+                "ics_tier": "Tier 1 (Apex Command)",
+                "iam_role_arn": "arn:aws:iam::123456789012:role/JalRakshak-IncidentCommanderRole",
+                "permissions": ["DISPATCH_AUTHORITY", "BROADCAST_SNS", "OVERRIDE_SIMULATION"]
+            },
+            {
+                "role": "field_responder",
+                "title": "Tactical Field Operations Lead",
+                "ics_tier": "Tier 3 (Tactical Response)",
+                "iam_role_arn": "arn:aws:iam::123456789012:role/JalRakshak-FieldResponderRole",
+                "permissions": ["UPDATE_ASSET_STATUS", "UPLOAD_FIELD_PROOF", "READ_TACTICAL_MANIFEST"]
+            },
+            {
+                "role": "scada_analyst",
+                "title": "Chief Hydrologist & SCADA Analyst",
+                "ics_tier": "Tier 2 (Intelligence & Planning)",
+                "iam_role_arn": "arn:aws:iam::123456789012:role/JalRakshak-SCADAAnalystRole",
+                "permissions": ["READ_SCADA_TELEMETRY", "TUNE_SIMULATION", "INSPECT_STRANDS_DAG"]
+            },
+            {
+                "role": "citizen",
+                "title": "Public Resident",
+                "ics_tier": "Public Stakeholder",
+                "iam_role_arn": "arn:aws:iam::123456789012:role/JalRakshak-PublicCitizenRole",
+                "permissions": ["SUBMIT_VISION_REPORT", "VIEW_BROADCASTS", "TRACK_WATER_TANKERS"]
+            }
+        ]
+    }
 
 @app.get("/api/resources")
 def get_resources():

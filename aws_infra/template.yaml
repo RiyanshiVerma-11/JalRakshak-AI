@@ -131,8 +131,8 @@ Resources:
   StrandsAgentOrchestratorLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./lambda/
-      Handler: orchestrator.handler
+      CodeUri: ./
+      Handler: lambda_handlers.strands_agent_orchestrator_handler
       Description: "Orchestrates the 5 AWS Strands Agents graph for incident decisioning"
       Policies:
         - DynamoDBCrudPolicy:
@@ -151,8 +151,8 @@ Resources:
   CitizenReportIngestLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./lambda/
-      Handler: citizen_ingest.handler
+      CodeUri: ./
+      Handler: lambda_handlers.citizen_ingest_handler
       Description: "Ingests citizen photos, executes Rekognition vision analysis, and logs to DynamoDB"
       Events:
         ApiEvent:

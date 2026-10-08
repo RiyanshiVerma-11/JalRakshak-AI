@@ -22,7 +22,9 @@ export default function Header({
   isSimulating,
   incidentsCount,
   criticalCount,
-  onOpenJudgeTour
+  onOpenJudgeTour,
+  currentUser,
+  onOpenLogin
 }) {
   const [timeStr, setTimeStr] = useState('');
 
@@ -39,6 +41,8 @@ export default function Header({
   const getTabLabel = () => {
     switch (activeTab) {
       case 'command': return 'Emergency Command Center';
+      case 'field_ops': return 'Tactical Field Operations (NDRF)';
+      case 'scada': return 'SCADA & Environmental Telemetry';
       case 'citizen': return 'Citizen PWA & Vision Reports';
       case 'copilot': return 'AI Emergency Copilot';
       case 'aws': return 'AWS Strands Architecture';
@@ -80,9 +84,24 @@ export default function Header({
         </div>
       </div>
 
-      {/* Right: 3-Min Judge Demo Tour + Ultra-Compact 1-Line Simulator Bar */}
+      {/* Right: Role Switcher + 3-Min Judge Tour + Ultra-Compact 1-Line Simulator Bar */}
       <div className="flex items-center gap-2 shrink-0">
         
+        {/* Active Persona / Role Switcher Pill (Crucial for Judge Demo) */}
+        <button
+          onClick={onOpenLogin}
+          className="flex h-7 items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 px-2 text-[11px] font-bold text-white border border-slate-700 hover:border-blue-500/60 shadow-xs transition-all active:scale-95 shrink-0"
+          title="Switch Persona / Open RBAC Security Gateway"
+        >
+          <span className="text-xs">{currentUser?.avatar || '👨‍💼'}</span>
+          <span className="hidden sm:inline font-bold text-cyan-300">
+            {currentUser?.name?.split(' ')[1] || currentUser?.name || 'Commander'}
+          </span>
+          <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-900 text-slate-300 border border-slate-700 font-mono">
+            {currentUser?.role === 'incident_commander' ? '👑 Commander' : currentUser?.role === 'field_responder' ? '🚜 Field Ops' : currentUser?.role === 'scada_analyst' ? '🔬 SCADA' : '👥 Citizen'}
+          </span>
+        </button>
+
         {/* 3-Min Judge Tour Pill */}
         <button
           onClick={onOpenJudgeTour}

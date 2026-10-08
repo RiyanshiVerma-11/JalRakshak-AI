@@ -34,13 +34,22 @@ import {
   X,
   Compass,
   Layers,
-  Check
+  Check,
+  Lock
 } from 'lucide-react';
 import { emergencyAudio } from '../../utils/audioAlert';
 import WhatIfImpactSimulator from './WhatIfImpactSimulator';
 import CVBoundingBoxOverlay from '../CitizenPWA/CVBoundingBoxOverlay';
 
-export default function ActionPlanPanel({ incident, onApproveAction, onModifyAction, onOpenGIS }) {
+export default function ActionPlanPanel({ 
+  incident, 
+  onApproveAction, 
+  onModifyAction, 
+  onOpenGIS,
+  currentUser,
+  onOpenLogin,
+  onSwitchToFieldOps
+}) {
   const [activePanelTab, setActivePanelTab] = useState('tactical'); // 'tactical', 'whatif', 'vision'
   const [selectedLang, setSelectedLang] = useState('english');
   const [isApprovingAll, setIsApprovingAll] = useState(false);
@@ -48,6 +57,9 @@ export default function ActionPlanPanel({ incident, onApproveAction, onModifyAct
   const [modifyText, setModifyText] = useState('');
   const [modifyingActionId, setModifyingActionId] = useState(null);
   const [isAudioBroadcasting, setIsAudioBroadcasting] = useState(false);
+
+  // RBAC Permission Check: Incident Commander holds statutory authorization
+  const canApprove = currentUser?.permissions?.canApproveActions ?? true;
 
   // Multi-Action Selection Checkboxes
   const [selectedActionIds, setSelectedActionIds] = useState([]);
@@ -67,6 +79,13 @@ export default function ActionPlanPanel({ incident, onApproveAction, onModifyAct
       setSelectedActionIds(pendingIds);
     }
   }, [incident?.id, incident?.recommended_actions]);
+
+  // Listen for JudgeDemoTour event to open What-If panel
+  useEffect(() => {
+    const handleOpenWhatIf = () => setActivePanelTab('whatif');
+    window.addEventListener('jalrakshak:openWhatIf', handleOpenWhatIf);
+    return () => window.removeEventListener('jalrakshak:openWhatIf', handleOpenWhatIf);
+  }, []);
 
   if (!incident) {
     return (
@@ -245,6 +264,16 @@ export default function ActionPlanPanel({ incident, onApproveAction, onModifyAct
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
               PLAN FULLY AUTHORIZED & DISPATCHED
             </span>
+          ) : !canApprove ? (
+            <button
+              type="button"
+              onClick={onOpenLogin}
+              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 shadow-xs"
+              title={`Logged in as ${currentUser?.title || 'User'}. Click to switch to Incident Commander role.`}
+            >
+              <Lock className="h-3.5 w-3.5 text-amber-600" />
+              <span>🔒 Incident Commander Sign-Off Required (NDMA Sec 4.3)</span>
+            </button>
           ) : (
             <button
               onClick={handleApproveSelected}
@@ -615,15 +644,27 @@ export default function ActionPlanPanel({ incident, onApproveAction, onModifyAct
                             </button>
 
                             {/* Individual Subtle Outline Approve Button (Primary Bulk CTA Dominates) */}
-                            <button
-                              type="button"
-                              onClick={() => onApproveAction(action.id)}
-                              className="flex items-center gap-1 rounded-lg border border-slate-300 hover:border-emerald-500 hover:bg-emerald-50 px-2 py-1 text-xs font-semibold text-slate-700 hover:text-emerald-700 transition-all active:scale-95 shrink-0"
-                              title="Approve this single directive"
-                            >
-                              <CheckCircle2 className="h-3 w-3 text-slate-400 group-hover:text-emerald-600" />
-                              <span className="text-[11px]">Approve</span>
-                            </button>
+                            {!canApprove ? (
+                              <button
+                                type="button"
+                                onClick={onOpenLogin}
+                                className="flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100 transition-all shrink-0"
+                                title="Statutory sign-off reserved for Incident Commander (NDMA Sec 4.3). Click to switch role."
+                              >
+                                <Lock className="h-3 w-3 text-amber-600" />
+                                <span className="text-[11px]">Sign-off Locked</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => onApproveAction(action.id)}
+                                className="flex items-center gap-1 rounded-lg border border-slate-300 hover:border-emerald-500 hover:bg-emerald-50 px-2 py-1 text-xs font-semibold text-slate-700 hover:text-emerald-700 transition-all active:scale-95 shrink-0"
+                                title="Approve this single directive"
+                              >
+                                <CheckCircle2 className="h-3 w-3 text-slate-400 group-hover:text-emerald-600" />
+                                <span className="text-[11px]">Approve</span>
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>

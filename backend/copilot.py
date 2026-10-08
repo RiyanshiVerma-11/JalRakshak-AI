@@ -189,6 +189,9 @@ class EmergencyCopilot:
                     f"JalRakshak AI is monitoring **4 active climate & utility sectors**. "
                     f"Primary incident of concern is **{primary_inc['title']}** in **{primary_inc['ward_name']}** (Severity: **{primary_inc['severity']}**). "
                     f"All 5 autonomous Strands agents are actively evaluating telemetry."
+                ) if primary_inc else (
+                    "JalRakshak AI is on standby. No active incidents currently detected. "
+                    "Use the sidebar to trigger a live simulation — cloudburst, heatwave, pipeline leak, or water shortage."
                 ),
                 "key_metrics": {
                     "Active Incidents": len(incidents),
@@ -201,8 +204,12 @@ class EmergencyCopilot:
                     "sop_id": "SOP-GEN-01",
                     "reference": "Integrated Disaster Management Framework",
                     "reasoning": "Real-time municipal resilience protocol."
-                }),
-                "why_critical": [f['detail'] for f in primary_inc['explainability']['factors'][:3]] if primary_inc else ["System operational."],
+                }) if primary_inc else {
+                    "sop_id": "SOP-GEN-01",
+                    "reference": "Integrated Disaster Management Framework",
+                    "reasoning": "Awaiting active incident data to retrieve applicable SOP."
+                },
+                "why_critical": [f['detail'] for f in primary_inc['explainability']['factors'][:3]] if primary_inc else ["No active incident. System is operational and ready."],
                 "suggested_followups": [
                     "What should we do about the flood in Ward 17?",
                     "Check heatwave status in Ward 4",

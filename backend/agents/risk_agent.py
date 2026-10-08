@@ -76,7 +76,7 @@ class RiskDetectionAgent:
             factors = [
                 {"factor": "Heat Index Spike", "detail": f"Calculated Heat Index {heat_index}°C exceeds critical stress baseline (42°C)", "weight": "+40%"},
                 {"factor": "Wet-Bulb Temperature", "detail": f"Wet-bulb reading {wet_bulb}°C impairs natural body thermoregulation", "weight": "+32%"},
-                {"factor": "Ambient Ambient Heat", "detail": f"Continuous peak dry bulb reading of {temp}°C", "weight": "+28%"}
+                {"factor": "Sustained Dry Bulb Heat", "detail": f"Continuous peak dry bulb reading of {temp}°C", "weight": "+28%"}
             ]
 
         elif category == "leak":
@@ -114,7 +114,7 @@ class RiskDetectionAgent:
                 confidence = 0.76
 
             factors = [
-                {"factor": "Reservoir Level", "detail": f"Elevated terminal reservoir capacity at {res_pct}%", "weight": "+42%"},
+                {"factor": "Reservoir Level", "detail": f"Terminal reservoir critically depleted to {res_pct}% capacity", "weight": "+42%"},
                 {"factor": "Per Capita Deficit", "detail": f"Deficit of {deficit} Litres/Capita/Day in service area", "weight": "+35%"},
                 {"factor": "Community Distress", "detail": f"{citizen_count} verified citizen shortage logs in past 6 hours", "weight": "+23%"}
             ]

@@ -80,6 +80,10 @@ export default function JudgeDemoTour({
       actionLabel: 'Open What-If Recession Simulator',
       onAction: () => {
         setActiveTab('command');
+        // Dispatch custom event so ActionPlanPanel switches to its 'whatif' sub-tab
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('jalrakshak:openWhatIf'));
+        }, 400);
       }
     },
     {
@@ -257,7 +261,7 @@ export default function JudgeDemoTour({
                   : 'text-slate-600 hover:text-slate-800 border-slate-200'
               }`}
             >
-              <Play className={`h-3 w-3 ${isAutoPlaying ? 'animate-spin' : ''}`} />
+              <Play className={`h-3 w-3 ${isAutoPlaying ? 'animate-pulse' : ''}`} />
               <span>{isAutoPlaying ? 'Auto-Advancing (15s)' : 'Auto-Play Tour'}</span>
             </button>
 

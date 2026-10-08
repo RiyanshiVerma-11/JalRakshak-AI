@@ -1,12 +1,19 @@
-# 🌊 JalRakshak AI — Autonomous Climate & Water Emergency Response Platform
+<div align="center">
 
-> **"Most climate platforms tell authorities what is happening. JalRakshak AI tells them what to do next."**  
-> *Transforming real-time environmental signals and citizen reports into prioritized, explainable, human-authorized tactical actions.*
+# 🌊 JalRakshak AI
+### Autonomous Urban Climate & Water Emergency Decision Command Platform
+**Track 2: Environment, Climate & Water — AWS Hackathon 2026**
 
-[![AWS Hackathon](https://img.shields.io/badge/AWS%20Hackathon-WeMakeDevs%202026-FF9900?style=for-the-badge&logo=amazon-aws)](https://www.wemakedevs.org/aws/env)
-[![AWS Strands Agents](https://img.shields.io/badge/Orchestrator-AWS%20Strands%20Agents%20SDK-06B6D4?style=for-the-badge&logo=amazonaws)](https://aws.amazon.com)
-[![Bedrock Claude 3.5](https://img.shields.io/badge/AI%20Model-Claude%203.5%20Sonnet-6366F1?style=for-the-badge)](https://aws.amazon.com/bedrock/)
-[![NDMA Compliant](https://img.shields.io/badge/Statutory%20SOP-NDMA%20%26%20NHAP%202024-10B981?style=for-the-badge)](https://ndma.gov.in)
+[![AWS Hackathon](https://img.shields.io/badge/AWS%20Hackathon-Track%202%20Contender-FF9900?style=for-the-badge&logo=amazon-aws)](https://www.wemakedevs.org/aws/env)
+[![AWS Strands Agents](https://img.shields.io/badge/Orchestrator-AWS%20Strands%205--Agent%20DAG-06B6D4?style=for-the-badge&logo=amazonaws)](https://aws.amazon.com)
+[![Bedrock Claude 3.5](https://img.shields.io/badge/Bedrock%20LLM-Claude%203.5%20Sonnet-6366F1?style=for-the-badge)](https://aws.amazon.com/bedrock/)
+[![NDMA Compliant](https://img.shields.io/badge/Statutory%20SOP-NDMA%20Urban%20Flooding%202024-10B981?style=for-the-badge)](https://ndma.gov.in)
+[![RBAC Enforced](https://img.shields.io/badge/Security-PoLP%20%26%20ICS--400%20RBAC-E11D48?style=for-the-badge)](https://aws.amazon.com/cognito/)
+
+> *"Most climate platforms tell authorities WHAT is happening.  
+> **JalRakshak AI tells them WHAT TO DO NEXT in under 600ms."***
+
+</div>
 
 ---
 

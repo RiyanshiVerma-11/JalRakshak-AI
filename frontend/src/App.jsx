@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { ShieldAlert, MapPin, Cpu, Layers } from 'lucide-react';
+import { ShieldAlert, MapPin, Cpu, Layers, Lock, Key } from 'lucide-react';
 import Header from './components/Header';
 import StatRibbon from './components/CommandCenter/StatRibbon';
 import CommandCenterExplainerBanner from './components/CommandCenter/CommandCenterExplainerBanner';
@@ -14,12 +14,18 @@ import AWSArchitectureView from './components/AWSArchitecture/AWSArchitectureVie
 import LandingPageView from './components/LandingPage/LandingPageView';
 import Sidebar from './components/Sidebar';
 import JudgeDemoTour from './components/JudgeDemoTour';
+import LoginPage from './components/Auth/LoginPage';
+import FieldOpsView from './components/FieldOps/FieldOpsView';
+import SCADAAnalystDashboard from './components/SCADAAnalyst/SCADAAnalystDashboard';
+import { DEFAULT_USER, PERSONAS, ROLES } from './data/rolesData';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('landing'); // 'landing', 'command', 'citizen', 'copilot', 'aws'
+  const [activeTab, setActiveTab] = useState('landing'); // 'landing', 'command', 'field_ops', 'scada', 'citizen', 'copilot', 'aws'
   const [commandMode, setCommandMode] = useState('decision'); // 'decision', 'gis', 'dag', 'all'
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(DEFAULT_USER);
   const [incidents, setIncidents] = useState([]);
   const [selectedIncident, setSelectedIncident] = useState(null);
   const [resources, setResources] = useState([]);
@@ -107,19 +113,48 @@ export default function App() {
     }
   };
 
-  // Human-in-the-Loop Action Approval
+  // Role Authentication / Persona Switching Handler
+  const handleLogin = (persona) => {
+    setCurrentUser(persona);
+    showNotification(`Authenticated as ${persona.name} (${persona.title}) [${persona.icsTier}]`, 'success');
+
+    // Automatically adapt to dedicated dashboard for each role
+    if (persona.role === ROLES.CITIZEN) {
+      setActiveTab('citizen');
+    } else if (persona.role === ROLES.FIELD_RESPONDER) {
+      setActiveTab('field_ops');
+    } else if (persona.role === ROLES.SCADA_ANALYST) {
+      setActiveTab('scada');
+    } else {
+      setActiveTab('command');
+    }
+  };
+
+  // Human-in-the-Loop Action Approval (Enforces RBAC)
   const handleApproveAction = async (actionId) => {
+    if (!currentUser?.permissions?.canApproveActions) {
+      showNotification(`Authorization Denied: Role '${currentUser?.title}' lacks statutory sign-off authority under NDMA Sec 4.3.`, 'alert');
+      setIsAuthOpen(true);
+      return;
+    }
+
     try {
       const res = await fetch(`/api/actions/${actionId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          officer_id: "OFFICER_PATIL_EOC",
-          officer_name: "Municipal Disaster Controller",
-          notes: "Approved under NDMA Urban Flood Emergency Protocol 2024"
+          officer_id: currentUser?.id || "OFFICER_PATIL_EOC",
+          officer_name: currentUser?.name || "Municipal Disaster Controller",
+          officer_role: currentUser?.role || "incident_commander",
+          notes: `Authorized under NDMA Protocol by ${currentUser?.name} (${currentUser?.title})`
         })
       });
       const data = await res.json();
+
+      if (!res.ok) {
+        showNotification(data.detail || 'Authorization Denied by RBAC Policy.', 'alert');
+        return;
+      }
 
       if (data.success) {
         confetti({
@@ -128,7 +163,7 @@ export default function App() {
           origin: { y: 0.7 }
         });
 
-        showNotification(`Tactical order authorized! Assigned asset dispatched and Amazon SNS queued.`, 'success');
+        showNotification(`Tactical order authorized by ${currentUser?.name}! Assigned asset dispatched and Amazon SNS queued.`, 'success');
         await fetchIncidents();
         await fetchResources();
       }
@@ -137,14 +172,21 @@ export default function App() {
     }
   };
 
-  // Human-in-the-Loop Action Modification
+  // Human-in-the-Loop Action Modification (Enforces RBAC)
   const handleModifyAction = async (actionId, modifiedText) => {
+    if (!currentUser?.permissions?.canModifyActions) {
+      showNotification(`Modification Denied: Role '${currentUser?.title}' cannot alter statutory directives.`, 'alert');
+      return;
+    }
+
     try {
       const res = await fetch(`/api/actions/${actionId}/modify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          officer_id: "OFFICER_PATIL_EOC",
+          officer_id: currentUser?.id || "OFFICER_PATIL_EOC",
+          officer_name: currentUser?.name || "Municipal Disaster Controller",
+          officer_role: currentUser?.role || "incident_commander",
           modified_action: modifiedText
         })
       });
@@ -200,6 +242,8 @@ export default function App() {
           isSimulating={isSimulating}
           criticalCount={criticalCount}
           incidentsCount={incidents.length}
+          currentUser={currentUser}
+          onOpenLogin={() => setIsAuthOpen(true)}
         />
       )}
 
@@ -223,11 +267,13 @@ export default function App() {
             incidentsCount={incidents.length}
             criticalCount={criticalCount}
             onOpenJudgeTour={() => setIsTourOpen(true)}
+            currentUser={currentUser}
+            onOpenLogin={() => setIsAuthOpen(true)}
           />
         )}
 
         {/* Main Content Area */}
-        <main className="flex-1 p-3 sm:p-5 max-w-[1600px] w-full mx-auto">
+        <main className={`flex-1 w-full ${activeTab === 'landing' ? 'p-0 max-w-none' : 'p-3 sm:p-5 max-w-[1600px] mx-auto'}`}>
           
           {/* TAB 0: LANDING PAGE (PROBLEM & MISSION) */}
           {activeTab === 'landing' && (
@@ -236,6 +282,9 @@ export default function App() {
               onSimulate={handleSimulate}
               onOpenCitizenPWA={() => setActiveTab('citizen')}
               onOpenJudgeTour={() => setIsTourOpen(true)}
+              onSelectRole={handleLogin}
+              onOpenLogin={() => setIsAuthOpen(true)}
+              onNavigateTab={(tab) => setActiveTab(tab)}
             />
           )}
 
@@ -243,6 +292,35 @@ export default function App() {
           {activeTab === 'command' && (
             <div className="space-y-4">
               
+              {/* Public Safety Restriction Notice for Citizen Role */}
+              {currentUser?.role === ROLES.CITIZEN && (
+                <div className="rounded-2xl bg-amber-50 border border-amber-300 p-4 text-amber-950 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldAlert className="h-5 w-5 text-amber-700 shrink-0" />
+                    <div>
+                      <strong className="text-sm font-bold">Public Safety Notice: Municipal Emergency Operations Center</strong>
+                      <p className="text-xs text-amber-800">
+                        You are viewing this portal under the <strong>Resident / Public Stakeholder Role</strong>. Tactical asset dispatch and SCADA valve telemetry are restricted under NDMA Section 34.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setActiveTab('citizen')}
+                      className="rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 text-xs shadow-xs"
+                    >
+                      Go to Citizen Portal ➔
+                    </button>
+                    <button
+                      onClick={() => setIsAuthOpen(true)}
+                      className="rounded-xl bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold px-3 py-1.5 text-xs"
+                    >
+                      Switch to Official Role ➔
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* MODULAR COMMAND TOOLBAR: Instant Access to Sections Without Endless Scrolling */}
               <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-xs">
                 
@@ -339,6 +417,9 @@ export default function App() {
                       setCommandMode('gis');
                       if (action) setFocusedGISAction(action);
                     }}
+                    currentUser={currentUser}
+                    onOpenLogin={() => setIsAuthOpen(true)}
+                    onSwitchToFieldOps={() => setActiveTab('field_ops')}
                   />
 
                   {/* Compact Quick toggle to view GIS or Agents */}
@@ -443,6 +524,9 @@ export default function App() {
                       setCommandMode('gis');
                       if (action) setFocusedGISAction(action);
                     }}
+                    currentUser={currentUser}
+                    onOpenLogin={() => setIsAuthOpen(true)}
+                    onSwitchToFieldOps={() => setActiveTab('field_ops')}
                   />
 
                   <AgentTraceDrawer
@@ -453,6 +537,33 @@ export default function App() {
               )}
 
             </div>
+          )}
+
+          {/* TAB 1.5: TACTICAL FIELD OPERATIONS (NDRF / GROUND RESPONDERS) */}
+          {activeTab === 'field_ops' && (
+            <FieldOpsView
+              currentUser={currentUser}
+              incidents={incidents}
+              resources={resources}
+              onOpenGIS={() => {
+                setActiveTab('command');
+                setCommandMode('gis');
+              }}
+            />
+          )}
+
+          {/* TAB 1.7: SCADA & ENVIRONMENTAL TELEMETRY DASHBOARD (CHIEF HYDROLOGIST & ANALYST) */}
+          {activeTab === 'scada' && (
+            <SCADAAnalystDashboard
+              currentUser={currentUser}
+              incidents={incidents}
+              onSimulate={handleSimulate}
+              onSwitchToCommander={() => {
+                const cmd = PERSONAS.find(p => p.role === ROLES.INCIDENT_COMMANDER);
+                if (cmd) handleLogin(cmd);
+              }}
+              onOpenLogin={() => setIsAuthOpen(true)}
+            />
           )}
 
           {/* TAB 2: CITIZEN PWA */}
@@ -503,6 +614,15 @@ export default function App() {
         setActiveTab={setActiveTab}
         onSelectIncident={setSelectedIncident}
       />
+
+      {/* Dedicated Enterprise Login & RBAC Portal Modal */}
+      {isAuthOpen && (
+        <LoginPage
+          activeUser={currentUser}
+          onLogin={handleLogin}
+          onClose={() => setIsAuthOpen(false)}
+        />
+      )}
 
     </div>
   );

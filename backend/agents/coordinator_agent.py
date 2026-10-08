@@ -96,7 +96,9 @@ class CoordinatorAgent:
 
         elif category == "heatwave":
             shelters = impact_output.get("shelters_available", ["Dadar Sports Complex Shelter"])
-            shelter_name = shelters[0] if shelters else "Municipal Community Center"
+            # Strip " (Cap: XXXX)" suffix appended by impact_agent so action text stays clean
+            raw_shelter = shelters[0] if shelters else "Municipal Community Center"
+            shelter_name = raw_shelter.split(" (Cap:")[0]
 
             recommended_actions.append({
                 "id": f"ACT-{uuid.uuid4().hex[:6].upper()}",
@@ -115,7 +117,7 @@ class CoordinatorAgent:
             recommended_actions.append({
                 "id": f"ACT-{uuid.uuid4().hex[:6].upper()}",
                 "priority": 2,
-                "action": f"Position {van_name} at primary public transit transit hub",
+                "action": f"Position {van_name} at primary public transit hub",
                 "resource_id": van_id,
                 "authority": "Emergency Medical Services",
                 "eta_minutes": 14,

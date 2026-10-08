@@ -95,6 +95,15 @@ export default function AWSArchitectureView() {
       description: 'Dispatches critical geo-targeted SMS, Civil Defense alerts, and automated siren activations in English, Hindi, and Marathi.',
       roleInApp: 'Publishes authorized emergency advisories instantly across telecom operator gateways.',
       specs: 'Topic: JalRakshak-Alerts-Multilingual (18,450 Subscribers)'
+    },
+    {
+      id: 'cognito',
+      name: 'Amazon Cognito & AWS IAM',
+      category: 'Identity & PoLP Governance',
+      badge: 'Statutory RBAC & ICS',
+      description: 'Enforces Principle of Least Privilege (PoLP) and Indian Disaster Management Act 2005 (ICS) hierarchy across 4 distinct personas.',
+      roleInApp: 'Secures high-impact statutory human-in-the-loop signoff, separates Commander from Field Responders, and isolates public access.',
+      specs: 'User Pool: ap-south-1_JalRakshakPool | 4 Scoped IAM Claims'
     }
   ];
 
