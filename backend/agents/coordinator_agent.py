@@ -37,11 +37,18 @@ class CoordinatorAgent:
             pump_name = matched_pump["resource_name"] if matched_pump else "Dewatering Pump P-04"
             pump_id = matched_pump["resource_id"] if matched_pump else "RES-PUMP-01"
             eta = matched_pump.get("estimated_eta_minutes", 15) if matched_pump else 15
+            
+            rain = telemetry.get("rainfall_rate_mm_hr", 100.0)
+            depth = telemetry.get("flood_depth_cm", 35.0)
+
+            # Dynamic pump allocation based on flood intensity
+            pump_capacity_gpm = 1000 if rain < 80 else 2500 if rain < 130 else 5000
+            pump_count = 1 if rain < 80 else 2 if rain < 140 else 4
 
             recommended_actions.append({
                 "id": f"ACT-{uuid.uuid4().hex[:6].upper()}",
                 "priority": 1,
-                "action": f"Deploy {pump_name} to {drain_outfall}",
+                "action": f"Deploy {pump_count}x High-Capacity Dewatering Units ({pump_capacity_gpm} GPM) to {drain_outfall} (Surface Depth: {depth}cm)",
                 "resource_id": pump_id,
                 "authority": "Stormwater Drainage Dept",
                 "eta_minutes": eta,

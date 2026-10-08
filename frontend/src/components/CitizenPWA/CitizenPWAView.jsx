@@ -26,16 +26,17 @@ import {
   Navigation,
   Bot,
   MessageSquareQuote,
-  Trash2
+  Trash2,
+  UserPlus
 } from 'lucide-react';
 
-export default function CitizenPWAView({ onReportSubmitted }) {
+export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenLogin }) {
   const [showCVModal, setShowCVModal] = useState(false);
   const [category, setCategory] = useState('waterlogging');
   const [wardId, setWardId] = useState('WARD-17');
   const [address, setAddress] = useState('');
   const [description, setDescription] = useState('');
-  const [reporterName, setReporterName] = useState('Resident Citizen');
+  const [reporterName, setReporterName] = useState(currentUser?.name || 'Resident Citizen');
   const [reporterPhone, setReporterPhone] = useState('+91 98201 XXXXX');
   
   // Real Photo Upload & Camera State
@@ -346,13 +347,26 @@ export default function CitizenPWAView({ onReportSubmitted }) {
                 </div>
               </div>
 
-              <a
-                href="tel:1077"
-                className="flex items-center gap-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 px-2.5 py-1 text-rose-300 border border-rose-500/40 text-[10px] font-bold transition-all shadow-xs"
-              >
-                <PhoneCall className="h-3 w-3 text-rose-400" />
-                <span>SOS 1077</span>
-              </a>
+              <div className="flex items-center gap-1.5">
+                {onOpenLogin && (
+                  <button
+                    type="button"
+                    onClick={onOpenLogin}
+                    className="flex items-center gap-1 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 px-2 py-1 text-blue-300 border border-blue-500/40 text-[10px] font-bold transition-all shadow-xs"
+                    title="Register or Switch User Account"
+                  >
+                    <UserPlus className="h-3 w-3 text-cyan-400" />
+                    <span>Register</span>
+                  </button>
+                )}
+                <a
+                  href="tel:1077"
+                  className="flex items-center gap-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 px-2.5 py-1 text-rose-300 border border-rose-500/40 text-[10px] font-bold transition-all shadow-xs"
+                >
+                  <PhoneCall className="h-3 w-3 text-rose-400" />
+                  <span>SOS 1077</span>
+                </a>
+              </div>
             </div>
 
             {/* Navigation Tabs (Report vs Feed vs AI Query) */}

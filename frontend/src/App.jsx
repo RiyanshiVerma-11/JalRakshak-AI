@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { ShieldAlert, MapPin, Cpu, Layers, Lock, Key } from 'lucide-react';
+import { ShieldAlert, MapPin, Cpu, Layers, Lock, Key, Sliders } from 'lucide-react';
 import Header from './components/Header';
 import StatRibbon from './components/CommandCenter/StatRibbon';
 import CommandCenterExplainerBanner from './components/CommandCenter/CommandCenterExplainerBanner';
@@ -8,6 +8,7 @@ import LiveCityMap from './components/CommandCenter/LiveCityMap';
 import AIPriorityQueue from './components/CommandCenter/AIPriorityQueue';
 import ActionPlanPanel from './components/CommandCenter/ActionPlanPanel';
 import AgentTraceDrawer from './components/CommandCenter/AgentTraceDrawer';
+import WhatIfImpactSimulator from './components/CommandCenter/WhatIfImpactSimulator';
 import CitizenPWAView from './components/CitizenPWA/CitizenPWAView';
 import AICopilotView from './components/AICopilot/AICopilotView';
 import AWSArchitectureView from './components/AWSArchitecture/AWSArchitectureView';
@@ -76,15 +77,19 @@ export default function App() {
   }, []);
 
   // Cinematic Live Scenario Trigger
-  const handleSimulate = async (scenario) => {
+  const handleSimulate = async (scenario, customRainfall = null) => {
     setIsSimulating(true);
-    showNotification(`⚡ Live Event Triggered: Activating AWS Strands 5-Agent Pipeline for ${scenario.toUpperCase()}...`, 'alert');
+    const rainMsg = customRainfall ? ` (${customRainfall} mm/hr Custom Telemetry)` : '';
+    showNotification(`⚡ Live Event Triggered: Activating AWS Strands 5-Agent Pipeline for ${scenario.toUpperCase()}${rainMsg}...`, 'alert');
 
     try {
+      const payload = { scenario };
+      if (customRainfall) payload.custom_rainfall = customRainfall;
+
       const res = await fetch('/api/incidents/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenario })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
 
@@ -385,6 +390,18 @@ export default function App() {
                   </button>
 
                   <button
+                    onClick={() => setCommandMode('whatif')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
+                      commandMode === 'whatif'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Sliders className="h-3.5 w-3.5" />
+                    <span>🔬 What-If & Stress Test</span>
+                  </button>
+
+                  <button
                     onClick={() => setCommandMode('all')}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
                       commandMode === 'all'
@@ -502,6 +519,16 @@ export default function App() {
                 </div>
               )}
 
+              {/* MODULE 3.5: WHAT-IF DYNAMIC STRESS TESTING */}
+              {commandMode === 'whatif' && (
+                <div className="space-y-4 animate-fade-in">
+                  <WhatIfImpactSimulator
+                    incident={selectedIncident}
+                    onRunDynamicSimulation={handleSimulate}
+                  />
+                </div>
+              )}
+
               {/* MODULE 4: ALL-IN-ONE VIEW (Classic Full Screen Overview) */}
               {commandMode === 'all' && (
                 <div className="space-y-4 animate-fade-in">
@@ -587,6 +614,8 @@ export default function App() {
           {/* TAB 2: CITIZEN PWA */}
           {activeTab === 'citizen' && (
             <CitizenPWAView
+              currentUser={currentUser}
+              onOpenLogin={() => setActiveTab('login')}
               onReportSubmitted={() => {
                 fetchIncidents();
                 showNotification('Citizen Report synchronized to AI Command Queue!', 'success');

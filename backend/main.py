@@ -95,15 +95,22 @@ def simulate_scenario(req: SimulateRequest):
 
     if category == "flood":
         rain = req.custom_rainfall or 118.0
+        # Dynamic physical hydrology scaling:
+        # Base drainage threshold is 50 mm/hr. Anything above accumulates on surface.
+        excess_rain = max(0.0, rain - 50.0)
+        calc_depth = round(15.0 + (excess_rain * 0.42), 1)
+        calc_saturation = min(100.0, round(50.0 + (excess_rain * 0.75), 1))
+        calc_reports = max(3, int(rain / 14))
+
         telemetry = {
             "rainfall_rate_mm_hr": rain,
-            "accumulated_rain_24h_mm": 195.0,
-            "flood_depth_cm": 42.0,
-            "drainage_saturation_pct": 98.5,
+            "accumulated_rain_24h_mm": round(rain * 1.65, 1),
+            "flood_depth_cm": calc_depth,
+            "drainage_saturation_pct": calc_saturation,
             "temperature_c": 27.5,
-            "citizen_reports_count": 8
+            "citizen_reports_count": calc_reports
         }
-        title = f"🔴 LIVE EVENT: Extreme Cloudburst ({rain} mm/hr) & Flash Flood Risk"
+        title = f"🔴 LIVE EVENT: Rainfall Spike ({rain} mm/hr) & Dynamic Flood Risk"
     elif category == "heatwave":
         temp = req.custom_temp or 44.8
         telemetry = {

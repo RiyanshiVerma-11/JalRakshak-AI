@@ -18,18 +18,30 @@ import {
   Building,
   Smartphone,
   ExternalLink,
-  Info
+  Info,
+  UserPlus
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { PERSONAS, ROLES } from '../../data/rolesData';
 
 export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
-  const [activeTab, setActiveTab] = useState('personas'); // 'personas', 'credentials', 'matrix'
+  const [activeTab, setActiveTab] = useState('personas'); // 'personas', 'credentials', 'register', 'matrix'
   const [selectedPersona, setSelectedPersona] = useState(activeUser || PERSONAS[0]);
   const [email, setEmail] = useState('commissioner.patil@bmc.gov.in');
   const [password, setPassword] = useState('••••••••••••');
   const [cognitoMfaCode, setCognitoMfaCode] = useState('742918');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  // New User Registration Form State
+  const [registerType, setRegisterType] = useState('citizen'); // 'citizen' or 'officer'
+  const [regFullName, setRegFullName] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regWard, setRegWard] = useState('WARD-17');
+  const [regPassword, setRegPassword] = useState('');
+  const [regDepartment, setRegDepartment] = useState('Municipal Disaster Unit');
+  const [regOfficialId, setRegOfficialId] = useState('');
+  const [regSuccessMsg, setRegSuccessMsg] = useState(null);
 
   const fillPreset = (persona) => {
     setSelectedPersona(persona);
@@ -71,6 +83,70 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
   const handleCredentialsSubmit = (e) => {
     e.preventDefault();
     handleSelectPersonaAndLogin(selectedPersona);
+  };
+
+  const handleRegisterSubmit = (e) => {
+    e.preventDefault();
+    setIsAuthenticating(true);
+
+    const isOfficer = registerType === 'officer';
+    const newPersona = {
+      role: isOfficer ? ROLES.FIELD_RESPONDER : ROLES.CITIZEN,
+      id: `USER_${Date.now()}`,
+      name: regFullName || (isOfficer ? 'Officer Officer' : 'New Citizen'),
+      title: isOfficer ? `Tactical Responder (${regDepartment})` : `Registered Resident (${regWard})`,
+      department: isOfficer ? regDepartment : `Citizen Portal (${regWard})`,
+      icsTier: isOfficer ? 'Tier 3: Tactical Operations (ICS-200 Provisioned)' : 'Verified Public Citizen (DMA 2005 Sec 34)',
+      avatar: isOfficer ? '👮' : '🙋',
+      badgeColor: isOfficer ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700' : 'bg-blue-950/80 text-blue-300 border-blue-700',
+      accentColor: isOfficer ? 'from-emerald-600 to-teal-600' : 'from-blue-600 to-indigo-600',
+      statutoryAuthority: isOfficer ? 'Municipal Ground Response Clearance' : 'Public Safety & Emergency Grievance',
+      iamRoleArn: isOfficer ? 'arn:aws:iam::123456789012:role/JalRakshak-FieldResponderRole' : 'arn:aws:iam::123456789012:role/JalRakshak-PublicCitizenRole',
+      cognitoGroup: isOfficer ? 'ap-south-1_JalRakshak_FieldResponders' : 'ap-south-1_JalRakshak_PublicUsers',
+      description: isOfficer 
+        ? `Newly provisioned field responder for ${regDepartment}.`
+        : `Verified registered resident of ${regWard}.`,
+      permissions: {
+        canApproveActions: false,
+        canModifyActions: false,
+        canBroadcastSNS: false,
+        canSimulateWhatIf: false,
+        canAccessCommandCenter: isOfficer,
+        canAccessFieldOps: isOfficer,
+        canAccessCopilot: true,
+        canAccessAWSArch: false,
+        canAccessCitizenPWA: true,
+        canUpdateFieldStatus: isOfficer
+      },
+      allowedActions: isOfficer ? [
+        'View Real-Time Assigned Tactical Mission Manifest',
+        '1-Tap Status Updates from Field',
+        'Submit Geotagged Field Photo Proof to Command Center'
+      ] : [
+        '1-Tap Multimodal Photo Reporting',
+        'View Real-Time Localized Emergency Advisories',
+        'Direct 1077 Municipal SOS Hotline Access'
+      ],
+      restrictedActions: isOfficer ? [
+        'Cannot approve or reassign unassigned civic assets'
+      ] : [
+        'Classified Municipal Emergency Command Center is restricted'
+      ]
+    };
+
+    setTimeout(() => {
+      confetti({
+        particleCount: 90,
+        spread: 80,
+        origin: { y: 0.5 },
+        colors: ['#2563eb', '#10b981', '#f59e0b']
+      });
+      setIsAuthenticating(false);
+      setRegSuccessMsg(`Account created successfully in AWS Cognito! Logging in as ${newPersona.name}...`);
+      setTimeout(() => {
+        onLogin(newPersona);
+      }, 700);
+    }, 600);
   };
 
   return (
@@ -170,6 +246,18 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
               >
                 <Key className="h-3.5 w-3.5" />
                 <span>🔐 AWS Cognito Form Login</span>
+              </button>
+
+              <button
+                onClick={() => { setActiveTab('register'); setRegSuccessMsg(null); }}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all ${
+                  activeTab === 'register'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                }`}
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>✨ Register / Sign Up</span>
               </button>
 
               <button
@@ -410,6 +498,188 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
                 </div>
 
               </div>
+            </div>
+          )}
+
+          {/* TAB 2.5: USER REGISTRATION / SIGN UP (AWS COGNITO USER POOL SIGN UP) */}
+          {activeTab === 'register' && (
+            <div className="p-4 sm:p-6 lg:p-8 max-w-xl mx-auto space-y-5">
+              
+              <div className="text-center space-y-1">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-mono font-bold border border-blue-200">
+                  <UserPlus className="h-3.5 w-3.5" />
+                  <span>Amazon Cognito User Pool Provisioning</span>
+                </span>
+                <h3 className="text-xl font-extrabold text-slate-900">
+                  Create a New User Account
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Register as a local resident for localized emergency alerts or apply for field responder dispatch clearance.
+                </p>
+              </div>
+
+              {/* Account Type Selector */}
+              <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setRegisterType('citizen')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    registerType === 'citizen'
+                      ? 'bg-white text-blue-700 shadow-xs border border-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <span className="text-base">🧑</span>
+                  <span>Resident / Citizen</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRegisterType('officer')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    registerType === 'officer'
+                      ? 'bg-white text-emerald-700 shadow-xs border border-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <span className="text-base">👮</span>
+                  <span>Field Responder / Officer</span>
+                </button>
+              </div>
+
+              {regSuccessMsg && (
+                <div className="rounded-2xl bg-emerald-50 border border-emerald-300 p-3 text-xs text-emerald-900 font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>{regSuccessMsg}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleRegisterSubmit} className="space-y-3.5 text-xs">
+                
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    {registerType === 'citizen' ? 'Full Name (पूरा नाम)' : 'Officer Name & Designation'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={regFullName}
+                    onChange={(e) => setRegFullName(e.target.value)}
+                    placeholder={registerType === 'citizen' ? 'e.g. Priya Sharma' : 'e.g. Insp. Vikram Singh'}
+                    className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Mobile Number (SMS Alerts)</label>
+                    <input
+                      type="tel"
+                      required
+                      value={regPhone}
+                      onChange={(e) => setRegPhone(e.target.value)}
+                      placeholder="+91 98765 XXXXX"
+                      className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      placeholder={registerType === 'citizen' ? 'citizen@gmail.com' : 'officer@gov.in'}
+                      className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-mono"
+                    />
+                  </div>
+                </div>
+
+                {registerType === 'citizen' ? (
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Residential Ward / Area</label>
+                    <select
+                      value={regWard}
+                      onChange={(e) => setRegWard(e.target.value)}
+                      className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                    >
+                      <option value="WARD-17">Ward 17 — Kurla West & LBS Marg (High Vulnerability Zone)</option>
+                      <option value="WARD-12">Ward 12 — Dadar & Hindmata (Flood Lowland Basin)</option>
+                      <option value="WARD-08">Ward 08 — Andheri Subway & Milan Corridor</option>
+                      <option value="WARD-22">Ward 22 — Chembur & Eastern Freeway</option>
+                      <option value="WARD-04">Ward 04 — Colaba & Marine Lines Coast</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Department / Unit</label>
+                      <select
+                        value={regDepartment}
+                        onChange={(e) => setRegDepartment(e.target.value)}
+                        className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                      >
+                        <option value="NDRF 8th Battalion">NDRF 8th Battalion</option>
+                        <option value="SDRF Quick Response Unit">SDRF Quick Response Unit</option>
+                        <option value="MCGM Stormwater Dewatering Squad">MCGM Stormwater Dewatering Squad</option>
+                        <option value="Civil Defense Volunteer Force">Civil Defense Volunteer Force</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Official Badge / Service ID</label>
+                      <input
+                        type="text"
+                        required
+                        value={regOfficialId}
+                        onChange={(e) => setRegOfficialId(e.target.value)}
+                        placeholder="e.g. MH-NDRF-8041"
+                        className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Account Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    placeholder="Create a secure password"
+                    className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Enforced by AWS Cognito Password Policy: min 8 characters, letters & numbers.
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 text-[11px] text-slate-600 flex items-start gap-2">
+                  <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                  <span>
+                    By creating an account, your details are registered in AWS Cognito User Pool with <strong>Least Privilege RBAC</strong> under Disaster Management Act 2005 guidelines.
+                  </span>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isAuthenticating}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 shadow-md shadow-blue-500/20 active:scale-95 transition-all text-xs"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>{isAuthenticating ? 'Creating Cognito User & Provisioning...' : `Create ${registerType === 'officer' ? 'Officer' : 'Citizen'} Account ➔`}</span>
+                </button>
+              </form>
+
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('personas')}
+                  className="text-xs font-bold text-blue-600 hover:underline"
+                >
+                  ← Already have access? Use 1-Click Fast Track Login
+                </button>
+              </div>
+
             </div>
           )}
 
