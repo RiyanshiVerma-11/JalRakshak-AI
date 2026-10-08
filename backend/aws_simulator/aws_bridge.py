@@ -25,6 +25,34 @@ def _convert_floats_to_decimals(obj: Any) -> Any:
 _G = "\033[92m"; _Y = "\033[93m"; _C = "\033[96m"; _P = "\033[95m"
 _B = "\033[1m";  _R = "\033[0m"
 
+# ── Automatic .env loader (ensures local .env credentials are active) ───────
+def _load_env_file():
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+        return
+    except Exception:
+        pass
+    try:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        root_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
+        env_file = os.path.join(root_dir, ".env")
+        if os.path.isfile(env_file):
+            with open(env_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    k, v = line.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip("'\"")
+                    if k and k not in os.environ:
+                        os.environ[k] = v
+    except Exception:
+        pass
+
+_load_env_file()
+
 try:
     import boto3
     from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
@@ -32,8 +60,9 @@ try:
 except ImportError:
     BOTO3_AVAILABLE = False
 
-# Set AWS_EXECUTION_MODE=LIVE in the shell to attempt real AWS calls.
+# Set AWS_EXECUTION_MODE=LIVE in the shell or .env to attempt real AWS calls.
 AWS_EXECUTION_MODE  = os.environ.get("AWS_EXECUTION_MODE", "HYBRID").upper()
+_DEFAULT_REGION     = os.environ.get("AWS_DEFAULT_REGION", os.environ.get("AWS_REGION", "ap-south-1"))
 _BEDROCK_MODEL_ID   = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-3-5-sonnet-20240620-v1:0")
 _MODEL_SHORT        = "claude-3-5-sonnet"
 _CREDS_VERIFIED: Optional[bool] = None          # lazy-cached after first probe
@@ -48,7 +77,7 @@ def _credentials_available() -> bool:
             _CREDS_VERIFIED = False
         else:
             try:
-                boto3.client("sts", region_name="ap-south-1").get_caller_identity()
+                boto3.client("sts", region_name=_DEFAULT_REGION).get_caller_identity()
                 _CREDS_VERIFIED = True
             except Exception:
                 _CREDS_VERIFIED = False
@@ -71,7 +100,7 @@ def invoke_bedrock_agent(prompt: str, ward_name: str = "Ward 17 (Kurla L-Ward)")
 
 def _bedrock_live(prompt: str, ward_name: str) -> Dict[str, Any]:
     try:
-        client = boto3.client("bedrock-runtime", region_name="ap-south-1")
+        client = boto3.client("bedrock-runtime", region_name=_DEFAULT_REGION)
         body = json.dumps({
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": 256,

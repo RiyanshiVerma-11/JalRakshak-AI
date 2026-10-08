@@ -1,4 +1,4 @@
-# How We Built JalRakshak AI: When Cloudbursts Strike, AWS Strands Orchestrates the Evacuation
+# How We Built JalRakshak AI: When Cloudbursts Strike, Multi-Agent AI on AWS Orchestrates the Evacuation
 
 *Built for the Bharat Builds Tour: Environmental Hacks (Track 02: Heat and Water)*
 
@@ -12,7 +12,7 @@ When minutes mean the difference between a controlled tactical evacuation and a 
 
 We built **JalRakshak AI** to change that.
 
-JalRakshak AI is an autonomous, serverless climate and water emergency decision command platform powered by the **AWS Strands Agents SDK**, **Amazon EventBridge**, **DynamoDB**, and **Amazon Bedrock**. It turns chaotic IoT telemetry and citizen smartphone photos into legally defensible, prioritized disaster responses in under 2 seconds.
+JalRakshak AI is an autonomous, serverless climate and water emergency decision command platform powered by an **Autonomous 5-Agent Collaborative Pipeline**, **Amazon EventBridge**, **Amazon DynamoDB**, and **Amazon Bedrock**. It turns chaotic IoT telemetry and citizen smartphone photos into legally defensible, prioritized disaster responses in under 2 seconds.
 
 Here is the story of how we built it, the architecture powering it, and—most importantly—**what fought back.**
 
@@ -22,7 +22,7 @@ Here is the story of how we built it, the architecture powering it, and—most i
 
 We designed JalRakshak AI around a **dual-loop philosophy**:
 1. **The Citizen Field Loop (Edge to Cloud):** A lightweight PWA where citizens upload geotagged photos of waterlogging, pipeline bursts, or contamination. Computer vision analyzes depth and severity, creating verified evidence stored in **Amazon S3**.
-2. **The Command Center Loop (Autonomous Multi-Agent DAG):** When sensor thresholds exceed critical safety limits (e.g., rainfall > 70 mm/hr or pipeline pressure drops > 2.0 bar), an event fires into **Amazon EventBridge**, which triggers a collaborative 5-agent directed acyclic graph (DAG) orchestrated by the **AWS Strands Agents SDK**.
+2. **The Command Center Loop (Autonomous Multi-Agent Pipeline):** When sensor thresholds exceed critical safety limits (e.g., rainfall > 70 mm/hr or pipeline pressure drops > 2.0 bar), an event fires into **Amazon EventBridge**, which triggers a collaborative 5-agent state graph pipeline.
 
 ```
   [ IoT Water Sensors / Citizen PWA ]
@@ -34,7 +34,7 @@ We designed JalRakshak AI around a **dual-loop philosophy**:
      [ AWS Lambda Orchestrator ]
                   │
      ┌────────────┴──────────────────────────────────────┐
-     │          AWS Strands 5-Agent Pipeline             │
+     │       Autonomous 5-Agent Emergency Pipeline       │
      │                                                   │
      │  1. Risk Agent (Bedrock + Sensor Telemetry)       │
      │         │                                         │
@@ -68,7 +68,7 @@ We wanted a production-grade, zero-maintenance architecture that could scale fro
 ### Infrastructure as Code (AWS SAM)
 We declared the entire system in an AWS Serverless Application Model (`aws_infra/template.yaml`) adhering strictly to the **Principle of Least Privilege (PoLP)**:
 
-* **AWS Strands Agents SDK & Amazon Bedrock:** Orchestrates the multi-agent graph using Claude 3.5 Sonnet for deep contextual reasoning and Titan Embeddings for standard operating procedure (SOP) vector search.
+* **Amazon Bedrock (Claude 3.5 Sonnet):** Powers situational synthesis, risk narrative generation, and multi-agent reasoning, supported by high-speed in-memory vector RAG for statutory NDMA guidelines.
 * **Amazon EventBridge (`jalrakshak-emergency-eventbus`):** Acts as the central nervous system. Decouples noisy IoT telemetry ingestion from high-priority dispatch workflows.
 * **Amazon DynamoDB:** Four Pay-Per-Request state tables with Point-in-Time Recovery (PITR) for sub-5ms lookups:
   - `JalRakshak-IncidentsTable` (with GSI on `severity`)
@@ -96,11 +96,11 @@ If Amazon Bedrock experiences rate throttling or latency spikes above 3,000ms, t
 ```python
 # Graceful Degradation in backend/agents/strands_workflow.py
 try:
-    plan = invoke_bedrock_strands(agents_dag, telemetry)
-except BedrockThrottlingException:
+    plan = strands_orchestrator.execute_workflow(ward_id, category, telemetry)
+except BedrockDegradationException:
     # Deterministic statutory safety net
-    plan = execute_deterministic_ndma_matrix(category, ward_data)
-    plan["fault_tolerance"]["graceful_degradation_active"] = True
+    plan = self._execute_deterministic_ndma_fallback(category, ward_info, telemetry)
+    plan["execution_mode"] = "DETERMINISTIC_NDMA_FALLBACK"
 ```
 
 ### Battle 2: Multi-Agent Race Conditions on Physical Resources
@@ -115,7 +115,7 @@ In Indian municipal administration, the Disaster Management Act of 2005 (Section
 
 **How We Won:**
 We built a **Statutory RBAC Human-in-the-Loop Barrier (NDMA Sec 4.3)**:
-- The 5-Agent Strands pipeline generates the complete tactical battle plan: which schools to open as shelters, which dewatering pumps to move, and what multilingual SMS to broadcast.
+- The 5-Agent pipeline generates the complete tactical battle plan: which schools to open as shelters, which dewatering pumps to move, and what multilingual SMS to broadcast.
 - But every critical action is frozen in `PENDING_APPROVAL` status.
 - Only an authenticated user with the **Incident Commander role** (validated against Amazon Cognito / IAM roles) can authorize or modify the action. 
 - Attempted approvals by unauthorized roles trigger an instant **HTTP 403 Forbidden** and write an immutable audit log entry.

@@ -9,3 +9,4 @@ botocore>=1.34.0
 # Vector RAG — TF-IDF + cosine similarity for NDMA SOP retrieval
 scikit-learn>=1.4.0
 numpy>=1.26.0
+python-dotenv>=1.0.0

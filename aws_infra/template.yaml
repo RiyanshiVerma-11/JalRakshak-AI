@@ -277,17 +277,17 @@ Resources:
   StrandsAgentOrchestratorLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
-      Handler: lambda_handlers.strands_agent_orchestrator_handler
-      Description: "Orchestrates the 5-Agent AWS Strands graph with deterministic NDMA fallback"
+      CodeUri: ../
+      Handler: aws_infra.lambda_handlers.strands_agent_orchestrator_handler
+      Description: "Orchestrates the 5-Agent emergency pipeline with deterministic NDMA fallback"
       Role: !GetAtt StrandsExecutionRole.Arn
 
   CitizenReportIngestLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./
-      Handler: lambda_handlers.citizen_ingest_handler
-      Description: "Ingests citizen camera photos, executes Rekognition inference, and emits EventBridge events"
+      CodeUri: ../
+      Handler: aws_infra.lambda_handlers.citizen_ingest_handler
+      Description: "Ingests citizen camera photos and emits EventBridge events"
       Role: !GetAtt CitizenIngestExecutionRole.Arn
       Events:
         ApiEvent:

@@ -3,7 +3,7 @@
 # 🌊 JalRakshak AI
 ### Autonomous Urban Climate & Water Emergency Decision Command Platform
 
-[![AWS Strands Agents](https://img.shields.io/badge/Orchestrator-AWS%20Strands%205--Agent%20DAG-06B6D4?style=for-the-badge&logo=amazonaws)](https://aws.amazon.com)
+[![Multi-Agent Orchestrator](https://img.shields.io/badge/Orchestrator-Autonomous%205--Agent%20Pipeline-06B6D4?style=for-the-badge&logo=amazonaws)](backend/agents/strands_workflow.py)
 [![Bedrock Claude 3.5](https://img.shields.io/badge/Bedrock%20LLM-Claude%203.5%20Sonnet-6366F1?style=for-the-badge)](https://aws.amazon.com/bedrock/)
 [![NDMA Compliant](https://img.shields.io/badge/Statutory%20SOP-NDMA%20Urban%20Flooding%202024-10B981?style=for-the-badge)](https://ndma.gov.in)
 [![RBAC Enforced](https://img.shields.io/badge/Security-PoLP%20%26%20ICS--400%20RBAC-E11D48?style=for-the-badge)](https://aws.amazon.com/cognito/)
@@ -30,7 +30,7 @@ TRADITIONAL STATUS QUO:
 🌧️ Red Alert: "Heavy rain in Kurla" ──(4 hours of phone tag)──> 🚜 Pump arrives too late (Hospital flooded)
 
 JALRAKSHAK AI AUTONOMOUS COMMAND:
-⚡ 118mm Rain Spike ──(528ms AWS Strands DAG)──> 📋 Prioritized Action Plan ──(HITL Sign-Off)──> 🚜 Pre-emptive Dispatch
+⚡ 118mm Rain Spike ──(528ms 5-Agent Collaborative Pipeline)──> 📋 Prioritized Action Plan ──(HITL Sign-Off)──> 🚜 Pre-emptive Dispatch
 ```
 
 > [!IMPORTANT]
@@ -53,7 +53,7 @@ flowchart TD
         CV --> EventBridge
     end
 
-    subgraph STRANDS["2. AWS STRANDS 5-AGENT STATE GRAPH (Total Latency: ~528ms)"]
+    subgraph STRANDS["2. AUTONOMOUS 5-AGENT COLLABORATIVE PIPELINE (Total Latency: ~528ms)"]
         direction TB
         A1["🤖 Agent 1: Risk Detection Agent<br/>Evaluates Sensor Deltas vs. Drainage Capacity (120ms)"]
         A2["🤖 Agent 2: Impact Assessment Agent<br/>GIS Spatial Intersect (8,420 Pop, Bhabha Hospital) (145ms)"]
@@ -216,9 +216,9 @@ Civic disaster boards cannot trust an unexplained "black-box" AI score. JalRaksh
 
 | Persona | Role | Primary Interface | Key Capabilities |
 | :--- | :--- | :--- | :--- |
-| **IAS Shrikar Patil** | **Incident Commander** | **Executive Command Center** | • 1-Click statutory action authorization<br/>• Live GIS City Map with asset geofences<br/>• 5-Agent Strands DAG trace drawer<br/>• Amazon SNS mass emergency alert queuing |
+| **IAS Shrikar Patil** | **Incident Commander** | **Executive Command Center** | • 1-Click statutory action authorization<br/>• Live GIS City Map with asset geofences<br/>• 5-Agent Decision Trace drawer<br/>• Amazon SNS mass emergency alert queuing |
 | **Insp. Rajesh Yadav** | **Field Operations Lead** | **Tactical Field Terminal** | • Dispatched task manifest with ETAs<br/>• Geotagged ground photo proof verification<br/>• "Mark Arrived on Scene" state machine<br/>• Depot 17 inventory (Pumps, Boats, Sandbags) |
-| **Dr. Ananya Verma** | **Chief Hydrologist** | **SCADA Telemetry Console** | • **⚡ Custom Telemetry Injector** ($0\text{--}220\text{ mm/hr}$ dynamic simulation & tidal lock penalty)<br/>• 248 IoT live sensor telemetry grid<br/>• $-2.4\text{ Bar}$ pipe pressure cavitation alerts<br/>• Dynamic pump requirement scaling & live EventBridge dispatch<br/>• Sub-second DAG execution latency metrics |
+| **Dr. Ananya Verma** | **Chief Hydrologist** | **SCADA Telemetry Console** | • **⚡ Custom Telemetry Injector** ($0\text{--}220\text{ mm/hr}$ dynamic simulation & tidal lock penalty)<br/>• 248 IoT live sensor telemetry grid<br/>• $-2.4\text{ Bar}$ pipe pressure cavitation alerts<br/>• Dynamic pump requirement scaling & live EventBridge dispatch<br/>• Sub-second pipeline execution latency metrics |
 | **Aarav Sharma** | **Citizen Resident** | **Citizen Emergency PWA** | • Mobile smartphone frame experience<br/>• 1-Tap 1077 SOS helpline calling<br/>• Photo flood reporting with AI depth ruler ($35\text{--}50\text{ cm}$)<br/>• Localized emergency advisories in English, Hindi & Marathi |
 
 ---
@@ -231,7 +231,7 @@ JalRakshak AI features a built-in, automated interactive tour for reviewers and 
    Click `118mm Cloudburst`. Live sensors spike from baseline to crisis levels across Kurla L-Ward.
 2. **Step 2 (0:30 - 1:00): The Explainability Moment**  
    Inspect the Explainability Scorecard to view the mathematical weights and statutory NDMA citations.
-3. **Step 3 (1:00 - 1:40): The AWS Strands 5-Agent DAG**  
+3. **Step 3 (1:00 - 1:40): The Autonomous 5-Agent Pipeline**  
    Open the bottom execution drawer to see all 5 agents collaborate with sub-600ms latency.
 4. **Step 4 (1:40 - 2:15): Human-in-the-Loop Sign-off**  
    Click `Approve & Execute All`. Confetti fires, assets are dispatched, and Amazon SNS broadcasts are queued.
@@ -246,13 +246,20 @@ JalRakshak AI features a built-in, automated interactive tour for reviewers and 
 
 | AWS Service | Production Architectural Role | In-App Realization |
 | :--- | :--- | :--- |
-| **AWS Strands Agents SDK** | Deterministic multi-agent collaborative state graph | `backend/agents/strands_workflow.py` running the 5-agent DAG |
-| **Amazon Bedrock** | Foundation model inference (Claude 3.5 Sonnet) | Asynchronous multilingual advisory synthesis (~1.4s) & tactical reasoning |
-| **Amazon EventBridge** | Decoupled event bus for telemetry thresholds & citizen tickets | Emits `SensorThresholdExceeded` events |
-| **Amazon Rekognition** | Multimodal computer vision for flood depth estimation | Extracts water depth bounding boxes and road passability |
-| **Amazon SNS** | High-throughput multilingual SMS emergency broadcaster | Localized broadcasts in English, Hindi, and Marathi |
-| **Amazon DynamoDB** | Single-digit millisecond state storage for incidents & assets | Schemas defined in `aws_infra/template.yaml` |
-| **AWS AppSync** | Offline-first synchronization for tactical field teams | Offline cache ready badge in Field Ops |
+| **Collaborative 5-Agent Pipeline** | Deterministic multi-agent collaborative state graph | `backend/agents/strands_workflow.py` executing 5-agent graph |
+| **Amazon Bedrock** | Foundation model inference (Claude 3.5 Sonnet) | Asynchronous multilingual advisory synthesis (~1.4s) & tactical reasoning via Boto3 |
+| **Amazon EventBridge** | Decoupled event bus for telemetry thresholds & citizen tickets | Emits `SensorThresholdExceeded` CloudEvents 1.0 payloads |
+| **Amazon DynamoDB** | Single-digit millisecond state storage for incidents & assets | Schemas defined in `aws_infra/template.yaml`; live PutItem with Decimal serialization |
+| **Amazon SNS** | High-throughput multilingual SMS emergency broadcaster | Localized broadcasts in English, Hindi, and Marathi via Boto3 |
+| **Amazon S3** | Encrypted object lake for citizen evidence photos | Tamper-proof storage specified in SAM template |
+| **AWS SAM IaC** | Production serverless infrastructure specification | Declarative `aws_infra/template.yaml` with PoLP IAM roles |
+
+---
+
+### 🛡️ Resilient Dual-Mode Execution & Statutory Safety Net
+JalRakshak AI utilizes a dual-mode runtime architecture (`LIVE` and `HYBRID`). In `LIVE` mode with active AWS credentials, the system executes real Boto3 calls against Amazon Bedrock (Claude 3.5 Sonnet), writes incident state directly to Amazon DynamoDB (`JalRakshak-IncidentsTable`), publishes CloudEvents 1.0 payloads to Amazon EventBridge, and broadcasts multilingual alerts over Amazon SNS. 
+
+During civic emergencies, cloud networks can suffer throttling (HTTP 429) or upstream timeouts. If Bedrock degrades or latency exceeds safety thresholds, the orchestrator triggers an automated circuit-breaker into an embedded **Statutory NDMA 2024 Deterministic Matrix**, guaranteeing legally binding, sub-50ms evacuation and pump dispatches with zero civic downtime.
 
 ---
 
@@ -281,7 +288,7 @@ In mission-critical civic disaster management, **external AI API outages cannot 
 4. **Audit & Trace Notification:** The Incident Record flags `fault_tolerance.graceful_degradation_active = true` and alerts the commander that deterministic statutory fallback rules are actively governing the response.
 
 ```
-Amazon Bedrock Online ──(528ms)──> AWS Strands Collaborative 5-Agent Graph
+Amazon Bedrock Online ──(528ms)──> Bedrock Claude 3.5 Multi-Agent Synthesis
         │ (Throttling / Timeout)
         ▼
 Statutory NDMA Matrix ──(<50ms)──> Zero-Downtime Deterministic Action Directives
@@ -295,7 +302,7 @@ The entire serverless multi-agent pipeline is declared in [`aws_infra/template.y
 
 * **13 Production Resources:** EventBridge custom bus, Event routing rules, encrypted S3 evidence lake, 4 DynamoDB state tables with Point-in-Time Recovery, SNS multilingual topic, and 2 Lambda handlers.
 * **Least-Privilege IAM Roles (PoLP):**
-  * `StrandsExecutionRole`: Scoped strictly to `bedrock:InvokeModel` on specific foundation model ARNs (`anthropic.claude-3-5-sonnet*`, `amazon.titan-embed*`), DynamoDB CRUD strictly on `IncidentsTable`, `ResourcesTable`, and `AuditLogTable`, and `sns:Publish` strictly on `EmergencyAlertsTopic`.
+  * `StrandsExecutionRole`: Scoped strictly to `bedrock:InvokeModel` on Claude 3.5 Sonnet & Haiku foundation models, DynamoDB CRUD strictly on `IncidentsTable`, `ResourcesTable`, and `AuditLogTable`, and `sns:Publish` strictly on `EmergencyAlertsTopic`.
   * `CitizenIngestExecutionRole`: Scoped strictly to `CitizenReportsTable`, S3 evidence bucket uploads, and EventBridge event emission.
 
 ---
@@ -335,6 +342,10 @@ tests/test_integration.py::test_mathematical_confidence_score_bounds           P
 ### 1. Run Everything with One Command
 The React frontend is pre-compiled into `frontend/dist/` and served directly by FastAPI on port 8004:
 ```bash
+# (Optional) Copy configuration template — defaults to HYBRID zero-key mode
+copy .env.example .env   # On Windows (or 'cp .env.example .env' on Linux/macOS)
+
+# Start the unified application
 python run_app.py
 ```
 Open **[http://localhost:8004](http://localhost:8004)** in your browser!
@@ -355,7 +366,7 @@ Open **[http://localhost:6173](http://localhost:6173)**.
 ## 🏆 Enterprise Platform Capabilities Checklist
 
 - [x] **Predictive → Context-Aware → Actionable → Explainable → Human-Controlled**
-- [x] **AWS Strands Agents SDK:** 5-agent state graph orchestration (<600ms total DAG latency)
+- [x] **Autonomous 5-Agent Orchestrator:** Collaborative state graph pipeline (<600ms total latency)
 - [x] **Statutory SOP RAG:** Grounded in NDMA 2024 Guidelines, NHAP, and CPHEEO manuals
 - [x] **Multimodal Computer Vision:** Automated flood depth ruler and road passability estimation
 - [x] **Multilingual Citizen Alerts:** Localized SMS broadcasts in English, Hindi, and Marathi
