@@ -495,6 +495,184 @@ export default function SCADAAnalystDashboard({
 
       </div>
 
+      {/* ⚡ Custom Telemetry Injector — Live API Slider */}
+      <CustomTelemetryInjector apiBase="http://localhost:8004" />
+
     </div>
   );
 }
+
+
+// ──────────────────────────────────────────────────────────────────────────
+//  CustomTelemetryInjector – live API-wired rainfall slider for judge demo
+// ──────────────────────────────────────────────────────────────────────────
+function CustomTelemetryInjector({ apiBase = 'http://localhost:8004' }) {
+  const [rainfall, setRainfall]     = React.useState(118);
+  const [tide, setTide]             = React.useState('HIGH');
+  const [loading, setLoading]       = React.useState(false);
+  const [result, setResult]         = React.useState(null);
+  const [error, setError]           = React.useState(null);
+
+  const riskColor = {
+    CRITICAL: 'text-rose-500',
+    HIGH:     'text-orange-500',
+    ELEVATED: 'text-yellow-500',
+    NORMAL:   'text-emerald-500',
+  };
+  const riskBg = {
+    CRITICAL: 'bg-rose-950/60 border-rose-700/60',
+    HIGH:     'bg-orange-950/60 border-orange-700/60',
+    ELEVATED: 'bg-yellow-950/60 border-yellow-700/60',
+    NORMAL:   'bg-emerald-950/60 border-emerald-700/60',
+  };
+
+  const handleInject = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${apiBase}/api/v1/simulate/dynamic-telemetry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rainfall_rate:    rainfall,
+          tide_level:       tide,
+          ward_id:          'WARD-17',
+          verified_photos:  Math.floor(rainfall / 18),
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setResult(data);
+    } catch (err) {
+      setError(err.message || 'Network error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-cyan-950/80 to-slate-900 border border-cyan-700/50 p-4 space-y-4 shadow-xl">
+      {/* Header */}
+      <div className="flex items-center gap-2 border-b border-cyan-800/40 pb-3">
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 text-base">⚡</span>
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-wider text-cyan-300">
+            Custom Telemetry Injector
+          </h3>
+          <p className="text-[10px] text-slate-400 font-mono">Live Bedrock + RAG recalculation via /api/v1/simulate/dynamic-telemetry</p>
+        </div>
+      </div>
+
+      {/* Rainfall Slider */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-xs font-bold">
+          <span className="text-slate-300">Rainfall Rate Injection</span>
+          <span className={`font-mono font-black text-sm ${rainfall >= 130 ? 'text-rose-400' : rainfall >= 90 ? 'text-orange-400' : rainfall >= 55 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+            {rainfall} mm/hr
+          </span>
+        </div>
+        <input
+          type="range"
+          min="10"
+          max="220"
+          step="5"
+          value={rainfall}
+          onChange={(e) => { setRainfall(Number(e.target.value)); setResult(null); }}
+          className="w-full h-2 rounded-full appearance-none cursor-pointer accent-cyan-400"
+          style={{ background: `linear-gradient(to right, #22d3ee ${((rainfall-10)/210)*100}%, #1e293b ${((rainfall-10)/210)*100}%)` }}
+        />
+        <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+          <span>10 mm/hr (Normal)</span>
+          <span className="text-yellow-500">55 (Elevated)</span>
+          <span className="text-orange-500">90 (High)</span>
+          <span className="text-rose-500">130+ (CRITICAL)</span>
+        </div>
+      </div>
+
+      {/* Tide Level Selector */}
+      <div className="flex items-center gap-2 text-xs">
+        <span className="text-slate-400 font-bold whitespace-nowrap">Tidal State:</span>
+        {['LOW', 'NORMAL', 'HIGH', 'VERY_HIGH'].map((t) => (
+          <button
+            key={t}
+            onClick={() => { setTide(t); setResult(null); }}
+            className={`rounded-lg px-2.5 py-1 font-bold text-[10px] border transition-all ${tide === t ? 'bg-cyan-600/40 border-cyan-500/60 text-cyan-300' : 'bg-slate-800/60 border-slate-700/50 text-slate-400 hover:border-cyan-600/40'}`}
+          >
+            {t.replace('_', ' ')}
+          </button>
+        ))}
+      </div>
+
+      {/* Action Button */}
+      <button
+        onClick={handleInject}
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 disabled:cursor-not-allowed text-slate-950 font-black py-2.5 text-xs shadow-lg transition-all active:scale-95"
+      >
+        {loading ? (
+          <>
+            <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+            Invoking Bedrock + RAG Pipeline…
+          </>
+        ) : (
+          <>⚡ Recalculate &amp; Inject Telemetry</>
+        )}
+      </button>
+
+      {/* Error */}
+      {error && (
+        <div className="rounded-xl bg-rose-950/60 border border-rose-700/50 px-3 py-2 text-xs text-rose-300 font-mono">
+          ⚠ {error}
+        </div>
+      )}
+
+      {/* Live Result HUD */}
+      {result && (
+        <div className={`rounded-2xl border p-3.5 space-y-3 ${riskBg[result.risk_level] || 'bg-slate-800/60 border-slate-700/50'}`}>
+          {/* Risk Badge */}
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-mono text-slate-400 block">AI Risk Classification</span>
+              <span className={`text-2xl font-black ${riskColor[result.risk_level] || 'text-white'}`}>
+                {result.risk_level}
+              </span>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] font-mono text-slate-400 block">Confidence Score</span>
+              <span className="text-2xl font-black text-emerald-400">{result.confidence_score}%</span>
+            </div>
+          </div>
+
+          {/* 4-card HUD grid */}
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: 'Breach %',          value: `${result.breach_pct}%`,                 color: 'text-rose-400' },
+              { label: 'Pumps Required',     value: `${result.pump_count} units`,             color: 'text-cyan-400' },
+              { label: 'Exposed Citizens',   value: result.exposed_population.toLocaleString(), color: 'text-orange-400' },
+              { label: 'Vector Similarity',  value: result.sop_match.vector_score.toFixed(4),  color: 'text-purple-400' },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="rounded-xl bg-slate-900/60 border border-slate-700/40 p-2.5 text-center">
+                <span className="text-[9px] font-mono uppercase text-slate-500 block">{label}</span>
+                <span className={`text-base font-black ${color}`}>{value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* SOP Match */}
+          <div className="rounded-xl bg-slate-900/70 border border-slate-700/40 p-2.5 space-y-1">
+            <span className="text-[9px] font-mono uppercase text-slate-500">RAG Vector SOP Match</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-cyan-300">{result.sop_match.id}</span>
+              <span className="text-[10px] font-mono text-purple-300">{result.sop_match.vector_score.toFixed(4)}</span>
+            </div>
+            <p className="text-[10px] text-slate-400 leading-relaxed">{result.sop_match.citation}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

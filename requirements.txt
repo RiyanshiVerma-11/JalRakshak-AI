@@ -3,3 +3,9 @@ uvicorn>=0.22.0
 pydantic>=2.0.0
 httpx>=0.24.0
 python-multipart>=0.0.6
+# AWS SDK — Bedrock (Claude 3.5 Sonnet) + SNS live dispatch
+boto3>=1.34.0
+botocore>=1.34.0
+# Vector RAG — TF-IDF + cosine similarity for NDMA SOP retrieval
+scikit-learn>=1.4.0
+numpy>=1.26.0
