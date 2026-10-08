@@ -1,0 +1,184 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  JalRakshak AI - Autonomous Climate & Water Emergency Response Platform
+  AWS Serverless & Multi-Agent Infrastructure (EventBridge, Bedrock Strands Agents, DynamoDB, S3, SNS, Lambda)
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: python3.11
+    Environment:
+      Variables:
+        INCIDENTS_TABLE: !Ref IncidentsTable
+        RESOURCES_TABLE: !Ref ResourcesTable
+        CITIZEN_REPORTS_TABLE: !Ref CitizenReportsTable
+        AUDIT_LOG_TABLE: !Ref AuditLogTable
+        EVIDENCE_BUCKET: !Ref EvidenceBucket
+        EVENT_BUS_NAME: !Ref EmergencyEventBus
+        SNS_TOPIC_ARN: !Ref EmergencyAlertsTopic
+
+Resources:
+  # ==========================================
+  # 1. AWS EVENTBRIDGE EVENT BUS
+  # ==========================================
+  EmergencyEventBus:
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: jalrakshak-emergency-eventbus
+
+  RainfallThresholdRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventBusName: !Ref EmergencyEventBus
+      Description: "Detects rainfall spikes > 70mm/hr and routes to Strands Coordinator"
+      EventPattern:
+        source:
+          - "aws.iot.environment"
+        detail-type:
+          - "SensorThresholdExceeded"
+      Targets:
+        - Arn: !GetAtt StrandsAgentOrchestratorLambda.Arn
+          Id: "TriggerStrandsWorkflowTarget"
+
+  # ==========================================
+  # 2. AMAZON S3 EVIDENCE LAKE
+  # ==========================================
+  EvidenceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "jalrakshak-evidence-${AWS::AccountId}-${AWS::Region}"
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, POST]
+            AllowedOrigins: ['*']
+            MaxAge: 3000
+
+  # ==========================================
+  # 3. AMAZON DYNAMODB STATE TABLES
+  # ==========================================
+  IncidentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: JalRakshak-IncidentsTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: severity
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: SeverityIndex
+          KeySchema:
+            - AttributeName: severity
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  ResourcesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: JalRakshak-ResourcesTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  CitizenReportsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: JalRakshak-CitizenReportsTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  AuditLogTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: JalRakshak-AuditLogTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: timestamp
+          KeyType: HASH
+
+  # ==========================================
+  # 4. AMAZON SNS NOTIFICATION TOPIC
+  # ==========================================
+  EmergencyAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: JalRakshak-Alerts-Multilingual
+      DisplayName: "JalRakshak Disaster Warning System"
+
+  # ==========================================
+  # 5. SERVERLESS LAMBDA HANDLERS
+  # ==========================================
+  StrandsAgentOrchestratorLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./lambda/
+      Handler: orchestrator.handler
+      Description: "Orchestrates the 5 AWS Strands Agents graph for incident decisioning"
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IncidentsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ResourcesTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt EmergencyAlertsTopic.TopicName
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "bedrock:InvokeModel"
+                - "bedrock:InvokeModelWithResponseStream"
+              Resource: "*"
+
+  CitizenReportIngestLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./lambda/
+      Handler: citizen_ingest.handler
+      Description: "Ingests citizen photos, executes Rekognition vision analysis, and logs to DynamoDB"
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /citizen/report
+            Method: post
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CitizenReportsTable
+        - S3CrudPolicy:
+            BucketName: !Ref EvidenceBucket
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "rekognition:DetectLabels"
+                - "events:PutEvents"
+              Resource: "*"
+
+Outputs:
+  EventBusArn:
+    Description: "Amazon EventBridge Emergency Bus ARN"
+    Value: !GetAtt EmergencyEventBus.Arn
+  EvidenceBucketName:
+    Description: "Amazon S3 Bucket for field photos and telemetry"
+    Value: !Ref EvidenceBucket
+  SNSTopicArn:
+    Description: "Amazon SNS Emergency Topic ARN"
+    Value: !Ref EmergencyAlertsTopic
