@@ -265,15 +265,13 @@ export default function ActionPlanPanel({
               PLAN FULLY AUTHORIZED & DISPATCHED
             </span>
           ) : !canApprove ? (
-            <button
-              type="button"
-              onClick={onOpenLogin}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition-all bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 shadow-xs"
-              title={`Logged in as ${currentUser?.title || 'User'}. Click to switch to Incident Commander role.`}
+            <div
+              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black bg-amber-50 text-amber-800 border border-amber-300 shadow-xs select-none"
+              title={`Logged in as ${currentUser?.title || 'User'}. Incident Commander sign-off required (NDMA Sec 4.3).`}
             >
               <Lock className="h-3.5 w-3.5 text-amber-600" />
               <span>🔒 Incident Commander Sign-Off Required (NDMA Sec 4.3)</span>
-            </button>
+            </div>
           ) : (
             <button
               onClick={handleApproveSelected}
@@ -573,13 +571,13 @@ export default function ActionPlanPanel({
                           />
                         </div>
 
-                        <div className="space-y-0.5 flex-1 min-w-0">
-                          {/* Priority Tag & Authority Row */}
+                        <div className="space-y-1 flex-1 min-w-0">
+                          {/* Priority Tag & Department Authority Heading (Full Legible Display) */}
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="flex h-4 w-5 items-center justify-center rounded bg-blue-100 text-blue-800 font-black text-[10px] border border-blue-200 shrink-0">
                               P{action.priority}
                             </span>
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide truncate max-w-[130px]">
+                            <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider">
                               {action.authority}
                             </span>
                             {action.eta_minutes && (
@@ -611,60 +609,35 @@ export default function ActionPlanPanel({
                         </div>
                       </div>
 
-                      {/* Right: Action Execution Controls */}
+                      {/* Right: Simplified Single Inline Action Controls */}
                       <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-                        
-                        {/* 📍 View on GIS Button (Action-to-Map Direct Spatial Context) */}
-                        <button
-                          type="button"
-                          onClick={() => setPipMapAction(action)}
-                          className="flex items-center gap-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 hover:border-blue-300 px-2 py-1 text-xs font-bold transition-all shrink-0 active:scale-95 shadow-2xs"
-                          title="Open Ground Reality GIS HUD & Map Coordinates"
-                        >
-                          <MapPin className="h-3 w-3 text-rose-500 shrink-0" />
-                          <span className="text-[11px] whitespace-nowrap">View on GIS</span>
-                        </button>
-
-                        {/* Status / Approval Controls */}
                         {isApproved ? (
-                          <span className="flex items-center gap-1 rounded-lg bg-emerald-100 px-2 py-1 text-xs font-black text-emerald-800 border border-emerald-300 shrink-0">
-                            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                            <span className="text-[10px]">DISPATCHED</span>
+                          <span className="flex items-center gap-1 rounded-lg bg-emerald-100/90 text-emerald-800 px-2 py-1 text-xs font-black border border-emerald-300 shadow-2xs">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                            <span className="text-[10px] tracking-wide">DISPATCHED</span>
                           </span>
                         ) : (
                           <div className="flex items-center gap-1">
+                            {/* Single Inline Details/Map Icon Button */}
+                            <button
+                              type="button"
+                              onClick={() => setPipMapAction(action)}
+                              className="flex items-center gap-1.5 rounded-lg bg-blue-50/80 hover:bg-blue-100 text-blue-700 border border-blue-200 hover:border-blue-300 px-2 py-1 text-xs font-bold transition-all shrink-0 active:scale-95 shadow-2xs cursor-pointer"
+                              title="View Ground Reality GIS Coordinates & Asset Details"
+                            >
+                              <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+                              <span className="text-[11px] whitespace-nowrap">Details / Map</span>
+                            </button>
+
+                            {/* Subtle Inline Edit Directive Button */}
                             <button
                               type="button"
                               onClick={() => handleStartModify(action)}
-                              className="rounded-lg bg-slate-100 hover:bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-600 border border-slate-200 transition-all flex items-center gap-0.5 shrink-0"
-                              title="Modify action parameters inline"
+                              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                              title="Modify action directive parameters"
                             >
                               <Edit3 className="h-3 w-3" />
-                              <span className="text-[11px]">Edit</span>
                             </button>
-
-                            {/* Individual Subtle Outline Approve Button (Primary Bulk CTA Dominates) */}
-                            {!canApprove ? (
-                              <button
-                                type="button"
-                                onClick={onOpenLogin}
-                                className="flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100 transition-all shrink-0"
-                                title="Statutory sign-off reserved for Incident Commander (NDMA Sec 4.3). Click to switch role."
-                              >
-                                <Lock className="h-3 w-3 text-amber-600" />
-                                <span className="text-[11px]">Sign-off Locked</span>
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => onApproveAction(action.id)}
-                                className="flex items-center gap-1 rounded-lg border border-slate-300 hover:border-emerald-500 hover:bg-emerald-50 px-2 py-1 text-xs font-semibold text-slate-700 hover:text-emerald-700 transition-all active:scale-95 shrink-0"
-                                title="Approve this single directive"
-                              >
-                                <CheckCircle2 className="h-3 w-3 text-slate-400 group-hover:text-emerald-600" />
-                                <span className="text-[11px]">Approve</span>
-                              </button>
-                            )}
                           </div>
                         )}
                       </div>
@@ -779,6 +752,55 @@ export default function ActionPlanPanel({
                 );
               })}
             </div>
+
+            {/* Unified Batch Execution Footer (Execute Actions via Clean Batch Controls) */}
+            {pendingActions.length > 0 && (
+              <div className="sticky bottom-0 z-10 mt-3 p-2.5 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-800 flex items-center justify-between gap-3 animate-fade-in">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse"></span>
+                  <span className="text-xs font-bold text-slate-200">
+                    {selectedPendingActions.length} of {pendingActions.length} Directives Selected
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (selectedPendingActions.length === pendingActions.length) {
+                        setSelectedActionIds([]);
+                      } else {
+                        setSelectedActionIds(pendingActions.map(a => a.id));
+                      }
+                    }}
+                    className="text-[11px] font-bold text-slate-300 hover:text-white px-2 py-1 rounded hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    {selectedPendingActions.length === pendingActions.length ? 'Deselect All' : 'Select All'}
+                  </button>
+
+                  {canApprove ? (
+                    <button
+                      type="button"
+                      onClick={handleApproveSelected}
+                      disabled={isApprovingAll || selectedPendingActions.length === 0}
+                      className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-black transition-all active:scale-95 cursor-pointer ${
+                        selectedPendingActions.length === 0
+                          ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                          : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md'
+                      }`}
+                    >
+                      <ThumbsUp className="h-3.5 w-3.5" />
+                      <span>{getApproveButtonLabel()}</span>
+                    </button>
+                  ) : (
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-amber-300 bg-amber-950/80 border border-amber-700/80 px-2.5 py-1 rounded-lg">
+                      <Lock className="h-3 w-3 text-amber-400" />
+                      <span>Commander Sign-Off Required</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
           </div>
 

@@ -6,6 +6,7 @@ Logs realistic cloud metrics (latency ms, token counts, model ID) to backend con
 """
 import os
 import json
+import re
 import time
 import logging
 from typing import Dict, Any
@@ -23,7 +24,8 @@ class CommunicationAgent:
     def __init__(self):
         self.name = "Communication Agent"
         self.role = "Multilingual Public Alert & Citizen Warning Synthesizer"
-        self.model_id = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-3-5-sonnet-20241022-v2:0")
+        # Standardized on production Claude 3.5 Sonnet in ap-south-1
+        self.model_id = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-3-5-sonnet-20240620-v1:0")
         self.region = os.environ.get("AWS_DEFAULT_REGION", "ap-south-1")
         self._bedrock_client = None
 
@@ -73,8 +75,27 @@ class CommunicationAgent:
                     body=body
                 )
                 resp_body = json.loads(response["body"].read())
-                text_out = resp_body["content"][0]["text"]
-                parsed = json.loads(text_out)
+                text_out = resp_body["content"][0]["text"].strip()
+                
+                # Robust strip of markdown code fences (e.g. ```json ... ``` or ``` ... ```)
+                cleaned_text = text_out
+                if cleaned_text.startswith("```"):
+                    lines = cleaned_text.splitlines()
+                    if lines and lines[0].startswith("```"):
+                        lines = lines[1:]
+                    if lines and lines[-1].startswith("```"):
+                        lines = lines[:-1]
+                    cleaned_text = "\n".join(lines).strip()
+                
+                try:
+                    parsed = json.loads(cleaned_text)
+                except (json.JSONDecodeError, TypeError):
+                    # Regex fallback to extract JSON object structure if LLM outputs extra conversational text
+                    match = re.search(r"\{[\s\S]*\}", cleaned_text)
+                    if match:
+                        parsed = json.loads(match.group(0))
+                    else:
+                        raise ValueError(f"Could not parse valid JSON from Bedrock response: {text_out[:100]}...")
                 
                 latency_ms = int((time.time() - t_start) * 1000)
                 input_tokens = resp_body.get("usage", {}).get("input_tokens", 145)
@@ -94,12 +115,24 @@ class CommunicationAgent:
                         "tokens": input_tokens + output_tokens
                     }
                 }
+            except ClientError as ce:
+                err_code = ce.response.get("Error", {}).get("Code", "ClientError")
+                err_msg = ce.response.get("Error", {}).get("Message", str(ce))
+                if err_code in ("ThrottlingException", "RequestLimitExceeded"):
+                    logger.warning(f"[BEDROCK THROTTLED 429] {err_code}: Rate limit reached. {err_msg}. Triggering NDMA deterministic fallback.")
+                elif err_code in ("ModelTimeoutException", "ReadTimeoutError"):
+                    logger.warning(f"[BEDROCK TIMEOUT] {err_code}: Inference deadline exceeded. {err_msg}.")
+                elif err_code == "AccessDeniedException":
+                    logger.error(f"[BEDROCK IAM DENIED] {err_code}: IAM policy missing bedrock:InvokeModel permission. {err_msg}")
+                elif err_code == "ValidationException":
+                    logger.error(f"[BEDROCK VALIDATION] {err_code}: Model ID '{self.model_id}' or payload invalid. {err_msg}")
+                else:
+                    logger.warning(f"[BEDROCK CLIENT ERROR] {err_code}: {err_msg}")
             except Exception as e:
                 logger.info(f"Bedrock live call bypassed ({e}). Engaging deterministic statutory synthesizer.")
 
-        # 2. High-Fidelity Deterministic Synthesis with Realistic Production Latency
-        # Simulates real Bedrock network round-trip & inference window (1.2s - 1.5s)
-        time.sleep(0.35) 
+        # 2. High-Fidelity Deterministic Synthesis with Realistic Latency Accounting
+        # Non-blocking deterministic statutory fallback under NDMA guidelines
 
         depth = telemetry.get("flood_depth_cm", 30)
         temp = telemetry.get("temperature_c", 43)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { ShieldAlert, MapPin, Cpu, Layers, Lock, Key, Sliders } from 'lucide-react';
 import Header from './components/Header';
@@ -20,13 +20,84 @@ import FieldOpsView from './components/FieldOps/FieldOpsView';
 import SCADAAnalystDashboard from './components/SCADAAnalyst/SCADAAnalystDashboard';
 import { DEFAULT_USER, PERSONAS, ROLES } from './data/rolesData';
 
+const SESSION_STORAGE_KEY = 'jalrakshak_session';
+
+const ROUTE_CONFIG = {
+  landing: { path: '/', isProtected: false },
+  login: { path: '/login', isProtected: false },
+  command: { path: '/command-center', isProtected: true, permission: 'canAccessCommandCenter' },
+  field_ops: { path: '/field-ops', isProtected: true, permission: 'canAccessFieldOps' },
+  scada: { path: '/scada', isProtected: true, permission: 'canAccessCommandCenter' },
+  citizen: { path: '/citizen', isProtected: false },
+  copilot: { path: '/copilot', isProtected: true, permission: 'canAccessCopilot' },
+  aws: { path: '/aws', isProtected: false }
+};
+
+const PATH_TO_TAB = {
+  '/': 'landing',
+  '/landing': 'landing',
+  '/login': 'login',
+  '/app': 'command',
+  '/dashboard': 'command',
+  '/command': 'command',
+  '/command-center': 'command',
+  '/field-ops': 'field_ops',
+  '/field_ops': 'field_ops',
+  '/scada': 'scada',
+  '/scada-analyst': 'scada',
+  '/citizen': 'citizen',
+  '/pwa': 'citizen',
+  '/copilot': 'copilot',
+  '/aws': 'aws',
+  '/architecture': 'aws'
+};
+
+const getStoredSession = () => {
+  try {
+    const saved = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch (e) {
+    console.error('Failed to parse saved session:', e);
+  }
+  return null;
+};
+
+const getRoleAuthorizedDashboard = (persona) => {
+  if (!persona) return 'login';
+  if (persona.role === ROLES.CITIZEN) {
+    return 'citizen';
+  } else if (persona.role === ROLES.FIELD_RESPONDER) {
+    return 'field_ops';
+  } else if (persona.role === ROLES.SCADA_ANALYST) {
+    return 'scada';
+  } else {
+    return 'command';
+  }
+};
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState('landing'); // 'landing', 'command', 'field_ops', 'scada', 'citizen', 'copilot', 'aws'
+  const [currentUser, setCurrentUser] = useState(() => getStoredSession());
+
+  const [activeTab, setActiveTab] = useState(() => {
+    const pathname = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+    const mappedTab = PATH_TO_TAB[pathname];
+    const initialSession = getStoredSession();
+
+    if (mappedTab) {
+      const config = ROUTE_CONFIG[mappedTab];
+      if (config?.isProtected && !initialSession) {
+        // Strictly protect dashboard routes from unauthenticated access
+        return 'login';
+      }
+      return mappedTab;
+    }
+    return 'landing';
+  });
+
   const [commandMode, setCommandMode] = useState('decision'); // 'decision', 'gis', 'dag', 'all'
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(DEFAULT_USER);
   const [incidents, setIncidents] = useState([]);
   const [selectedIncident, setSelectedIncident] = useState(null);
   const [resources, setResources] = useState([]);
@@ -39,32 +110,40 @@ export default function App() {
     setTimeout(() => setNotification(null), 5000);
   };
 
-  const fetchIncidents = async () => {
+  const selectedIncidentRef = useRef(selectedIncident);
+  selectedIncidentRef.current = selectedIncident;
+
+  const fetchIncidents = useCallback(async () => {
     try {
       const res = await fetch('/api/incidents');
+      if (!res.ok) return;
       const data = await res.json();
       setIncidents(data);
-      if (!selectedIncident && data.length > 0) {
-        setSelectedIncident(data[0]);
-      } else if (selectedIncident) {
-        // Keep updated state of current incident
-        const updated = data.find(i => i.id === selectedIncident.id);
-        if (updated) setSelectedIncident(updated);
-      }
+      setSelectedIncident(prev => {
+        if (!prev && data.length > 0) {
+          return data[0];
+        }
+        if (prev) {
+          const updated = data.find(i => i.id === prev.id);
+          return updated || prev;
+        }
+        return prev;
+      });
     } catch (err) {
       console.error('Failed to fetch incidents:', err);
     }
-  };
+  }, []);
 
-  const fetchResources = async () => {
+  const fetchResources = useCallback(async () => {
     try {
       const res = await fetch('/api/resources');
+      if (!res.ok) return;
       const data = await res.json();
       setResources(data);
     } catch (err) {
       console.error('Failed to fetch resources:', err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchIncidents();
@@ -74,7 +153,7 @@ export default function App() {
       fetchResources();
     }, 6000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchIncidents, fetchResources]);
 
   // Cinematic Live Scenario Trigger
   const handleSimulate = async (scenario, customRainfall = null) => {
@@ -106,7 +185,7 @@ export default function App() {
         await fetchIncidents();
         await fetchResources();
         setSelectedIncident(data.incident);
-        setActiveTab('command');
+        navigateWithGuard('command');
 
         showNotification(`✅ AWS Strands Workflow complete: Action Plan generated for ${data.incident.ward_name}`, 'success');
       }
@@ -118,29 +197,148 @@ export default function App() {
     }
   };
 
+  // Strict Authentication Guard & Route Protection
+  const navigateWithGuard = (targetTabOrPath, overrideUser = currentUser) => {
+    let targetTab = targetTabOrPath;
+    if (PATH_TO_TAB[targetTabOrPath]) {
+      targetTab = PATH_TO_TAB[targetTabOrPath];
+    }
+
+    const config = ROUTE_CONFIG[targetTab] || { path: `/${targetTab}`, isProtected: false };
+
+    // 1. Unauthenticated user trying to access a protected route
+    if (config.isProtected && !overrideUser) {
+      sessionStorage.setItem('jalrakshak_intended_target', targetTab);
+      showNotification('🔒 Authentication required. Please sign in to access the Incident Command Center.', 'alert');
+      setActiveTab('login');
+      if (window.location.pathname !== '/login') {
+        window.history.pushState({ tab: 'login' }, '', '/login');
+      }
+      return false;
+    }
+
+    // 2. Role-Based Clearance Check (RBAC / PoLP)
+    if (config.isProtected && overrideUser && config.permission) {
+      if (!overrideUser.permissions?.[config.permission]) {
+        showNotification(`⚠️ Access Restricted: Role '${overrideUser.title}' lacks clearance for this section.`, 'alert');
+        const fallbackTab = getRoleAuthorizedDashboard(overrideUser);
+        setActiveTab(fallbackTab);
+        const fallbackPath = ROUTE_CONFIG[fallbackTab]?.path || `/${fallbackTab}`;
+        if (window.location.pathname !== fallbackPath) {
+          window.history.pushState({ tab: fallbackTab }, '', fallbackPath);
+        }
+        return false;
+      }
+    }
+
+    // 3. Authorized Navigation
+    setActiveTab(targetTab);
+    if (window.location.pathname !== config.path) {
+      window.history.pushState({ tab: targetTab }, '', config.path);
+    }
+    return true;
+  };
+
+  // Landing Page Single Primary CTA Handler
+  const handleEnterCommandCenter = () => {
+    if (!currentUser) {
+      sessionStorage.setItem('jalrakshak_intended_target', 'command');
+      showNotification('🔒 Authentication required. Please sign in to access the Command Center.', 'alert');
+      navigateWithGuard('login');
+    } else {
+      if (currentUser.permissions?.canAccessCommandCenter) {
+        navigateWithGuard('command');
+      } else {
+        const authorizedTab = getRoleAuthorizedDashboard(currentUser);
+        navigateWithGuard(authorizedTab);
+      }
+    }
+  };
+
   // Role Authentication / Persona Switching Handler
   const handleLogin = (persona) => {
     setCurrentUser(persona);
+    try {
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(persona));
+    } catch (e) {
+      console.error('Failed to store session:', e);
+    }
+
     showNotification(`Authenticated as ${persona.name} (${persona.title}) [${persona.icsTier}]`, 'success');
 
-    // Automatically adapt to dedicated dashboard for each role
-    if (persona.role === ROLES.CITIZEN) {
-      setActiveTab('citizen');
-    } else if (persona.role === ROLES.FIELD_RESPONDER) {
-      setActiveTab('field_ops');
-    } else if (persona.role === ROLES.SCADA_ANALYST) {
-      setActiveTab('scada');
-    } else {
-      setActiveTab('command');
+    // Check if there was an intended protected route they tried to visit
+    const intended = sessionStorage.getItem('jalrakshak_intended_target');
+    sessionStorage.removeItem('jalrakshak_intended_target');
+
+    let targetTab = null;
+    if (intended && ROUTE_CONFIG[intended]?.isProtected) {
+      const perm = ROUTE_CONFIG[intended]?.permission;
+      if (!perm || persona.permissions?.[perm]) {
+        targetTab = intended;
+      }
+    }
+
+    // Redirect to their specific authorized dashboard based on their role
+    if (!targetTab) {
+      targetTab = getRoleAuthorizedDashboard(persona);
+    }
+
+    setActiveTab(targetTab);
+    const targetPath = ROUTE_CONFIG[targetTab]?.path || `/${targetTab}`;
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({ tab: targetTab }, '', targetPath);
     }
   };
 
   // Sign Out Handler (Revokes AWS Cognito Session)
   const handleLogout = () => {
     setCurrentUser(null);
+    try {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+      sessionStorage.removeItem('jalrakshak_intended_target');
+    } catch (e) {
+      console.error('Failed to remove session:', e);
+    }
     showNotification('AWS Cognito session invalidated. Signed out safely.', 'info');
     setActiveTab('login');
+    if (window.location.pathname !== '/login') {
+      window.history.pushState({ tab: 'login' }, '', '/login');
+    }
   };
+
+  // Synchronize browser history and popstate
+  useEffect(() => {
+    const pathname = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+    const mappedTab = PATH_TO_TAB[pathname];
+    if (mappedTab) {
+      const config = ROUTE_CONFIG[mappedTab];
+      if (config?.isProtected && !currentUser) {
+        showNotification('🔒 Authentication required. Please sign in to access this route.', 'alert');
+        setActiveTab('login');
+        if (window.location.pathname !== '/login') {
+          window.history.replaceState({ tab: 'login' }, '', '/login');
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const pathname = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+      const mappedTab = PATH_TO_TAB[pathname] || 'landing';
+      const config = ROUTE_CONFIG[mappedTab];
+
+      if (config?.isProtected && !currentUser) {
+        setActiveTab('login');
+        window.history.replaceState({ tab: 'login' }, '', '/login');
+      } else {
+        setActiveTab(mappedTab);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentUser]);
 
   // Human-in-the-Loop Action Approval (Enforces RBAC)
   const handleApproveAction = async (actionId) => {
@@ -246,7 +444,9 @@ export default function App() {
       {!['landing', 'login'].includes(activeTab) && (
         <Sidebar
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={navigateWithGuard}
+          commandMode={commandMode}
+          setCommandMode={setCommandMode}
           isCollapsed={isSidebarCollapsed}
           setIsCollapsed={setIsSidebarCollapsed}
           onSimulate={handleSimulate}
@@ -255,7 +455,7 @@ export default function App() {
           criticalCount={criticalCount}
           incidentsCount={incidents.length}
           currentUser={currentUser}
-          onOpenLogin={() => setActiveTab('login')}
+          onOpenLogin={() => navigateWithGuard('login')}
           onLogout={handleLogout}
         />
       )}
@@ -263,7 +463,7 @@ export default function App() {
       {/* Main Content View Container with smooth margin shift */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
         !['landing', 'login'].includes(activeTab) 
-          ? (isSidebarCollapsed ? 'ml-[70px]' : 'ml-[260px]') 
+          ? (isSidebarCollapsed ? 'ml-[70px]' : 'ml-[280px]') 
           : 'ml-0'
       }`}>
 
@@ -271,18 +471,11 @@ export default function App() {
         {!['landing', 'login'].includes(activeTab) && (
           <Header
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            setActiveTab={navigateWithGuard}
             isSidebarCollapsed={isSidebarCollapsed}
             setIsSidebarCollapsed={setIsSidebarCollapsed}
-            onSimulate={handleSimulate}
-            onReset={handleReset}
-            isSimulating={isSimulating}
-            incidentsCount={incidents.length}
-            criticalCount={criticalCount}
-            onOpenJudgeTour={() => setIsTourOpen(true)}
+            selectedIncident={selectedIncident}
             currentUser={currentUser}
-            onOpenLogin={() => setActiveTab('login')}
-            onLogout={handleLogout}
           />
         )}
 
@@ -292,13 +485,14 @@ export default function App() {
           {/* TAB 0: LANDING PAGE (PROBLEM & MISSION) */}
           {activeTab === 'landing' && (
             <LandingPageView
-              onEnterCommandCenter={() => setActiveTab('command')}
+              currentUser={currentUser}
+              onEnterCommandCenter={handleEnterCommandCenter}
               onSimulate={handleSimulate}
-              onOpenCitizenPWA={() => setActiveTab('citizen')}
+              onOpenCitizenPWA={() => navigateWithGuard('citizen')}
               onOpenJudgeTour={() => setIsTourOpen(true)}
               onSelectRole={handleLogin}
-              onOpenLogin={() => setActiveTab('login')}
-              onNavigateTab={(tab) => setActiveTab(tab)}
+              onOpenLogin={() => navigateWithGuard('login')}
+              onNavigateTab={(tab) => navigateWithGuard(tab)}
             />
           )}
 
@@ -307,7 +501,7 @@ export default function App() {
             <LoginPage
               activeUser={currentUser}
               onLogin={handleLogin}
-              onBackToLanding={() => setActiveTab('landing')}
+              onBackToLanding={() => navigateWithGuard('landing')}
             />
           )}
 
@@ -329,13 +523,13 @@ export default function App() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setActiveTab('citizen')}
+                      onClick={() => navigateWithGuard('citizen')}
                       className="rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 text-xs shadow-xs"
                     >
                       Go to Citizen Portal ➔
                     </button>
                     <button
-                      onClick={() => setActiveTab('login')}
+                      onClick={() => navigateWithGuard('login')}
                       className="rounded-xl bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold px-3 py-1.5 text-xs"
                     >
                       Switch to Official Role ➔
@@ -627,6 +821,8 @@ export default function App() {
           {activeTab === 'copilot' && (
             <AICopilotView
               onApproveAction={handleApproveAction}
+              currentUser={currentUser}
+              onNavigateTab={(tab) => setActiveTab(tab)}
             />
           )}
 

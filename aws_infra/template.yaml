@@ -130,11 +130,17 @@ Resources:
       TableName: JalRakshak-AuditLogTable
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
+        - AttributeName: incident_id
+          AttributeType: S
         - AttributeName: timestamp
           AttributeType: S
       KeySchema:
-        - AttributeName: timestamp
+        - AttributeName: incident_id
           KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
 
   # =========================================================================
   # 4. AMAZON SNS MULTILINGUAL EMERGENCY BROADCAST TOPIC
@@ -185,9 +191,10 @@ Resources:
                   - bedrock:InvokeModel
                   - bedrock:InvokeModelWithResponseStream
                 Resource:
-                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-5-sonnet*"
-                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-haiku*"
-                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/amazon.titan-embed*"
+                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
+                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
+                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/amazon.titan-embed-text-v1"
+                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.anthropic.claude-3-5-sonnet-20240620-v1:0"
         - PolicyName: SNSEmergencyPublishAccess
           PolicyDocument:
             Version: '2012-10-17'

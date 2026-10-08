@@ -52,7 +52,7 @@ def test_flood_cloudburst_pipeline_and_incident_creation():
     assert incident["severity"] == "CRITICAL"
     assert "Kurla" in incident["ward_name"]
     assert incident["status"] == "PENDING_APPROVAL"
-    assert incident["execution_mode"] in ["AWS_BEDROCK_STRANDS", "DETERMINISTIC_NDMA_FALLBACK"]
+    assert incident["execution_mode"] in ["AWS_BEDROCK_STRANDS", "AWS_HYBRID_BEDROCK_STRANDS", "DETERMINISTIC_NDMA_FALLBACK"]
 
     # 4. Verify 5-Agent Trace
     trace = incident["agent_trace"]
@@ -106,14 +106,25 @@ def test_bedrock_fault_tolerance_and_ndma_fallback():
 def test_human_in_the_loop_action_approval():
     """
     Test 3: Verifies that human statutory approval advances action state and dispatches asset,
-    while unauthorized roles are blocked under NDMA Section 4.3 statutory RBAC policy.
+    verifying true round-trip database persistence under db._lock, while unauthorized/unauthenticated
+    roles are strictly blocked under NDMA Section 4.3 statutory RBAC policy.
     """
     # 1. Create fresh test incident
     inc = strands_orchestrator.execute_workflow("WARD-17", "flood", {"rainfall_rate_mm_hr": 118.0})
     action = inc["recommended_actions"][0]
     action_id = action["id"]
+    assigned_res_id = action.get("resource_id")
 
-    # 2. Verify unauthorized role is blocked with 403 Forbidden
+    # 2. Verify unauthenticated / default role request fails with 403 Forbidden
+    with pytest.raises(HTTPException) as unauth_exc:
+        approve_action(
+            action_id=action_id,
+            req=ActionApprovalRequest()  # No officer_role or officer_id provided
+        )
+    assert unauth_exc.value.status_code == 403
+    assert "NDMA Section 4.3" in unauth_exc.value.detail
+
+    # 3. Verify unauthorized citizen role is explicitly blocked with 403 Forbidden
     with pytest.raises(HTTPException) as exc_info:
         approve_action(
             action_id=action_id,
@@ -127,7 +138,7 @@ def test_human_in_the_loop_action_approval():
     assert exc_info.value.status_code == 403
     assert "NDMA Section 4.3" in exc_info.value.detail
 
-    # 3. Verify authorized Incident Commander successfully approves action
+    # 4. Verify authorized Incident Commander successfully approves action
     res = approve_action(
         action_id=action_id,
         req=ActionApprovalRequest(
@@ -141,6 +152,24 @@ def test_human_in_the_loop_action_approval():
     assert res["success"] is True
     assert res["action"]["status"] == "APPROVED"
     assert "IAS Shrikar Patil" in res["action"]["approved_by"]
+
+    # 5. Verify Database Round-Trip State Persistence (db.get_incidents())
+    # Asserts that the in-memory database copy was mutated under lock and not lost to shallow copy
+    all_persisted = db.get_incidents()
+    target_inc = next((i for i in all_persisted if i["id"] == inc["id"]), None)
+    assert target_inc is not None, f"Incident {inc['id']} not found in database round-trip"
+    persisted_act = next((a for a in target_inc["recommended_actions"] if a["id"] == action_id), None)
+    assert persisted_act is not None, f"Action {action_id} not found in persisted incident"
+    assert persisted_act["status"] == "APPROVED", f"Expected persisted status APPROVED, got {persisted_act['status']}"
+    assert "IAS Shrikar Patil" in persisted_act["approved_by"]
+
+    # 6. Verify Physical Resource Status Mutation (DISPATCHED)
+    if assigned_res_id and not assigned_res_id.startswith("SNS"):
+        res_list = db.get_resources()
+        dispatched_res = next((r for r in res_list if r["id"] == assigned_res_id), None)
+        assert dispatched_res is not None, f"Resource {assigned_res_id} not found in database"
+        assert dispatched_res["status"] == "DISPATCHED", f"Expected resource status DISPATCHED, got {dispatched_res['status']}"
+        assert dispatched_res["assigned_to"] == inc["id"]
 
 def test_emergency_copilot_rag_query():
     """
@@ -226,3 +255,135 @@ def test_serverless_lambda_handlers_execution():
     strands_body = json.loads(strands_res["body"])
     assert strands_body["status"] == "COMPLETED"
     assert strands_body["plan_generated"] is True
+
+
+def test_dynamic_telemetry_simulation_endpoint():
+    """
+    Test 7: Verifies POST /api/v1/simulate/dynamic-telemetry endpoint:
+    - Dynamic breach percentage calculation
+    - Risk level thresholding (NORMAL -> ELEVATED -> HIGH -> CRITICAL)
+    - High-discharge dewatering pump scaling
+    - Mathematical confidence bounds [68.5, 98.8]%
+    - Vector RAG semantic SOP retrieval
+    """
+    from fastapi.testclient import TestClient
+    from backend.main import app
+
+    client = TestClient(app)
+
+    # Scenario A: Cloudburst 118 mm/hr with HIGH tide
+    resp_a = client.post("/api/v1/simulate/dynamic-telemetry", json={
+        "rainfall_rate": 118.0,
+        "tide_level": "HIGH",
+        "ward_id": "WARD-17",
+        "verified_photos": 6
+    })
+    assert resp_a.status_code == 200
+    data_a = resp_a.json()
+    assert data_a["ward_id"] == "WARD-17"
+    assert data_a["rainfall_rate"] == 118.0
+    assert data_a["tide_level"] == "HIGH"
+    assert data_a["risk_level"] == "HIGH"
+    assert data_a["breach_pct"] > 0.0
+    assert data_a["pump_count"] == 5
+    assert 68.5 <= data_a["confidence_score"] <= 98.8
+    assert data_a["exposed_population"] > 0
+    assert "sop_match" in data_a
+    assert data_a["sop_match"]["id"].startswith("SOP-")
+    assert 0.0 < data_a["sop_match"]["vector_score"] <= 1.0
+    assert len(data_a["sop_match"]["mandatory_actions"]) >= 1
+
+    # Scenario B: Extreme catastrophic deluge 165 mm/hr with VERY_HIGH tide
+    resp_b = client.post("/api/v1/simulate/dynamic-telemetry", json={
+        "rainfall_rate": 165.0,
+        "tide_level": "VERY_HIGH",
+        "ward_id": "WARD-17",
+        "verified_photos": 12
+    })
+    assert resp_b.status_code == 200
+    data_b = resp_b.json()
+    assert data_b["risk_level"] == "CRITICAL"
+    assert data_b["breach_pct"] == 100.0
+    assert data_b["pump_count"] == 8
+    assert 68.5 <= data_b["confidence_score"] <= 98.8
+
+    # Scenario C: Dry/mild weather 25 mm/hr with LOW tide
+    resp_c = client.post("/api/v1/simulate/dynamic-telemetry", json={
+        "rainfall_rate": 25.0,
+        "tide_level": "LOW",
+        "ward_id": "WARD-17",
+        "verified_photos": 0
+    })
+    assert resp_c.status_code == 200
+    data_c = resp_c.json()
+    assert data_c["risk_level"] == "NORMAL"
+    assert data_c["breach_pct"] == 0.0
+    assert data_c["pump_count"] == 1
+    assert 68.5 <= data_c["confidence_score"] <= 98.8
+
+
+def test_rag_vector_search_cosine_similarity():
+    """
+    Test 8: Verifies semantic vector search in backend/rag/sop_knowledge.py:
+    - Scikit-learn TF-IDF vectorization with cosine similarity matching
+    - Returns valid cosine similarity score between 0.0 and 1.0
+    - Correctly maps climate disaster queries to statutory NDMA SOP documents
+    - Ensures all indexed SOP documents contain required schema
+    """
+    from backend.rag.sop_knowledge import query_sop_knowledge, get_all_sop_documents
+
+    # 1. Corpus verification
+    all_docs = get_all_sop_documents()
+    assert len(all_docs) >= 5
+    for doc in all_docs:
+        assert "id" in doc
+        assert "title" in doc
+        assert "citation" in doc
+        assert "category" in doc
+        assert "mandatory_actions" in doc
+        assert len(doc["mandatory_actions"]) >= 1
+
+    # 2. Flood domain semantic retrieval
+    flood_query = "Mithi River culvert overflow waterlogging inundated depth 40cm evacuation"
+    flood_result = query_sop_knowledge(flood_query, top_k=1)
+    assert flood_result["id"] in ["SOP-FLD-101", "SOP-FLD-102"]
+    assert 0.15 <= flood_result["vector_score"] <= 1.0
+    assert "NDMA" in flood_result["citation"]
+
+    # 3. Heat wave domain semantic retrieval
+    heat_query = "severe heat wave wet bulb temperature 43C vulnerable population ORS shelters"
+    heat_result = query_sop_knowledge(heat_query, top_k=1)
+    assert heat_result["id"] == "SOP-HEAT-04"
+    assert 0.15 <= heat_result["vector_score"] <= 1.0
+    assert "NHAP" in heat_result["citation"]
+
+    # 4. Pipeline burst semantic retrieval
+    pipe_query = "high pressure trunk main fracture contaminated water supply pipeline rupture"
+    pipe_result = query_sop_knowledge(pipe_query, top_k=1)
+    assert pipe_result["id"] == "SOP-PIPE-82"
+    assert 0.15 <= pipe_result["vector_score"] <= 1.0
+    assert "CPHEEO" in pipe_result["citation"]
+
+
+def test_mathematical_confidence_score_bounds():
+    """
+    Test 9: Verifies mathematical confidence formula bounds across boundary cases:
+    - Minimum bound 68.5%
+    - Maximum bound 98.8%
+    - Monotonically rewards verified citizen photos and rainfall deltas
+    """
+    from backend.main import _compute_confidence
+
+    # Low rainfall, zero photos
+    c_low = _compute_confidence(0.0, 0)
+    assert 68.5 <= c_low <= 98.8
+
+    # Baseline threshold 45 mm/hr
+    c_base = _compute_confidence(45.0, 0)
+    assert 68.5 <= c_base <= 98.8
+
+    # Extreme rainfall with citizen corroboration
+    c_extreme = _compute_confidence(200.0, 15)
+    assert 68.5 <= c_extreme <= 98.8
+    assert c_extreme > c_low
+

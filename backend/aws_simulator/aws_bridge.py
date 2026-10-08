@@ -22,7 +22,7 @@ except ImportError:
 
 # Set AWS_EXECUTION_MODE=LIVE in the shell to attempt real AWS calls.
 AWS_EXECUTION_MODE  = os.environ.get("AWS_EXECUTION_MODE", "HYBRID").upper()
-_BEDROCK_MODEL_ID   = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+_BEDROCK_MODEL_ID   = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-3-5-sonnet-20240620-v1:0")
 _MODEL_SHORT        = "claude-3-5-sonnet"
 _CREDS_VERIFIED: Optional[bool] = None          # lazy-cached after first probe
 
@@ -84,6 +84,20 @@ def _bedrock_live(prompt: str, ward_name: str) -> Dict[str, Any]:
         _log_bedrock(True, latency_ms, inp, out)
         return {"narrative": txt, "model_id": _BEDROCK_MODEL_ID,
                 "latency_ms": latency_ms, "input_tokens": inp, "output_tokens": out, "live": True}
+    except ClientError as ce:
+        err_code = ce.response.get("Error", {}).get("Code", "ClientError")
+        err_msg = ce.response.get("Error", {}).get("Message", str(ce))
+        if err_code in ("ThrottlingException", "RequestLimitExceeded"):
+            print(f"{_Y}[BEDROCK THROTTLED 429]{_R} Rate exceeded for {_MODEL_SHORT}. Engaging deterministic fallback.")
+        elif err_code in ("ModelTimeoutException", "ReadTimeoutError"):
+            print(f"{_Y}[BEDROCK TIMEOUT]{_R} Model invocation timed out. Engaging emergency statutory matrix.")
+        elif err_code == "AccessDeniedException":
+            print(f"{_Y}[BEDROCK IAM DENIED]{_R} Access denied for role. Check IAM policies.")
+        elif err_code == "ValidationException":
+            print(f"{_Y}[BEDROCK VALIDATION]{_R} Schema or ModelId invalid: {err_msg}")
+        else:
+            print(f"{_Y}[BEDROCK CLIENT ERROR]{_R} {err_code}: {err_msg}")
+        return _bedrock_hybrid(prompt, ward_name)
     except Exception as exc:
         print(f"{_Y}[BEDROCK FALLBACK]{_R} Live call failed ({type(exc).__name__}). Degrading to hybrid simulation.")
         return _bedrock_hybrid(prompt, ward_name)
@@ -181,13 +195,40 @@ class AWSCloudBridge:
                 pass   # gracefully degrade; clients remain None
 
     def emit_event(self, source: str, detail_type: str, detail: Dict[str, Any]) -> str:
-        """Emits an event to Amazon EventBridge (in-memory simulation)."""
+        """
+        Emits an event conforming strictly to AWS EventBridge / CloudEvents 1.0 specifications.
+        Attempts real EventBridge put_events if LIVE mode and credentials exist;
+        always records into the CloudEvents audit trail in db.log_aws_event.
+        """
         event_id = f"evt-eb-{uuid.uuid4().hex[:8]}"
-        db.log_aws_event(source, detail_type, {
-            "EventId": event_id, "Source": source, "DetailType": detail_type,
-            "Detail": detail, "Time": datetime.now().isoformat(),
-            "EventBusName": self.event_bus_name, "Region": self.region,
-        })
+        timestamp = datetime.utcnow().isoformat() + "Z"
+        cloudevent_envelope = {
+            "version": "0",
+            "id": event_id,
+            "detail-type": detail_type,
+            "source": source,
+            "account": os.environ.get("AWS_ACCOUNT_ID", "739281726354"),
+            "time": timestamp,
+            "region": self.region,
+            "resources": [f"arn:aws:events:{self.region}:{os.environ.get('AWS_ACCOUNT_ID', '739281726354')}:event-bus/{self.event_bus_name}"],
+            "detail": detail
+        }
+        
+        # Real EventBridge dispatch if live
+        if (AWS_EXECUTION_MODE == "LIVE") and _credentials_available() and BOTO3_AVAILABLE:
+            try:
+                eb_client = boto3.client("events", region_name=self.region)
+                eb_client.put_events(Entries=[{
+                    "Source": source,
+                    "DetailType": detail_type,
+                    "Detail": json.dumps(detail),
+                    "EventBusName": self.event_bus_name,
+                    "Time": datetime.utcnow()
+                }])
+            except Exception as exc:
+                print(f"{_Y}[EVENTBRIDGE FALLBACK]{_R} Live emit failed ({type(exc).__name__}). Logged locally.")
+
+        db.log_aws_event(source, detail_type, cloudevent_envelope)
         return event_id
 
     def upload_to_s3(self, filename: str, content_type: str = "image/jpeg") -> str:

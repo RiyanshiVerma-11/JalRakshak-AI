@@ -7,7 +7,8 @@
 [![Bedrock Claude 3.5](https://img.shields.io/badge/Bedrock%20LLM-Claude%203.5%20Sonnet-6366F1?style=for-the-badge)](https://aws.amazon.com/bedrock/)
 [![NDMA Compliant](https://img.shields.io/badge/Statutory%20SOP-NDMA%20Urban%20Flooding%202024-10B981?style=for-the-badge)](https://ndma.gov.in)
 [![RBAC Enforced](https://img.shields.io/badge/Security-PoLP%20%26%20ICS--400%20RBAC-E11D48?style=for-the-badge)](https://aws.amazon.com/cognito/)
-[![Integration Tests](https://img.shields.io/badge/Integration%20Tests-5%2F5%20Passing-10B981?style=for-the-badge&logo=pytest)](tests/test_integration.py)
+[![Integration Tests](https://img.shields.io/badge/Integration%20Tests-9%2F9%20Passing-10B981?style=for-the-badge&logo=pytest)](tests/test_integration.py)
+[![Hybrid Architecture](https://img.shields.io/badge/Hybrid%20Architecture-Sub--50ms%20GIS%20%2B%20Bedrock%20RAG-8B5CF6?style=for-the-badge&logo=amazonaws)](backend/aws_simulator/aws_bridge.py)
 [![Fault Tolerance](https://img.shields.io/badge/Fault%20Tolerance-NDMA%20Fallback%20Active-06B6D4?style=for-the-badge&logo=shield)](backend/agents/strands_workflow.py)
 [![AWS SAM IaC](https://img.shields.io/badge/AWS%20SAM-Template%20Validated-FF9900?style=for-the-badge&logo=amazon-aws)](aws_infra/template.yaml)
 
@@ -101,6 +102,30 @@ flowchart TD
     style EXECUTION fill:#082f49,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
 ```
 
+### ⚡ Hybrid Real-Time & Generative Architecture: Sub-50ms GIS Routing + Asynchronous Bedrock Synthesis
+
+JalRakshak AI solves the fundamental tension between **real-time field safety** and **nuanced generative intelligence** through a dual-lane Hybrid Architecture:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        JALRAKSHAK AI HYBRID CLOUD ARCHITECTURE                         │
+├──────────────────────────────────────────┬─────────────────────────────────────────────┤
+│ 🚀 DETERMINISTIC FAST LANE (<50ms)        │ 🧠 GENERATIVE SYNTHESIS LANE (~1.4s)         │
+├──────────────────────────────────────────┼─────────────────────────────────────────────┤
+│ • SCADA telemetry threshold & breach     │ • Asynchronous Amazon Bedrock invocation    │
+│   calculation (effective drainage delta) │   (Claude 3.5 Sonnet foundation model)      │
+│ • GIS spatial contour intersection &     │ • Multilingual citizen warning broadcasts   │
+│   critical asset proximity (hospitals)   │   synthesized in English, Hindi, & Marathi  │
+│ • Tactical asset matching & routing      │ • Dynamic incident explanation scorecards   │
+│   (nearest dewatering pumps from Depot)  │ • In-memory TF-IDF + Cosine Vector RAG     │
+│ • Statutory NDMA decision matrix rule    │   retrieval over NDMA 2024 Guidelines       │
+│   enforcement for zero-downtime safety   │ • Amazon SNS mass emergency topic dispatch  │
+└──────────────────────────────────────────┴─────────────────────────────────────────────┘
+```
+
+> **Why Hybrid?**  
+> During an active monsoon cloudburst, immediate life-safety operations—such as floodgate drop triggers, outfall backflow warnings, and emergency vehicular diversions—cannot stall waiting on LLM token generation. The deterministic engine calculates breach metrics, allocates pumps, and isolates risks in **$<50\text{ ms}$**, while Amazon Bedrock works asynchronously in parallel (**$\sim 1.4\text{s}$**) to produce contextually rich, multilingual incident documentation and strategic coordination orders.
+
 ---
 
 ## 👥 Role-Based Access Control (RBAC & PoLP)
@@ -193,7 +218,7 @@ Civic disaster boards cannot trust an unexplained "black-box" AI score. JalRaksh
 | :--- | :--- | :--- | :--- |
 | **IAS Shrikar Patil** | **Incident Commander** | **Executive Command Center** | • 1-Click statutory action authorization<br/>• Live GIS City Map with asset geofences<br/>• 5-Agent Strands DAG trace drawer<br/>• Amazon SNS mass emergency alert queuing |
 | **Insp. Rajesh Yadav** | **Field Operations Lead** | **Tactical Field Terminal** | • Dispatched task manifest with ETAs<br/>• Geotagged ground photo proof verification<br/>• "Mark Arrived on Scene" state machine<br/>• Depot 17 inventory (Pumps, Boats, Sandbags) |
-| **Dr. Ananya Verma** | **Chief Hydrologist** | **SCADA Telemetry Console** | • 248 IoT live sensor telemetry grid<br/>• $-2.4\text{ Bar}$ pipe pressure cavitation alerts<br/>• Interactive precipitation & discharge tuning sliders<br/>• Sub-second DAG execution latency metrics |
+| **Dr. Ananya Verma** | **Chief Hydrologist** | **SCADA Telemetry Console** | • **⚡ Custom Telemetry Injector** ($0\text{--}220\text{ mm/hr}$ dynamic simulation & tidal lock penalty)<br/>• 248 IoT live sensor telemetry grid<br/>• $-2.4\text{ Bar}$ pipe pressure cavitation alerts<br/>• Dynamic pump requirement scaling & live EventBridge dispatch<br/>• Sub-second DAG execution latency metrics |
 | **Aarav Sharma** | **Citizen Resident** | **Citizen Emergency PWA** | • Mobile smartphone frame experience<br/>• 1-Tap 1077 SOS helpline calling<br/>• Photo flood reporting with AI depth ruler ($35\text{--}50\text{ cm}$)<br/>• Localized emergency advisories in English, Hindi & Marathi |
 
 ---
@@ -222,12 +247,27 @@ JalRakshak AI features a built-in, automated interactive tour for reviewers and 
 | AWS Service | Production Architectural Role | In-App Realization |
 | :--- | :--- | :--- |
 | **AWS Strands Agents SDK** | Deterministic multi-agent collaborative state graph | `backend/agents/strands_workflow.py` running the 5-agent DAG |
-| **Amazon Bedrock** | Foundation model inference (Claude 3.5 Sonnet) | Tactical reasoning engine and SOP semantic matching |
+| **Amazon Bedrock** | Foundation model inference (Claude 3.5 Sonnet) | Asynchronous multilingual advisory synthesis (~1.4s) & tactical reasoning |
 | **Amazon EventBridge** | Decoupled event bus for telemetry thresholds & citizen tickets | Emits `SensorThresholdExceeded` events |
 | **Amazon Rekognition** | Multimodal computer vision for flood depth estimation | Extracts water depth bounding boxes and road passability |
 | **Amazon SNS** | High-throughput multilingual SMS emergency broadcaster | Localized broadcasts in English, Hindi, and Marathi |
 | **Amazon DynamoDB** | Single-digit millisecond state storage for incidents & assets | Schemas defined in `aws_infra/template.yaml` |
 | **AWS AppSync** | Offline-first synchronization for tactical field teams | Offline cache ready badge in Field Ops |
+
+---
+
+## 📚 TF-IDF + Cosine Similarity Vector RAG Engine over NDMA 2024 Guidelines
+
+Civic emergency directives require strict adherence to national disaster response standards. Rather than relying on static keyword lookups or ungrounded generative hallucinations, JalRakshak AI features a purpose-built in-memory semantic vector RAG engine ([`backend/rag/sop_knowledge.py`](backend/rag/sop_knowledge.py)):
+
+* **Scikit-Learn Vectorization:** Uses `TfidfVectorizer(ngram_range=(1, 2), sublinear_tf=True)` combined with `cosine_similarity` to mathematically match incoming climate telemetry queries against statutory SOP documents.
+* **Statutory Document Index:**
+  1. **`SOP-FLD-101`**: *NDMA Urban Flooding Guidelines 2024 (Ch. 4 Sec 4.3)* — Protocol for urban inundation exceeding $30\text{ cm}$, high-discharge dewatering pump deployment ($>500\text{ GPM}$), and arterial road traffic diversion ($>25\text{ cm}$).
+  2. **`SOP-FLD-102`**: *NDMA Urban Flooding Guidelines 2024 (Ch. 5 Sec 5.1)* — Rapid ingress flash flood protocol, Mithi River tidal lock sluice gate coordination, and vulnerable population evacuation within $1.5\text{ km}$.
+  3. **`SOP-HEAT-04`**: *National Heat Wave Action Plan (NHAP 2024 Sec 3.1)* — Extreme heatwave protocol for wet-bulb temperature exceeding $32^\circ\text{C}$, municipal cooling shelter activation, and mandatory worker rest schedules.
+  4. **`SOP-PIPE-82`**: *CPHEEO Manual on Water Supply 2021 (Sec 8.4)* — Water transmission trunk main fracture containment, surge vessel cavitation protection, and dual-source chlorine residual monitoring.
+  5. **`SOP-WTR-301`**: *BMC Stormwater Drainage Manual & CPHEEO 2021* — Gravity outfall tidal locking mitigation, auxiliary booster pump activation, and solid waste trash-rack clearing.
+* **Deterministic Fallback:** Includes a standalone pure-Python vector math implementation as a fallback, guaranteeing zero-downtime SOP retrieval even in constrained environments.
 
 ---
 
@@ -262,22 +302,26 @@ The entire serverless multi-agent pipeline is declared in [`aws_infra/template.y
 
 ## 🧪 Live Integration Test Suite
 
-We maintain a rigorous automated integration test suite validating end-to-end functionality, statutory RBAC, Bedrock fault tolerance, and CloudFormation template validity:
+We maintain a rigorous automated integration test suite validating end-to-end functionality, statutory RBAC, Bedrock fault tolerance, dynamic telemetry injection, RAG vector cosine similarity, and CloudFormation template validity:
 
 ```bash
 # Run the complete test suite
 python -m pytest tests/test_integration.py -v
 ```
 
-### Verified Test Results:
+### Verified Test Results (100% Passing):
 ```text
-tests/test_integration.py::test_flood_cloudburst_pipeline_and_incident_creation PASSED [ 20%]
-tests/test_integration.py::test_bedrock_fault_tolerance_and_ndma_fallback       PASSED [ 40%]
-tests/test_integration.py::test_human_in_the_loop_action_approval               PASSED [ 60%]
-tests/test_integration.py::test_emergency_copilot_rag_query                    PASSED [ 80%]
-tests/test_integration.py::test_sam_infrastructure_as_code_template           PASSED [100%]
+tests/test_integration.py::test_flood_cloudburst_pipeline_and_incident_creation PASSED [ 11%]
+tests/test_integration.py::test_bedrock_fault_tolerance_and_ndma_fallback       PASSED [ 22%]
+tests/test_integration.py::test_human_in_the_loop_action_approval               PASSED [ 33%]
+tests/test_integration.py::test_emergency_copilot_rag_query                    PASSED [ 44%]
+tests/test_integration.py::test_sam_infrastructure_as_code_template           PASSED [ 55%]
+tests/test_integration.py::test_serverless_lambda_handlers_execution           PASSED [ 66%]
+tests/test_integration.py::test_dynamic_telemetry_simulation_endpoint         PASSED [ 77%]
+tests/test_integration.py::test_rag_vector_search_cosine_similarity           PASSED [ 88%]
+tests/test_integration.py::test_mathematical_confidence_score_bounds           PASSED [100%]
 
-============================== 5 passed in 0.70s ==============================
+============================== 9 passed in 15.07s ==============================
 ```
 
 ---

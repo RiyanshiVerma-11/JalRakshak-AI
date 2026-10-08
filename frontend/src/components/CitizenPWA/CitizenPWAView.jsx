@@ -348,17 +348,6 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
               </div>
 
               <div className="flex items-center gap-1.5">
-                {onOpenLogin && (
-                  <button
-                    type="button"
-                    onClick={onOpenLogin}
-                    className="flex items-center gap-1 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 px-2 py-1 text-blue-300 border border-blue-500/40 text-[10px] font-bold transition-all shadow-xs"
-                    title="Register or Switch User Account"
-                  >
-                    <UserPlus className="h-3 w-3 text-cyan-400" />
-                    <span>Register</span>
-                  </button>
-                )}
                 <a
                   href="tel:1077"
                   className="flex items-center gap-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 px-2.5 py-1 text-rose-300 border border-rose-500/40 text-[10px] font-bold transition-all shadow-xs"

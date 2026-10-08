@@ -3,6 +3,7 @@ Simulated Amazon DynamoDB Data Store & Real-Time Municipal Registry for JalRaksh
 Supports realistic coordinates for Mumbai wards (Kurla/BKC, Dadar, Andheri, Chembur, Colaba).
 """
 import copy
+import threading
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
@@ -598,9 +599,10 @@ INITIAL_CITIZEN_REPORTS = [
     }
 ]
 
-# Database State Manager
+# Database State Manager (Thread-Safe Concurrency Lock for Async / Multi-worker Safety)
 class MockDatabase:
     def __init__(self):
+        self._lock = threading.RLock()
         self.incidents = copy.deepcopy(INITIAL_INCIDENTS)
         self.resources = copy.deepcopy(DEFAULT_RESOURCES)
         self.citizen_reports = copy.deepcopy(INITIAL_CITIZEN_REPORTS)
@@ -616,55 +618,65 @@ class MockDatabase:
         self.aws_event_bus: List[Dict[str, Any]] = []
 
     def get_incidents(self) -> List[Dict[str, Any]]:
-        return self.incidents
+        with self._lock:
+            return copy.deepcopy(self.incidents)
 
     def get_incident(self, incident_id: str) -> Optional[Dict[str, Any]]:
-        for inc in self.incidents:
-            if inc["id"] == incident_id:
-                return inc
-        return None
+        with self._lock:
+            for inc in self.incidents:
+                if inc["id"] == incident_id:
+                    return inc
+            return None
 
     def add_incident(self, incident: Dict[str, Any]):
-        # Add to head of list so it appears first in priority queue
-        self.incidents.insert(0, incident)
+        with self._lock:
+            # Add to head of list so it appears first in priority queue
+            self.incidents.insert(0, incident)
 
     def update_incident(self, incident_id: str, updates: Dict[str, Any]):
-        for i, inc in enumerate(self.incidents):
-            if inc["id"] == incident_id:
-                self.incidents[i].update(updates)
-                return self.incidents[i]
-        return None
+        with self._lock:
+            for i, inc in enumerate(self.incidents):
+                if inc["id"] == incident_id:
+                    self.incidents[i].update(updates)
+                    return self.incidents[i]
+            return None
 
     def get_resources(self) -> List[Dict[str, Any]]:
-        return self.resources
+        with self._lock:
+            return self.resources
 
     def get_citizen_reports(self) -> List[Dict[str, Any]]:
-        return self.citizen_reports
+        with self._lock:
+            return self.citizen_reports
 
     def add_citizen_report(self, report: Dict[str, Any]):
-        self.citizen_reports.insert(0, report)
+        with self._lock:
+            self.citizen_reports.insert(0, report)
 
     def log_audit(self, officer: str, event: str, details: str):
-        self.audit_log.insert(0, {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "officer": officer,
-            "event": event,
-            "details": details
-        })
+        with self._lock:
+            self.audit_log.insert(0, {
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "officer": officer,
+                "event": event,
+                "details": details
+            })
 
     def log_aws_event(self, source: str, detail_type: str, detail: Dict[str, Any]):
-        self.aws_event_bus.insert(0, {
-            "event_id": f"evt-{len(self.aws_event_bus)+1000}",
-            "timestamp": datetime.now().isoformat(),
-            "source": source,
-            "detail_type": detail_type,
-            "detail": detail
-        })
+        with self._lock:
+            self.aws_event_bus.insert(0, {
+                "event_id": f"evt-{len(self.aws_event_bus)+1000}",
+                "timestamp": datetime.now().isoformat(),
+                "source": source,
+                "detail_type": detail_type,
+                "detail": detail
+            })
 
     def reset_to_defaults(self):
-        self.incidents = copy.deepcopy(INITIAL_INCIDENTS)
-        self.resources = copy.deepcopy(DEFAULT_RESOURCES)
-        self.citizen_reports = copy.deepcopy(INITIAL_CITIZEN_REPORTS)
-        self.log_audit("SYSTEM", "RESET_SIMULATION", "Database restored to standard operational baseline.")
+        with self._lock:
+            self.incidents = copy.deepcopy(INITIAL_INCIDENTS)
+            self.resources = copy.deepcopy(DEFAULT_RESOURCES)
+            self.citizen_reports = copy.deepcopy(INITIAL_CITIZEN_REPORTS)
+            self.log_audit("SYSTEM", "RESET_SIMULATION", "Database restored to standard operational baseline.")
 
 db = MockDatabase()

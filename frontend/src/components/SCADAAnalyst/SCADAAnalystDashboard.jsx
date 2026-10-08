@@ -110,14 +110,6 @@ export default function SCADAAnalystDashboard({
             <span className="text-[9px] font-mono uppercase text-slate-400 block">Telemetry Clock</span>
             <span className="text-xs font-mono font-bold text-cyan-300">{telemetryTime}</span>
           </div>
-
-          <button
-            onClick={onOpenLogin}
-            className="flex items-center gap-1.5 rounded-xl bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/40 px-3 py-2 text-xs font-bold transition-all shadow-xs"
-            title="Switch to Incident Commander for tactical execution"
-          >
-            <span>Switch Role ➔</span>
-          </button>
         </div>
       </div>
 

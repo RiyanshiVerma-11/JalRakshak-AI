@@ -11,35 +11,91 @@ import {
   ArrowRight,
   Clock,
   Layers,
-  ThumbsUp
+  ThumbsUp,
+  Camera,
+  PhoneCall,
+  MapPin,
+  ShieldCheck
 } from 'lucide-react';
 
-export default function AICopilotView({ onApproveAction }) {
+export default function AICopilotView({ onApproveAction, currentUser, onNavigateTab }) {
+  const role = currentUser?.role || 'incident_commander';
+  const isCitizen = role === 'citizen';
+  const isFieldOps = role === 'field_responder';
+  const isScada = role === 'scada_analyst';
+
+  const getInitialContent = () => {
+    if (isCitizen) {
+      return (
+        <div>
+          <p className="font-bold text-slate-900 mb-1 text-sm">
+            Good afternoon, {currentUser?.name || 'Resident'} (Ward 17).
+          </p>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            I am your <strong>JalRakshak Public Safety Copilot</strong>. I provide real-time neighborhood flood & heatwave advisories, safe dry transit corridors, open relief shelter locations, and help with submitting emergency photo SOS reports.
+          </p>
+        </div>
+      );
+    }
+    if (isFieldOps) {
+      return (
+        <div>
+          <p className="font-bold text-slate-900 mb-1 text-sm">
+            Good afternoon, {currentUser?.name || 'Field Unit Commander'}.
+          </p>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            I am the <strong>Field SOP Copilot</strong>. Grounded in NDRF standard operating guidelines, battalion deployment manifests, dewatering pump operations, and ground tactical procedures.
+          </p>
+        </div>
+      );
+    }
+    if (isScada) {
+      return (
+        <div>
+          <p className="font-bold text-slate-900 mb-1 text-sm">
+            Good afternoon, {currentUser?.name || 'Chief Hydrologist'}.
+          </p>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            I am the <strong>Hydrology Telemetry Copilot</strong>. I analyze real-time IoT water depth curves, pipeline pressure drops, and tidal outfall conditions.
+          </p>
+        </div>
+      );
+    }
+    return (
+      <div>
+        <p className="font-bold text-slate-900 mb-1 text-sm">
+          Good afternoon, {currentUser?.name || 'Municipal Disaster Operations Commander'}.
+        </p>
+        <p className="text-xs text-slate-600 leading-relaxed">
+          I am the <strong>JalRakshak AI Emergency Copilot</strong>. I analyze real-time environmental telemetry, municipal asset inventories, and statutory standard operating procedures (NDMA, NHAP, Jal Jeevan Mission) to recommend prioritized tactical actions.
+        </p>
+      </div>
+    );
+  };
+
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: (
-        <div>
-          <p className="font-bold text-slate-900 mb-1 text-sm">
-            Good afternoon, Municipal Disaster Operations Commander.
-          </p>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            I am the <strong>JalRakshak AI Emergency Copilot</strong>. I analyze real-time environmental telemetry, municipal asset inventories, and statutory standard operating procedures (NDMA, NHAP, Jal Jeevan Mission) to recommend prioritized tactical actions.
-          </p>
-        </div>
-      ),
+      content: getInitialContent(),
       structuredData: null
     }
   ]);
   const [inputQuery, setInputQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const samplePrompts = [
-    "What should we do about the current flood situation in Ward 17?",
-    "Are there cooling shelters available near Dadar?",
-    "Show available dewatering pumps and ETAs",
-    "Why was Ward 17 elevated to CRITICAL severity?"
-  ];
+  const samplePrompts = isCitizen
+    ? [
+        "What is this app for and how does it protect my neighborhood?",
+        "Is LBS Marg or Kurla flooded right now?",
+        "Where is the nearest emergency relief shelter in Ward 17?",
+        "How do I submit a photo report for street flooding?"
+      ]
+    : [
+        "What should we do about the current flood situation in Ward 17?",
+        "Are there cooling shelters available near Dadar?",
+        "Show available dewatering pumps and ETAs",
+        "Why was Ward 17 elevated to CRITICAL severity?"
+      ];
 
   const handleSend = async (queryText) => {
     const q = queryText || inputQuery;
@@ -54,7 +110,11 @@ export default function AICopilotView({ onApproveAction }) {
       const res = await fetch('/api/copilot/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q })
+        body: JSON.stringify({ 
+          query: q,
+          role: currentUser?.role || 'incident_commander',
+          user_name: currentUser?.name || 'User'
+        })
       });
       const data = await res.json();
 
@@ -91,13 +151,21 @@ export default function AICopilotView({ onApproveAction }) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-black text-slate-900">AI Emergency Copilot</h3>
+              <h3 className="text-sm font-black text-slate-900">
+                {isCitizen ? 'Public Safety Copilot' : isFieldOps ? 'Field SOP Copilot' : isScada ? 'Hydrology Telemetry Copilot' : 'AI Emergency Copilot'}
+              </h3>
               <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
-                Strands RAG Agent
+                {isCitizen ? 'Citizen FAQ & Safety' : isFieldOps ? 'NDRF RAG' : isScada ? 'Telemetry AI' : 'Strands RAG Agent'}
               </span>
             </div>
             <p className="text-[11px] text-slate-500">
-              Grounded in Municipal Standard Operating Procedures & Live Incident Feeds
+              {isCitizen
+                ? 'Multilingual Public Safety Advisories & Community Guidance'
+                : isFieldOps
+                ? 'Tactical Ground Operations & Dewatering Manifests'
+                : isScada
+                ? 'Inundation Curve Modeling & Hydraulic Telemetry'
+                : 'Grounded in Municipal Standard Operating Procedures & Live Incident Feeds'}
             </p>
           </div>
         </div>
@@ -127,17 +195,17 @@ export default function AICopilotView({ onApproveAction }) {
               {/* Message Header */}
               <div className="flex items-center gap-1.5 mb-2 font-bold opacity-90 text-[11px]">
                 {msg.role === 'user' ? (
-                  <span>Incident Commander (You)</span>
+                  <span>{currentUser?.name ? `${currentUser.name} (You)` : 'You'}</span>
                 ) : (
                   <span className="flex items-center gap-1 text-blue-700">
                     <Sparkles className="h-3.5 w-3.5" />
-                    JalRakshak AI Copilot
+                    {isCitizen ? 'JalRakshak Safety Copilot' : 'JalRakshak AI Copilot'}
                   </span>
                 )}
               </div>
 
               {/* Text Content */}
-              <div className="leading-relaxed text-slate-800 font-medium">
+              <div className="leading-relaxed text-slate-800 font-medium whitespace-pre-line">
                 {msg.content}
               </div>
 
@@ -162,7 +230,7 @@ export default function AICopilotView({ onApproveAction }) {
                     <div className="rounded-xl bg-blue-50/50 p-3.5 border border-blue-200">
                       <h5 className="font-extrabold text-blue-800 uppercase tracking-wider text-[11px] mb-2.5 flex items-center gap-1.5">
                         <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" />
-                        RECOMMENDED TACTICAL ACTIONS
+                        {isCitizen ? 'PUBLIC SAFETY DIRECTIVES & ADVISORIES' : 'RECOMMENDED TACTICAL ACTIONS'}
                       </h5>
                       <div className="space-y-2">
                         {msg.structuredData.recommended_actions.map((act, aIdx) => (
@@ -177,12 +245,43 @@ export default function AICopilotView({ onApproveAction }) {
                               </div>
                               <p className="font-bold text-slate-900 text-xs">{act.action}</p>
                             </div>
-                            <button
-                              onClick={() => onApproveAction && onApproveAction(act.resource_id || 'RES-GENERIC')}
-                              className="rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-[11px] font-bold text-white shrink-0 active:scale-95 transition-all shadow-xs"
-                            >
-                              Dispatch
-                            </button>
+
+                            {/* Role-tailored action button */}
+                            {isCitizen ? (
+                              act.action_type === 'PHOTO_SOS' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => onNavigateTab && onNavigateTab('citizen')}
+                                  className="rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-[11px] font-bold text-white shrink-0 active:scale-95 transition-all shadow-xs flex items-center gap-1"
+                                >
+                                  <Camera className="h-3 w-3" />
+                                  <span>Submit SOS</span>
+                                </button>
+                              ) : act.action_type === 'CALL' ? (
+                                <a
+                                  href="tel:1077"
+                                  className="rounded-lg bg-rose-600 hover:bg-rose-700 px-3 py-1.5 text-[11px] font-bold text-white shrink-0 active:scale-95 transition-all shadow-xs flex items-center gap-1"
+                                >
+                                  <PhoneCall className="h-3 w-3" />
+                                  <span>Call 1077</span>
+                                </a>
+                              ) : act.action_type === 'SHELTER' ? (
+                                <span className="rounded-lg bg-blue-50 text-blue-800 border border-blue-300 px-2 py-1 text-[10px] font-bold shrink-0">
+                                  Open 24/7
+                                </span>
+                              ) : (
+                                <span className="rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-300 px-2 py-1 text-[10px] font-bold shrink-0">
+                                  Verified Advisory
+                                </span>
+                              )
+                            ) : (
+                              <button
+                                onClick={() => onApproveAction && onApproveAction(act.resource_id || 'RES-GENERIC')}
+                                className="rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-[11px] font-bold text-white shrink-0 active:scale-95 transition-all shadow-xs"
+                              >
+                                Dispatch
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -194,7 +293,7 @@ export default function AICopilotView({ onApproveAction }) {
                     <div className="rounded-xl bg-amber-50/60 p-3.5 border border-amber-200">
                       <h5 className="font-extrabold text-amber-800 uppercase tracking-wider text-[11px] mb-1.5 flex items-center gap-1.5">
                         <HelpCircle className="h-3.5 w-3.5 text-amber-600" />
-                        WHY THESE ACTIONS? (AI REASONING)
+                        {isCitizen ? 'SAFETY REASONING & GROUND REALITY' : 'WHY THESE ACTIONS? (AI REASONING)'}
                       </h5>
                       <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-700 font-medium">
                         {msg.structuredData.why_critical.map((reason, rIdx) => (
@@ -244,7 +343,11 @@ export default function AICopilotView({ onApproveAction }) {
           <div className="flex justify-start">
             <div className="rounded-2xl rounded-tl-none bg-white p-4 border border-slate-200 text-xs flex items-center gap-2 text-blue-700 shadow-sm">
               <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping"></span>
-              <span className="font-semibold">Consulting AWS Strands Agents & Statutory SOP RAG Database...</span>
+              <span className="font-semibold">
+                {isCitizen
+                  ? 'Consulting Municipal Safety Feeds & Shelter Database...'
+                  : 'Consulting AWS Strands Agents & Statutory SOP RAG Database...'}
+              </span>
             </div>
           </div>
         )}
@@ -275,7 +378,7 @@ export default function AICopilotView({ onApproveAction }) {
           type="text"
           value={inputQuery}
           onChange={(e) => setInputQuery(e.target.value)}
-          placeholder="Ask Copilot: e.g. What should we do about the flood in Ward 17?"
+          placeholder={isCitizen ? "Ask Public Safety Copilot: e.g. What is this app for? Where is the nearest shelter?" : "Ask Copilot: e.g. What should we do about the flood in Ward 17?"}
           className="flex-1 rounded-xl bg-slate-50 px-4 py-2.5 text-xs text-slate-900 border border-slate-300 focus:border-blue-600 focus:outline-none placeholder:text-slate-400 font-medium"
         />
         <button

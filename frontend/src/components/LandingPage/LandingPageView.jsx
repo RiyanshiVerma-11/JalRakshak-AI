@@ -47,7 +47,8 @@ export default function LandingPageView({
   onOpenJudgeTour,
   onSelectRole,
   onOpenLogin,
-  onNavigateTab
+  onNavigateTab,
+  currentUser
 }) {
   const [activeScenario, setActiveScenario] = useState('flood');
 
@@ -147,14 +148,6 @@ export default function LandingPageView({
               Problem & Solution
             </button>
             <button
-              onClick={onOpenLogin}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-blue-600 hover:bg-slate-100 transition-colors flex items-center gap-1.5"
-              title="Open Dedicated 4 Statutory Personas & RBAC Gateway"
-            >
-              <Lock className="h-3 w-3 text-blue-500" />
-              <span>4 Statutory Roles</span>
-            </button>
-            <button
               onClick={() => scrollToSection('scenarios')}
               className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-blue-600 hover:bg-slate-100 transition-colors"
             >
@@ -184,41 +177,32 @@ export default function LandingPageView({
             </button>
           </nav>
 
-          {/* Quick Action CTAs (Cleaned right side - uncluttered) */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            {/* 3-Min Tour Button */}
-            <button
-              onClick={onOpenJudgeTour}
-              className="flex items-center gap-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
-              title="Open 3-Minute Hackathon Demo Tour"
-            >
-              <Award className="h-3.5 w-3.5 text-amber-600" />
-              <span className="hidden sm:inline">3-Min Tour</span>
-              <span className="sm:hidden">Tour</span>
-            </button>
-
-            {/* Sign In Button (Standard SaaS / Enterprise UX) */}
-            <button
-              onClick={() => {
-                if (onNavigateTab) onNavigateTab('login');
-                else if (onOpenLogin) onOpenLogin();
-              }}
-              className="flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
-              title="Sign in with AWS Cognito / Select Officer Role"
-            >
-              <Lock className="h-3.5 w-3.5 text-blue-600" />
-              <span>Sign In</span>
-            </button>
-
-            {/* Enter Command Center (Primary CTA) */}
-            <button
-              onClick={onEnterCommandCenter}
-              className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-black px-4 py-2 text-xs sm:text-sm shadow-md shadow-blue-500/20 transition-all active:scale-95"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              <span>LAUNCH APP</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
+          {/* Single Primary Navbar CTA (Cleaned right side - uncluttered) */}
+          <div className="flex items-center gap-2 shrink-0">
+            {currentUser ? (
+              <button
+                onClick={onEnterCommandCenter}
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold px-4 py-2 text-xs sm:text-sm shadow-md shadow-blue-500/20 transition-all active:scale-95"
+                title={`Active Session: ${currentUser.name} (${currentUser.title})`}
+              >
+                <span>{currentUser.avatar || '👨‍💼'}</span>
+                <span>Launch App</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (onNavigateTab) onNavigateTab('login');
+                  else if (onOpenLogin) onOpenLogin();
+                }}
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold px-4 py-2 text-xs sm:text-sm shadow-md shadow-blue-500/20 transition-all active:scale-95"
+                title="Sign in with AWS Cognito / Select Officer Role"
+              >
+                <Lock className="h-3.5 w-3.5" />
+                <span>Sign In</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
 
         </div>
@@ -293,7 +277,7 @@ export default function LandingPageView({
                 </div>
               </div>
 
-              {/* Action Buttons: Primary Blue CTA takes center stage, Why Cities Fail as secondary outline pill */}
+              {/* Hero Action CTA: Keep a single clear primary CTA button */}
               <div className="pt-2 flex flex-wrap items-center gap-3">
                 <button
                   onClick={onEnterCommandCenter}
@@ -302,25 +286,6 @@ export default function LandingPageView({
                   <LayoutDashboard className="h-4 w-4" />
                   <span>OPEN COMMAND CENTER</span>
                   <ArrowRight className="h-4 w-4" />
-                </button>
-
-                <button
-                  onClick={() => {
-                    if (onNavigateTab) onNavigateTab('login');
-                    else if (onOpenLogin) onOpenLogin();
-                  }}
-                  className="flex items-center gap-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 hover:border-slate-400 px-5 py-3.5 text-sm font-bold active:scale-95 transition-all shadow-xs"
-                >
-                  <Lock className="h-4 w-4 text-blue-600" />
-                  <span>Sign In / Roles</span>
-                </button>
-
-                <button
-                  onClick={onOpenJudgeTour}
-                  className="flex items-center gap-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-slate-400 px-5 py-3.5 text-sm font-bold active:scale-95 transition-all shadow-xs"
-                >
-                  <Award className="h-4 w-4 text-amber-600" />
-                  <span>🎬 3-Min Tour</span>
                 </button>
 
                 <button

@@ -28,16 +28,21 @@ import {
   Sparkles, 
   ShieldCheck,
   ChevronRight,
+  ChevronDown,
   Shield,
   Layers,
   ArrowUpRight,
-  LogOut
+  LogOut,
+  FileText,
+  MapPin
 } from 'lucide-react';
 import { ROLES, PERSONAS } from '../data/rolesData';
 
 export default function Sidebar({ 
   activeTab, 
   setActiveTab, 
+  commandMode,
+  setCommandMode,
   isCollapsed, 
   setIsCollapsed, 
   onSimulate, 
@@ -49,7 +54,7 @@ export default function Sidebar({
   onOpenLogin,
   onLogout 
 }) {
-  const [restrictedModal, setRestrictedModal] = useState(null);
+  const [isSimDrawerOpen, setIsSimDrawerOpen] = useState(false);
   const role = currentUser?.role || ROLES.INCIDENT_COMMANDER;
 
   // -------------------------------------------------------------
@@ -96,14 +101,6 @@ export default function Sidebar({
               icon: <Globe className="h-4 w-4 shrink-0" />,
               badge: null,
               desc: 'Platform Overview'
-            },
-            {
-              id: 'login',
-              label: 'Portal Login & Roles',
-              icon: <Key className="h-4 w-4 shrink-0 text-amber-400" />,
-              badge: 'Cognito',
-              badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800',
-              desc: 'Switch Persona & Credentials'
             }
           ],
           restrictedItems: [
@@ -178,14 +175,6 @@ export default function Sidebar({
               icon: <Globe className="h-4 w-4 shrink-0" />,
               badge: null,
               desc: 'Platform Overview'
-            },
-            {
-              id: 'login',
-              label: 'Portal Login & Roles',
-              icon: <Key className="h-4 w-4 shrink-0 text-amber-400" />,
-              badge: 'Cognito',
-              badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800',
-              desc: 'Switch Persona & Credentials'
             }
           ],
           restrictedItems: [
@@ -237,14 +226,6 @@ export default function Sidebar({
               icon: <Globe className="h-4 w-4 shrink-0" />,
               badge: null,
               desc: 'Platform Overview'
-            },
-            {
-              id: 'login',
-              label: 'Portal Login & Roles',
-              icon: <Key className="h-4 w-4 shrink-0 text-amber-400" />,
-              badge: 'Cognito',
-              badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800',
-              desc: 'Switch Persona & Credentials'
             }
           ],
           restrictedItems: [
@@ -282,7 +263,7 @@ export default function Sidebar({
       case ROLES.INCIDENT_COMMANDER:
       default:
         return {
-          title: 'Incident Commander',
+          title: 'Municipal Incident Commander',
           icsTier: 'ICS-400 Statutory Commander',
           accentBorder: 'border-rose-500',
           accentText: 'text-rose-400',
@@ -290,67 +271,42 @@ export default function Sidebar({
           primaryTab: 'command',
           allowedItems: [
             {
-              id: 'command',
-              label: 'Command Center',
-              icon: <LayoutDashboard className="h-4 w-4 shrink-0" />,
-              badge: '★ PRIMARY',
+              id: 'overview_gis',
+              targetTab: 'command',
+              commandMode: 'gis',
+              label: 'Incident Overview & GIS',
+              icon: <MapPin className="h-4 w-4 shrink-0" />,
+              badge: 'LIVE MAP',
+              badgeColor: 'bg-blue-950/90 text-blue-300 border-blue-800',
+              desc: 'Live Spatial Map & Priority Queue'
+            },
+            {
+              id: 'tactical_directives',
+              targetTab: 'command',
+              commandMode: 'decision',
+              label: 'Tactical Action Directives',
+              icon: <ShieldAlert className="h-4 w-4 shrink-0" />,
+              badge: '★ CORE',
               badgeColor: 'bg-rose-600 text-white font-black shadow-xs',
               desc: 'Executive Decision Room'
             },
             {
-              id: 'field_ops',
-              label: 'Field Operations',
-              icon: <Truck className="h-4 w-4 shrink-0" />,
-              badge: 'NDRF Units',
-              badgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-800',
-              desc: 'Tactical Ground Manifest'
-            },
-            {
-              id: 'scada',
-              label: 'SCADA Telemetry',
+              id: 'sensor_grid',
+              targetTab: 'scada',
+              label: 'Sensor Grid & Outfalls',
               icon: <Activity className="h-4 w-4 shrink-0" />,
               badge: '248 IoT',
-              badgeColor: 'bg-cyan-950/80 text-cyan-300 border-cyan-800',
-              desc: 'Environmental Sensor Grid'
+              badgeColor: 'bg-cyan-950/90 text-cyan-300 border-cyan-800',
+              desc: 'Telemetry & Sluice Outfalls'
             },
             {
-              id: 'citizen',
-              label: 'Citizen PWA',
-              icon: <Smartphone className="h-4 w-4 shrink-0" />,
-              badge: 'Public Feed',
-              badgeColor: 'bg-blue-950/80 text-cyan-300 border-blue-800',
-              desc: 'Vision Incident Queue'
-            },
-            {
-              id: 'copilot',
-              label: 'Emergency Copilot',
-              icon: <Bot className="h-4 w-4 shrink-0" />,
+              id: 'statutory_sops',
+              targetTab: 'copilot',
+              label: 'Statutory Logs & SOPs',
+              icon: <FileText className="h-4 w-4 shrink-0" />,
               badge: 'NDMA RAG',
-              badgeColor: 'bg-indigo-950/80 text-indigo-300 border-indigo-800',
-              desc: 'Statutory SOP Assistant'
-            },
-            {
-              id: 'aws',
-              label: 'AWS Architecture',
-              icon: <Cloud className="h-4 w-4 shrink-0" />,
-              badge: '5 Agents',
-              badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800',
-              desc: 'Strands DAG Architecture'
-            },
-            {
-              id: 'landing',
-              label: 'Problem & Mission',
-              icon: <Globe className="h-4 w-4 shrink-0" />,
-              badge: null,
-              desc: 'Platform Overview'
-            },
-            {
-              id: 'login',
-              label: 'Portal Login & Roles',
-              icon: <Key className="h-4 w-4 shrink-0 text-amber-400" />,
-              badge: 'Cognito',
-              badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800',
-              desc: 'Switch Persona & Credentials'
+              badgeColor: 'bg-indigo-950/90 text-indigo-300 border-indigo-800',
+              desc: 'Compliance & Audit Logs'
             }
           ],
           restrictedItems: []
@@ -361,11 +317,32 @@ export default function Sidebar({
   const navConfig = getRoleNavConfig();
 
   const handleItemClick = (item) => {
-    setActiveTab(item.id);
+    if (item.targetTab) {
+      setActiveTab(item.targetTab);
+      if (item.commandMode && setCommandMode) {
+        setCommandMode(item.commandMode);
+      }
+    } else {
+      setActiveTab(item.id);
+    }
   };
 
-  const handleRestrictedClick = (item) => {
-    setRestrictedModal(item);
+  const isItemActive = (item) => {
+    if (role === ROLES.INCIDENT_COMMANDER) {
+      if (item.id === 'overview_gis') {
+        return activeTab === 'command' && commandMode === 'gis';
+      }
+      if (item.id === 'tactical_directives') {
+        return activeTab === 'command' && (commandMode === 'decision' || !commandMode || ['all', 'dag', 'whatif'].includes(commandMode));
+      }
+      if (item.id === 'sensor_grid') {
+        return activeTab === 'scada';
+      }
+      if (item.id === 'statutory_sops') {
+        return activeTab === 'copilot';
+      }
+    }
+    return activeTab === item.id;
   };
 
   const simulationTriggers = [
@@ -399,7 +376,7 @@ export default function Sidebar({
     <>
       <aside 
         className={`fixed top-0 left-0 h-screen z-40 bg-slate-950 border-r border-slate-800 text-slate-300 shadow-2xl flex flex-col justify-between transition-all duration-200 ease-in-out ${
-          isCollapsed ? 'w-[68px]' : 'w-[245px]'
+          isCollapsed ? 'w-[70px]' : 'w-[280px]'
         }`}
       >
         
@@ -457,81 +434,27 @@ export default function Sidebar({
             </div>
           )}
 
-          {/* ACTIVE ROLE IDENTITY CARD (Visible when Expanded) */}
-          {!isCollapsed && (
-            <div className="p-2.5 border-b border-slate-800/80 bg-gradient-to-b from-slate-900/60 to-slate-950">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[9px] font-mono uppercase font-black tracking-widest text-slate-400 flex items-center gap-1">
-                  <ShieldCheck className="h-3 w-3 text-cyan-400" />
-                  Active Persona & Tier
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={onOpenLogin}
-                    className="text-[9px] font-bold text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-0.5"
-                    title="Switch to another persona"
-                  >
-                    <span>Switch</span>
-                    <ChevronRight className="h-2.5 w-2.5" />
-                  </button>
-                  <button
-                    onClick={onLogout}
-                    className="text-[9px] font-bold text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-0.5"
-                    title="Sign Out of AWS Cognito session"
-                  >
-                    <LogOut className="h-2.5 w-2.5" />
-                    <span>Exit</span>
-                  </button>
-                </div>
-              </div>
 
-              <div 
-                onClick={onOpenLogin}
-                className={`rounded-xl p-2 bg-slate-900 border ${navConfig.accentBorder}/50 hover:border-${navConfig.accentBorder} transition-all cursor-pointer shadow-xs group`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-xl p-1 rounded-lg bg-slate-800 border border-slate-700">
-                    {currentUser?.avatar || '👨‍💼'}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-xs font-black text-white truncate group-hover:text-cyan-300 transition-colors">
-                      {currentUser?.name || 'IAS Shrikar Patil'}
-                    </h3>
-                    <p className="text-[10px] text-slate-400 truncate">
-                      {currentUser?.title || 'Incident Commander'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-1.5 pt-1.5 border-t border-slate-800 flex items-center justify-between text-[9px] font-mono">
-                  <span className={`px-1.5 py-0.5 rounded border font-bold ${navConfig.accentBg}`}>
-                    {navConfig.icsTier}
-                  </span>
-                  <span className="text-slate-500 font-bold">PoLP RBAC</span>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ROLE-AUTHORIZED NAVIGATION PORTALS */}
           <div className="px-2 py-2 space-y-1">
             {!isCollapsed && (
-              <div className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center justify-between">
-                <span>Authorized Portals</span>
+              <div className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>Operational Modules</span>
                 <span className="text-[9px] text-emerald-400 font-mono font-normal">Active Clearance</span>
               </div>
             )}
 
             {navConfig.allowedItems.map((item) => {
-              const isActive = activeTab === item.id;
-              const isPrimary = item.badge === '★ PRIMARY';
+              const isActive = isItemActive(item);
+              const isPrimary = item.badge === '★ CORE' || item.badge === '★ PRIMARY';
 
               return (
                 <button
                   key={item.id}
                   onClick={() => handleItemClick(item)}
                   className={`w-full flex items-center rounded-xl transition-all text-left group ${
-                    isCollapsed ? 'justify-center p-2.5 my-1' : 'justify-between px-2.5 py-2 my-0.5'
+                    isCollapsed ? 'justify-center p-2.5 my-1' : 'justify-between px-2.5 py-2 my-1'
                   } ${
                     isActive
                       ? `bg-blue-600/25 ${navConfig.accentText} font-bold border-l-4 ${navConfig.accentBorder} rounded-l-none shadow-xs`
@@ -541,16 +464,16 @@ export default function Sidebar({
                   }`}
                   title={isCollapsed ? `${item.label} (${item.desc})` : undefined}
                 >
-                  <div className="flex items-center gap-2.5 truncate">
-                    <span className={`${isActive ? navConfig.accentText : isPrimary ? 'text-cyan-400' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <span className={`${isActive ? navConfig.accentText : isPrimary ? 'text-cyan-400' : 'text-slate-400 group-hover:text-slate-200'} shrink-0`}>
                       {item.icon}
                     </span>
                     {!isCollapsed && (
-                      <div className="truncate">
-                        <span className="text-xs truncate font-bold block leading-tight">
+                      <div className="min-w-0 flex-1 leading-snug">
+                        <span className="text-xs font-bold block text-white leading-tight">
                           {item.label}
                         </span>
-                        <span className="text-[9px] text-slate-500 truncate block">
+                        <span className="text-[10px] text-slate-400 block leading-tight mt-0.5 whitespace-normal break-words">
                           {item.desc}
                         </span>
                       </div>
@@ -558,7 +481,7 @@ export default function Sidebar({
                   </div>
 
                   {!isCollapsed && item.badge && (
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${item.badgeColor}`}>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 ml-1.5 ${item.badgeColor}`}>
                       {item.badge}
                     </span>
                   )}
@@ -567,94 +490,64 @@ export default function Sidebar({
             })}
           </div>
 
-          {/* RESTRICTED PORTALS (PoLP SECURITY CLEARANCE REQUIRED) */}
-          {navConfig.restrictedItems.length > 0 && (
-            <div className="px-2 pt-2 border-t border-slate-800/60 space-y-1">
-              {!isCollapsed && (
-                <div className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center justify-between">
-                  <span className="flex items-center gap-1 text-slate-500">
-                    <Lock className="h-3 w-3 text-amber-500/70" />
-                    Restricted Portals
-                  </span>
-                  <span className="text-[9px] text-amber-500 font-mono font-bold">PoLP Guarded</span>
-                </div>
-              )}
 
-              {navConfig.restrictedItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleRestrictedClick(item)}
-                  className={`w-full flex items-center rounded-xl transition-all text-left opacity-60 hover:opacity-100 hover:bg-amber-950/20 border border-transparent hover:border-amber-800/40 group ${
-                    isCollapsed ? 'justify-center p-2.5 my-1' : 'justify-between px-2.5 py-1.5 my-0.5'
-                  }`}
-                  title={isCollapsed ? `🔒 Restricted: Requires ${item.requiredRole}` : item.reason}
-                >
-                  <div className="flex items-center gap-2.5 truncate text-slate-400 group-hover:text-slate-300">
-                    <Lock className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                    {!isCollapsed && (
-                      <div className="truncate">
-                        <span className="text-xs truncate font-semibold block leading-tight text-slate-400 group-hover:text-amber-200">
-                          {item.label}
-                        </span>
-                        <span className="text-[9px] text-slate-500 truncate block">
-                          Requires {item.requiredRole}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {!isCollapsed && (
-                    <span className="text-[9px] font-mono font-bold text-amber-400/90 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/60 shrink-0">
-                      Locked
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
 
           {/* ROLE-TAILORED QUICK ACTION WIDGET */}
           <div className="px-2 pt-2 pb-1 border-t border-slate-800/80 mt-1">
             {!isCollapsed ? (
               <div className="space-y-1.5">
                 
-                {/* WIDGET FOR ROLE A: INCIDENT COMMANDER (Disaster Simulators) */}
+                {/* WIDGET FOR ROLE A: INCIDENT COMMANDER (Disaster Simulators - Collapsible Drawer) */}
                 {role === ROLES.INCIDENT_COMMANDER && (
-                  <>
-                    <div className="flex items-center justify-between px-2 py-0.5">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                        <Activity className="h-3 w-3 text-cyan-400" />
-                        Disaster Simulators
-                      </span>
-                      <span className="text-[9px] text-slate-500 font-mono">1-Click</span>
-                    </div>
-
-                    <div className="space-y-1">
-                      {simulationTriggers.map((sim) => (
-                        <button
-                          key={sim.id}
-                          onClick={() => onSimulate(sim.id)}
-                          disabled={isSimulating}
-                          className="w-full flex items-center justify-between rounded-lg px-2 py-1 text-xs text-slate-300 bg-slate-900/90 hover:bg-slate-800 hover:text-white border border-slate-800 transition-colors disabled:opacity-50 text-left"
-                        >
-                          <div className="flex items-center gap-1.5 truncate">
-                            {sim.icon}
-                            <span className="font-semibold text-[11px] truncate text-slate-200">{sim.label}</span>
-                          </div>
-                          <span className="text-[9px] font-mono text-slate-500 shrink-0">{sim.sub}</span>
-                        </button>
-                      ))}
-                    </div>
-
+                  <div className="rounded-xl bg-slate-900/90 border border-slate-800 p-2 space-y-1.5">
                     <button
-                      onClick={onReset}
-                      disabled={isSimulating}
-                      className="w-full flex items-center justify-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-white bg-slate-900/60 hover:bg-slate-800 border border-slate-800 transition-colors mt-0.5"
+                      type="button"
+                      onClick={() => setIsSimDrawerOpen(!isSimDrawerOpen)}
+                      className="w-full flex items-center justify-between text-left px-1 py-0.5 group cursor-pointer"
                     >
-                      <RotateCcw className="h-2.5 w-2.5 text-slate-500" />
-                      <span>Reset Data Baseline</span>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-300 group-hover:text-cyan-400 flex items-center gap-1.5 transition-colors">
+                        <Activity className="h-3 w-3 text-cyan-400" />
+                        <span>Disaster Scenarios</span>
+                      </span>
+                      <span className="flex items-center gap-1 text-[9px] text-slate-400 font-mono">
+                        <span>{isSimDrawerOpen ? 'Close' : 'Simulate'}</span>
+                        {isSimDrawerOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                      </span>
                     </button>
-                  </>
+
+                    {isSimDrawerOpen && (
+                      <div className="space-y-1 pt-1.5 border-t border-slate-800 animate-fade-in">
+                        <div className="text-[9px] text-slate-400 font-medium px-1">
+                          1-Click Synthetic Stress Testing:
+                        </div>
+                        <div className="space-y-1">
+                          {simulationTriggers.map((sim) => (
+                            <button
+                              key={sim.id}
+                              onClick={() => onSimulate(sim.id)}
+                              disabled={isSimulating}
+                              className="w-full flex items-center justify-between rounded-lg px-2 py-1 text-xs text-slate-300 bg-slate-950/80 hover:bg-slate-800 hover:text-white border border-slate-800/80 transition-colors disabled:opacity-50 text-left cursor-pointer"
+                            >
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                {sim.icon}
+                                <span className="font-semibold text-[11px] truncate text-slate-200">{sim.label}</span>
+                              </div>
+                              <span className="text-[9px] font-mono text-cyan-400/90 shrink-0">{sim.sub}</span>
+                            </button>
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={onReset}
+                          disabled={isSimulating}
+                          className="w-full flex items-center justify-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-white bg-slate-950/50 hover:bg-slate-800 border border-slate-800/60 transition-colors mt-0.5 cursor-pointer"
+                        >
+                          <RotateCcw className="h-2.5 w-2.5 text-slate-500" />
+                          <span>Reset Scenario Baseline</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* WIDGET FOR ROLE B: FIELD RESPONDER (Tactical Ground Ops HUD) */}
@@ -754,133 +647,75 @@ export default function Sidebar({
                 )}
 
               </div>
-            ) : (
-              <div className="flex flex-col items-center gap-1 py-1">
-                <button
-                  onClick={onOpenLogin}
-                  className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 text-cyan-400"
-                  title="Switch Persona"
-                >
-                  <UserCheck className="h-4 w-4" />
-                </button>
-              </div>
-            )}
+            ) : null}
           </div>
 
         </div>
 
-        {/* FOOTER: Role Access Status & AWS Security Clearance */}
-        <div className="p-2 border-t border-slate-800 bg-slate-900/90 shrink-0">
-          {!isCollapsed && (
-            <div className="mb-1.5 px-2 py-1 rounded bg-slate-950 border border-slate-800 text-[9px] flex items-center justify-between text-slate-400 font-mono">
-              <span className="flex items-center gap-1">
-                <Shield className="h-2.5 w-2.5 text-blue-400" />
-                <span>AWS IAM:</span>
-              </span>
-              <span className="text-emerald-400 font-bold flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-                PoLP Enforced
-              </span>
-            </div>
-          )}
-
-          <div 
-            onClick={onOpenLogin}
-            className={`flex items-center rounded-xl p-1 hover:bg-slate-800/80 transition-all cursor-pointer border border-transparent hover:border-slate-700 ${isCollapsed ? 'justify-center' : 'gap-2 px-1'}`}
-            title="Click to switch persona or manage access control"
-          >
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-950 border border-blue-800 text-xs shadow-xs">
-              {currentUser?.avatar || '👨‍💼'}
-            </div>
-
-            {!isCollapsed && (
-              <div className="truncate leading-tight flex-1">
-                <span className="text-xs font-bold text-white block truncate">
-                  {currentUser?.name?.split(' ')[0]} {currentUser?.name?.split(' ')[1] || ''}
+        {/* FOOTER: User Profile & Session Clearance (PoLP Enforced) */}
+        <div className="p-2.5 border-t border-slate-800 bg-slate-900/95 shrink-0 space-y-2">
+          {!isCollapsed ? (
+            <>
+              {/* PoLP IAM Clearance Badge */}
+              <div className="px-2 py-0.5 rounded bg-slate-950/80 border border-slate-800 text-[9px] flex items-center justify-between text-slate-400 font-mono">
+                <span className="flex items-center gap-1">
+                  <Shield className="h-2.5 w-2.5 text-blue-400" />
+                  <span>AWS IAM:</span>
                 </span>
-                <span className={`text-[10px] font-medium block truncate ${navConfig.accentText}`}>
-                  ● {currentUser?.title || 'Commander'}
+                <span className="text-emerald-400 font-bold flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  PoLP Enforced
                 </span>
               </div>
-            )}
 
-            {!isCollapsed && (
-              <div className="flex items-center gap-1.5 shrink-0 mr-1">
+              {/* Active User Profile Pill with Sign Out Link */}
+              <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-950 border border-slate-800 shadow-xs">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="text-lg p-1 rounded-lg bg-slate-800 border border-slate-700 shrink-0">
+                    {currentUser?.avatar || '👨‍💼'}
+                  </span>
+                  <div className="min-w-0 flex-1 leading-tight">
+                    <h4 className="text-xs font-black text-white truncate">
+                      {currentUser?.name || 'IAS Shrikar Patil'}
+                    </h4>
+                    <p className="text-[10px] text-slate-400 font-medium leading-tight whitespace-normal break-words mt-0.5">
+                      {currentUser?.title || (role === ROLES.CITIZEN ? 'Citizen Resident' : 'Municipal Incident Commander')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Single Clean Sign Out Button */}
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onOpenLogin) onOpenLogin();
-                  }}
-                  className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-800 transition-colors"
-                  title="Switch Persona"
-                >
-                  <Key className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onLogout) onLogout();
-                  }}
-                  className="p-1 rounded text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 transition-colors"
-                  title="Sign Out of session"
+                  type="button"
+                  onClick={onLogout}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-rose-950/60 border border-transparent hover:border-rose-900/60 transition-all shrink-0 active:scale-95"
+                  title="Sign Out of AWS Cognito session"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                 </button>
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-2 py-1">
+              <div 
+                className="text-base p-1.5 rounded-lg bg-slate-800 border border-slate-700" 
+                title={`${currentUser?.name || 'User'} (${currentUser?.title || 'Resident'})`}
+              >
+                {currentUser?.avatar || '🧑'}
+              </div>
+              <button
+                type="button"
+                onClick={onLogout}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-rose-950/60 transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
       </aside>
-
-      {/* RESTRICTED PORTAL ACCESS DENIED DIALOG (REAL ENTERPRISE FEEL) */}
-      {restrictedModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-fade-in">
-          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-amber-500/50 p-5 shadow-2xl space-y-4 text-white">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/40 shrink-0">
-                <Lock className="h-6 w-6" />
-              </div>
-              <div>
-                <span className="text-[10px] font-mono uppercase font-bold text-amber-400">
-                  Access Denied • Least Privilege
-                </span>
-                <h3 className="text-base font-black text-white leading-tight">
-                  {restrictedModal.label} is Restricted
-                </h3>
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 text-xs space-y-2">
-              <p className="text-slate-300 leading-relaxed">
-                {restrictedModal.reason}
-              </p>
-              <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-400">
-                <span>Current Role: <strong className="text-white">{currentUser?.title}</strong></span>
-                <span>Required: <strong className="text-amber-400">{restrictedModal.requiredRole}</strong></span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-1">
-              <button
-                onClick={() => setRestrictedModal(null)}
-                className="rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3.5 py-2 text-xs font-bold transition-colors"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  setRestrictedModal(null);
-                  onOpenLogin();
-                }}
-                className="rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
-              >
-                <span>Switch to {restrictedModal.requiredRole} ➔</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
