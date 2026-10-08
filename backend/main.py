@@ -194,6 +194,9 @@ def simulate_scenario(req: SimulateRequest):
         simulate_bedrock_throttle=bool(req.simulate_bedrock_throttle)
     )
 
+    # Sync to Amazon DynamoDB (Live cloud persistence / local audit sync)
+    aws_bridge.persist_incident_to_dynamodb(incident)
+
     return {
         "message": f"Simulated {category.upper()} emergency. Multi-agent workflow completed ({incident.get('execution_mode', 'AWS_BEDROCK_STRANDS')}).",
         "incident": incident
@@ -268,6 +271,10 @@ def approve_action(
         committed_title = parent_incident.get("title", "Emergency Incident")
         committed_alerts = copy.deepcopy(parent_incident.get("alerts_content", {}))
         committed_ward_id = parent_incident.get("ward_id", "WARD-17")
+        committed_incident = copy.deepcopy(parent_incident)
+
+    # Sync updated incident state to Amazon DynamoDB (Live cloud / audit sync)
+    aws_bridge.persist_incident_to_dynamodb(committed_incident)
 
     # If this was an alert/broadcast action, dispatch through Amazon SNS
     if "SNS" in str(resource_id) or "Broadcast" in committed_action.get("action", "") or "SMS" in committed_action.get("action", ""):
@@ -316,6 +323,7 @@ def modify_action(
             detail=f"Authorization Denied: Only Incident Commander can modify statutory disaster directives under NDMA Section 4.3."
         )
 
+    committed_parent = None
     with db._lock:
         target_action = None
         for inc in db.incidents:
@@ -328,12 +336,17 @@ def modify_action(
                     act["approved_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     act["approved_by"] = f"{effective_name} ({effective_id})"
                     target_action = copy.deepcopy(act)
+                    committed_parent = copy.deepcopy(inc)
                     break
             if target_action:
                 break
 
     if not target_action:
         raise HTTPException(status_code=404, detail="Action not found")
+
+    # Sync updated incident state to Amazon DynamoDB
+    if committed_parent:
+        aws_bridge.persist_incident_to_dynamodb(committed_parent)
 
     db.log_audit(
         officer=f"{effective_name} ({effective_role})",

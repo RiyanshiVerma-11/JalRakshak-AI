@@ -3,12 +3,21 @@ AWS Lambda Serverless Handlers for JalRakshak AI
 1. citizen_ingest_handler: Triggered by API Gateway POST /citizen/report; persists to DynamoDB, runs Vision inference, emits CloudEvents 1.0 to EventBridge.
 2. strands_agent_orchestrator_handler: Triggered by EventBridge SensorThresholdExceeded; executes the real 5-Agent Strands Graph.
 """
-import json
+import sys
 import os
+import json
 import uuid
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
+
+# Root-anchoring for AWS Lambda (/var/task) and local SAM execution
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_project_root = os.path.abspath(os.path.join(_current_dir, ".."))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+if _current_dir not in sys.path:
+    sys.path.insert(0, _current_dir)
 
 logger = logging.getLogger("jalrakshak.lambda")
 

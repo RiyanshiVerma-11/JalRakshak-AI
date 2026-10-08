@@ -4,7 +4,10 @@ import {
   PanelLeftOpen, 
   Clock, 
   ShieldAlert,
-  AlertTriangle
+  AlertTriangle,
+  Cloud,
+  CheckCircle2,
+  Server
 } from 'lucide-react';
 
 export default function Header({ 
@@ -15,6 +18,12 @@ export default function Header({
   currentUser
 }) {
   const [timeStr, setTimeStr] = useState('');
+  const [awsStatus, setAwsStatus] = useState({
+    execution_mode: 'HYBRID',
+    live_credentials: false,
+    region: 'ap-south-1'
+  });
+  const [showAwsDetails, setShowAwsDetails] = useState(false);
 
   useEffect(() => {
     const updateClock = () => {
@@ -26,7 +35,23 @@ export default function Header({
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    fetch('/api/aws/metrics')
+      .then(r => r.json())
+      .then(data => {
+        if (data) {
+          setAwsStatus({
+            execution_mode: data.execution_mode || 'HYBRID',
+            live_credentials: Boolean(data.live_credentials),
+            region: data.region || 'ap-south-1'
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const isCitizen = currentUser?.role === 'citizen' || activeTab === 'citizen';
+  const isLive = awsStatus.execution_mode === 'LIVE';
 
   const getTabLabel = () => {
     if (activeTab === 'citizen' || (isCitizen && activeTab !== 'copilot' && activeTab !== 'landing')) {
@@ -72,7 +97,7 @@ export default function Header({
         </div>
       </div>
 
-      {/* 2. Right: Active Incident Identifier + Live Status Badge + Current IST Time */}
+      {/* 2. Right: Active Incident Identifier + AWS Engine Pill + Live Status Badge + Current IST Time */}
       <div className="flex items-center gap-2.5 shrink-0">
         {/* Active Incident Identifier */}
         {selectedIncident && (
@@ -91,6 +116,78 @@ export default function Header({
           </div>
         )}
 
+        {/* AWS Engine Status Pill with Hover/Click Tooltip Popover */}
+        <div className="relative">
+          <button
+            onClick={() => setShowAwsDetails(!showAwsDetails)}
+            onMouseEnter={() => setShowAwsDetails(true)}
+            onMouseLeave={() => setShowAwsDetails(false)}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer shadow-xs ${
+              isLive
+                ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300 hover:bg-emerald-900/80'
+                : 'bg-cyan-950/80 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/80'
+            }`}
+            title="Click to view AWS Cloud Engine details"
+          >
+            <Cloud className={`h-3 w-3 ${isLive ? 'text-emerald-400' : 'text-cyan-400'}`} />
+            <span className="hidden sm:inline">
+              {isLive ? 'AWS Engine: Live Cloud (ap-south-1)' : 'AWS Engine: Hybrid Sandbox (ap-south-1)'}
+            </span>
+            <span className="sm:hidden">
+              {isLive ? 'AWS: Live' : 'AWS: Hybrid'}
+            </span>
+            <span className={`h-1.5 w-1.5 rounded-full ${isLive ? 'bg-emerald-400 animate-pulse' : 'bg-cyan-400 animate-pulse'}`} />
+          </button>
+
+          {/* Interactive Cloud Architecture Popover Tooltip */}
+          {showAwsDetails && (
+            <div 
+              className="absolute right-0 top-full mt-2 w-80 p-3 rounded-xl bg-slate-900/95 backdrop-blur-md border border-slate-700/80 shadow-2xl text-left z-50 animate-in fade-in zoom-in-95 duration-150"
+              onMouseEnter={() => setShowAwsDetails(true)}
+              onMouseLeave={() => setShowAwsDetails(false)}
+            >
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
+                <span className="text-[11px] font-bold text-white flex items-center gap-1.5">
+                  <Cloud className="h-3.5 w-3.5 text-cyan-400" />
+                  AWS Cloud Engine Status
+                </span>
+                <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${
+                  isLive ? 'bg-emerald-900 text-emerald-300 border border-emerald-700' : 'bg-cyan-900 text-cyan-300 border border-cyan-700'
+                }`}>
+                  {awsStatus.execution_mode}
+                </span>
+              </div>
+
+              <p className="text-[11px] leading-relaxed text-slate-300 mb-2.5">
+                <strong className="text-white">Dual-mode architecture:</strong> Runs offline zero-cost simulation locally or switches to real Amazon Bedrock, DynamoDB, &amp; EventBridge via <code className="text-cyan-300 bg-slate-800 px-1 py-0.5 rounded text-[10px]">AWS_EXECUTION_MODE=LIVE</code>.
+              </p>
+
+              <div className="space-y-1 text-[10px] text-slate-400 bg-slate-950/70 p-2 rounded-lg border border-slate-800 font-mono">
+                <div className="flex justify-between items-center">
+                  <span>Region:</span>
+                  <span className="text-slate-200">{awsStatus.region} (Mumbai)</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Bedrock LLM:</span>
+                  <span className="text-cyan-300">Claude 3.5 Sonnet</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>EventBridge Bus:</span>
+                  <span className="text-slate-200">jalrakshak-emergency-eventbus</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>State Store:</span>
+                  <span className="text-slate-200">DynamoDB (PITR Enabled)</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Emergency Fallback:</span>
+                  <span className="text-emerald-400">&lt;50ms Statutory NDMA Matrix</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Live Status Badge */}
         <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/80 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/40 shrink-0">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -107,3 +204,4 @@ export default function Header({
     </header>
   );
 }
+

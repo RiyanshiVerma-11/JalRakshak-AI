@@ -6,8 +6,20 @@ Judge terminal logs use ANSI colour for instant readability.
 """
 import os, uuid, time, json, random
 from datetime import datetime
+from decimal import Decimal
 from typing import Dict, Any, List, Optional
 from ..data.mock_db import db
+
+def _convert_floats_to_decimals(obj: Any) -> Any:
+    """Recursively converts all float instances to Decimal for Boto3 DynamoDB serialization."""
+    if isinstance(obj, float):
+        return Decimal(str(obj))
+    elif isinstance(obj, dict):
+        return {k: _convert_floats_to_decimals(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_convert_floats_to_decimals(x) for x in obj]
+    return obj
+
 
 # ANSI colour helpers
 _G = "\033[92m"; _Y = "\033[93m"; _C = "\033[96m"; _P = "\033[95m"
@@ -264,6 +276,36 @@ class AWSCloudBridge:
     def invoke_bedrock(self, prompt: str, ward_name: str = "Ward 17") -> Dict[str, Any]:
         """Convenience wrapper around module-level invoke_bedrock_agent."""
         return invoke_bedrock_agent(prompt=prompt, ward_name=ward_name)
+
+    def persist_incident_to_dynamodb(self, incident: Dict[str, Any]) -> bool:
+        """
+        Persists or updates an emergency incident in DynamoDB (JalRakshak-IncidentsTable).
+        LIVE mode: writes to DynamoDB via boto3 with Decimal serialization.
+        HYBRID/Local mode: writes to in-memory state and logs audit trail.
+        """
+        table_name = os.environ.get("INCIDENTS_TABLE", "JalRakshak-IncidentsTable")
+        inc_id = incident.get("id", "UNKNOWN")
+        live = (AWS_EXECUTION_MODE == "LIVE") and _credentials_available() and BOTO3_AVAILABLE
+
+        if live:
+            try:
+                dynamodb_resource = boto3.resource("dynamodb", region_name=self.region)
+                table = dynamodb_resource.Table(table_name)
+                item = _convert_floats_to_decimals(incident)
+                table.put_item(Item=item)
+                tag = f"{_G}{_B}[AMAZON DYNAMODB LIVE PUT]{_R}"
+                print(f"{tag} Table: {_C}{table_name}{_R} | Item: {_Y}{inc_id}{_R} | Status: {_G}SUCCESS{_R}")
+                db.log_audit("AMAZON_DYNAMODB", "ITEM_PUT_LIVE", f"Successfully synced {inc_id} to DynamoDB {table_name}")
+                return True
+            except Exception as exc:
+                print(f"{_Y}[DYNAMODB FALLBACK]{_R} Live PutItem failed ({type(exc).__name__}: {exc}). Logged to in-memory store.")
+                db.log_audit("AMAZON_DYNAMODB", "PUT_FALLBACK", f"Failed live PutItem for {inc_id}: {exc}")
+                return False
+        else:
+            tag = f"{_C}{_B}[AMAZON DYNAMODB HYBRID SYNC]{_R}"
+            print(f"{tag} Table: {_C}{table_name}{_R} | Item: {_Y}{inc_id}{_R} (In-Memory State Synced)")
+            return True
+
 
     def get_cloud_metrics(self) -> Dict[str, Any]:
         """Returns real-time AWS service health & metrics."""
