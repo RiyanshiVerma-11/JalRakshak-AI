@@ -38,6 +38,7 @@ class SimulateRequest(BaseModel):
     ward_id: Optional[str] = "WARD-17"
     custom_rainfall: Optional[float] = None
     custom_temp: Optional[float] = None
+    simulate_bedrock_throttle: Optional[bool] = False
 
 class ActionApprovalRequest(BaseModel):
     officer_id: Optional[str] = "OFFICER_PATIL_EOC"
@@ -139,16 +140,17 @@ def simulate_scenario(req: SimulateRequest):
         detail={"category": category, "ward_id": ward_id, "telemetry": telemetry}
     )
 
-    # Execute 5-agent Strands workflow
+    # Execute 5-agent Strands workflow (with automatic fault tolerance fallback)
     incident = strands_orchestrator.execute_workflow(
         ward_id=ward_id,
         category=category,
         telemetry=telemetry,
-        title_override=title
+        title_override=title,
+        simulate_bedrock_throttle=bool(req.simulate_bedrock_throttle)
     )
 
     return {
-        "message": f"Simulated {category.upper()} emergency. Multi-agent workflow completed successfully.",
+        "message": f"Simulated {category.upper()} emergency. Multi-agent workflow completed ({incident.get('execution_mode', 'AWS_BEDROCK_STRANDS')}).",
         "incident": incident
     }
 

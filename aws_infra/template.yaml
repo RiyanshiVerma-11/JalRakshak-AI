@@ -1,8 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  JalRakshak AI - Autonomous Climate & Water Emergency Response Platform
-  AWS Serverless & Multi-Agent Infrastructure (EventBridge, Bedrock Strands Agents, DynamoDB, S3, SNS, Lambda)
+  JalRakshak AI - Autonomous Climate & Water Emergency Decision Command Platform
+  Production-grade AWS Serverless & Multi-Agent Infrastructure with Least-Privilege IAM (PoLP)
+  Services: Amazon EventBridge, Bedrock Claude 3.5 Strands Agents, DynamoDB, S3, SNS, Rekognition, Lambda
 
 Globals:
   Function:
@@ -20,9 +21,9 @@ Globals:
         SNS_TOPIC_ARN: !Ref EmergencyAlertsTopic
 
 Resources:
-  # ==========================================
-  # 1. AWS EVENTBRIDGE EVENT BUS
-  # ==========================================
+  # =========================================================================
+  # 1. AWS EVENTBRIDGE EMERGENCY EVENT BUS & ROUTING RULES
+  # =========================================================================
   EmergencyEventBus:
     Type: AWS::Events::EventBus
     Properties:
@@ -32,7 +33,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       EventBusName: !Ref EmergencyEventBus
-      Description: "Detects rainfall spikes > 70mm/hr and routes to Strands Coordinator"
+      Description: "Detects rainfall spikes > 70mm/hr and triggers the 5-Agent Strands pipeline"
       EventPattern:
         source:
           - "aws.iot.environment"
@@ -42,13 +43,30 @@ Resources:
         - Arn: !GetAtt StrandsAgentOrchestratorLambda.Arn
           Id: "TriggerStrandsWorkflowTarget"
 
-  # ==========================================
-  # 2. AMAZON S3 EVIDENCE LAKE
-  # ==========================================
+  PermissionForEventBridgeToInvokeStrands:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref StrandsAgentOrchestratorLambda
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt RainfallThresholdRule.Arn
+
+  # =========================================================================
+  # 2. AMAZON S3 SECURE EVIDENCE LAKE
+  # =========================================================================
   EvidenceBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "jalrakshak-evidence-${AWS::AccountId}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders: ['*']
@@ -56,9 +74,9 @@ Resources:
             AllowedOrigins: ['*']
             MaxAge: 3000
 
-  # ==========================================
-  # 3. AMAZON DYNAMODB STATE TABLES
-  # ==========================================
+  # =========================================================================
+  # 3. AMAZON DYNAMODB HIGH-THROUGHPUT STATE TABLES
+  # =========================================================================
   IncidentsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -79,6 +97,8 @@ Resources:
               KeyType: HASH
           Projection:
             ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
 
   ResourcesTable:
     Type: AWS::DynamoDB::Table
@@ -116,61 +136,158 @@ Resources:
         - AttributeName: timestamp
           KeyType: HASH
 
-  # ==========================================
-  # 4. AMAZON SNS NOTIFICATION TOPIC
-  # ==========================================
+  # =========================================================================
+  # 4. AMAZON SNS MULTILINGUAL EMERGENCY BROADCAST TOPIC
+  # =========================================================================
   EmergencyAlertsTopic:
     Type: AWS::SNS::Topic
     Properties:
       TopicName: JalRakshak-Alerts-Multilingual
       DisplayName: "JalRakshak Disaster Warning System"
 
-  # ==========================================
-  # 5. SERVERLESS LAMBDA HANDLERS
-  # ==========================================
+  # =========================================================================
+  # 5. LEAST-PRIVILEGE IAM ROLES (PoLP - Well-Architected Security Pillar)
+  # =========================================================================
+  StrandsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: JalRakshak-StrandsOrchestrator-Role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBLeastPrivilegeAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt IncidentsTable.Arn
+                  - !Sub "${IncidentsTable.Arn}/index/*"
+                  - !GetAtt ResourcesTable.Arn
+                  - !GetAtt AuditLogTable.Arn
+        - PolicyName: BedrockModelInvocationAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-5-sonnet*"
+                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-haiku*"
+                  - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/amazon.titan-embed*"
+        - PolicyName: SNSEmergencyPublishAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref EmergencyAlertsTopic
+        - PolicyName: CloudWatchStructuredLogsAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+
+  CitizenIngestExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: JalRakshak-CitizenIngest-Role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CitizenReportsTableAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                Resource: !GetAtt CitizenReportsTable.Arn
+        - PolicyName: S3EvidenceAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource: !Sub "${EvidenceBucket.Arn}/*"
+        - PolicyName: RekognitionAnalysisAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - rekognition:DetectLabels
+                Resource: "*"
+        - PolicyName: EventBridgeEmitAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - events:PutEvents
+                Resource: !GetAtt EmergencyEventBus.Arn
+        - PolicyName: CloudWatchLogsAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+
+  # =========================================================================
+  # 6. SERVERLESS FUNCTIONS BOUND TO LEAST-PRIVILEGE ROLES
+  # =========================================================================
   StrandsAgentOrchestratorLambda:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./
       Handler: lambda_handlers.strands_agent_orchestrator_handler
-      Description: "Orchestrates the 5 AWS Strands Agents graph for incident decisioning"
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref IncidentsTable
-        - DynamoDBCrudPolicy:
-            TableName: !Ref ResourcesTable
-        - SNSPublishMessagePolicy:
-            TopicName: !GetAtt EmergencyAlertsTopic.TopicName
-        - Statement:
-            - Effect: Allow
-              Action:
-                - "bedrock:InvokeModel"
-                - "bedrock:InvokeModelWithResponseStream"
-              Resource: "*"
+      Description: "Orchestrates the 5-Agent AWS Strands graph with deterministic NDMA fallback"
+      Role: !GetAtt StrandsExecutionRole.Arn
 
   CitizenReportIngestLambda:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./
       Handler: lambda_handlers.citizen_ingest_handler
-      Description: "Ingests citizen photos, executes Rekognition vision analysis, and logs to DynamoDB"
+      Description: "Ingests citizen camera photos, executes Rekognition inference, and emits EventBridge events"
+      Role: !GetAtt CitizenIngestExecutionRole.Arn
       Events:
         ApiEvent:
           Type: Api
           Properties:
             Path: /citizen/report
             Method: post
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref CitizenReportsTable
-        - S3CrudPolicy:
-            BucketName: !Ref EvidenceBucket
-        - Statement:
-            - Effect: Allow
-              Action:
-                - "rekognition:DetectLabels"
-                - "events:PutEvents"
-              Resource: "*"
 
 Outputs:
   EventBusArn:
@@ -182,3 +299,9 @@ Outputs:
   SNSTopicArn:
     Description: "Amazon SNS Emergency Topic ARN"
     Value: !Ref EmergencyAlertsTopic
+  StrandsFunctionArn:
+    Description: "Strands Multi-Agent Orchestrator Lambda ARN"
+    Value: !GetAtt StrandsAgentOrchestratorLambda.Arn
+  StrandsRoleArn:
+    Description: "Least-Privilege IAM Execution Role for Bedrock & DynamoDB"
+    Value: !GetAtt StrandsExecutionRole.Arn

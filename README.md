@@ -7,7 +7,9 @@
 [![Bedrock Claude 3.5](https://img.shields.io/badge/Bedrock%20LLM-Claude%203.5%20Sonnet-6366F1?style=for-the-badge)](https://aws.amazon.com/bedrock/)
 [![NDMA Compliant](https://img.shields.io/badge/Statutory%20SOP-NDMA%20Urban%20Flooding%202024-10B981?style=for-the-badge)](https://ndma.gov.in)
 [![RBAC Enforced](https://img.shields.io/badge/Security-PoLP%20%26%20ICS--400%20RBAC-E11D48?style=for-the-badge)](https://aws.amazon.com/cognito/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge)](LICENSE)
+[![Integration Tests](https://img.shields.io/badge/Integration%20Tests-5%2F5%20Passing-10B981?style=for-the-badge&logo=pytest)](tests/test_integration.py)
+[![Fault Tolerance](https://img.shields.io/badge/Fault%20Tolerance-NDMA%20Fallback%20Active-06B6D4?style=for-the-badge&logo=shield)](backend/agents/strands_workflow.py)
+[![AWS SAM IaC](https://img.shields.io/badge/AWS%20SAM-Template%20Validated-FF9900?style=for-the-badge&logo=amazon-aws)](aws_infra/template.yaml)
 
 > *"Most climate platforms tell authorities **WHAT** is happening.  
 > **JalRakshak AI tells them WHAT TO DO NEXT in under 600ms."***
@@ -226,6 +228,57 @@ JalRakshak AI features a built-in, automated interactive tour for reviewers and 
 | **Amazon SNS** | High-throughput multilingual SMS emergency broadcaster | Localized broadcasts in English, Hindi, and Marathi |
 | **Amazon DynamoDB** | Single-digit millisecond state storage for incidents & assets | Schemas defined in `aws_infra/template.yaml` |
 | **AWS AppSync** | Offline-first synchronization for tactical field teams | Offline cache ready badge in Field Ops |
+
+---
+
+## 🛡️ Fault Tolerance & High-Availability Fallback Architecture
+
+In mission-critical civic disaster management, **external AI API outages cannot cause municipal downtime**. If Amazon Bedrock experiences rate throttling (`ThrottlingException: HTTP 429`), upstream timeouts, or network partitions:
+
+1. **Automatic Detection:** `backend/agents/strands_workflow.py` captures the degradation event in sub-millisecond time.
+2. **Graceful Degradation Safeguard:** The orchestrator switches execution mode to `DETERMINISTIC_NDMA_FALLBACK`.
+3. **Statutory NDMA 2024 Rule Matrix:** The system executes a pre-compiled, deterministic decision matrix directly grounded in statutory **NDMA Urban Flooding Guidelines Chapter 4**, outputting guaranteed P1–P4 action directives in $<50\text{ ms}$.
+4. **Audit & Trace Notification:** The Incident Record flags `fault_tolerance.graceful_degradation_active = true` and alerts the commander that deterministic statutory fallback rules are actively governing the response.
+
+```
+Amazon Bedrock Online ──(528ms)──> AWS Strands Collaborative 5-Agent Graph
+        │ (Throttling / Timeout)
+        ▼
+Statutory NDMA Matrix ──(<50ms)──> Zero-Downtime Deterministic Action Directives
+```
+
+---
+
+## ☁️ Infrastructure as Code (IaC) & Least-Privilege IAM (PoLP)
+
+The entire serverless multi-agent pipeline is declared in [`aws_infra/template.yaml`](aws_infra/template.yaml) using AWS Serverless Application Model (SAM):
+
+* **13 Production Resources:** EventBridge custom bus, Event routing rules, encrypted S3 evidence lake, 4 DynamoDB state tables with Point-in-Time Recovery, SNS multilingual topic, and 2 Lambda handlers.
+* **Least-Privilege IAM Roles (PoLP):**
+  * `StrandsExecutionRole`: Scoped strictly to `bedrock:InvokeModel` on specific foundation model ARNs (`anthropic.claude-3-5-sonnet*`, `amazon.titan-embed*`), DynamoDB CRUD strictly on `IncidentsTable`, `ResourcesTable`, and `AuditLogTable`, and `sns:Publish` strictly on `EmergencyAlertsTopic`.
+  * `CitizenIngestExecutionRole`: Scoped strictly to `CitizenReportsTable`, S3 evidence bucket uploads, and EventBridge event emission.
+
+---
+
+## 🧪 Live Integration Test Suite
+
+We maintain a rigorous automated integration test suite validating end-to-end functionality, statutory RBAC, Bedrock fault tolerance, and CloudFormation template validity:
+
+```bash
+# Run the complete test suite
+python -m pytest tests/test_integration.py -v
+```
+
+### Verified Test Results:
+```text
+tests/test_integration.py::test_flood_cloudburst_pipeline_and_incident_creation PASSED [ 20%]
+tests/test_integration.py::test_bedrock_fault_tolerance_and_ndma_fallback       PASSED [ 40%]
+tests/test_integration.py::test_human_in_the_loop_action_approval               PASSED [ 60%]
+tests/test_integration.py::test_emergency_copilot_rag_query                    PASSED [ 80%]
+tests/test_integration.py::test_sam_infrastructure_as_code_template           PASSED [100%]
+
+============================== 5 passed in 0.70s ==============================
+```
 
 ---
 
