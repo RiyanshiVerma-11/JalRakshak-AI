@@ -6,7 +6,10 @@ AWS Lambda Serverless Handlers for JalRakshak AI
 """
 import json
 import os
-import boto3
+try:
+    import boto3
+except ImportError:
+    boto3 = None
 import uuid
 from datetime import datetime
 

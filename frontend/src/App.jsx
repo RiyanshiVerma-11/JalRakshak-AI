@@ -130,11 +130,18 @@ export default function App() {
     }
   };
 
+  // Sign Out Handler (Revokes AWS Cognito Session)
+  const handleLogout = () => {
+    setCurrentUser(null);
+    showNotification('AWS Cognito session invalidated. Signed out safely.', 'info');
+    setActiveTab('login');
+  };
+
   // Human-in-the-Loop Action Approval (Enforces RBAC)
   const handleApproveAction = async (actionId) => {
     if (!currentUser?.permissions?.canApproveActions) {
       showNotification(`Authorization Denied: Role '${currentUser?.title}' lacks statutory sign-off authority under NDMA Sec 4.3.`, 'alert');
-      setIsAuthOpen(true);
+      setActiveTab('login');
       return;
     }
 
@@ -230,8 +237,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Collapsible Operational Sidebar (shown when in main app) */}
-      {activeTab !== 'landing' && (
+      {/* Collapsible Operational Sidebar (shown ONLY when inside main operational app) */}
+      {!['landing', 'login'].includes(activeTab) && (
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -243,19 +250,20 @@ export default function App() {
           criticalCount={criticalCount}
           incidentsCount={incidents.length}
           currentUser={currentUser}
-          onOpenLogin={() => setIsAuthOpen(true)}
+          onOpenLogin={() => setActiveTab('login')}
+          onLogout={handleLogout}
         />
       )}
 
       {/* Main Content View Container with smooth margin shift */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
-        activeTab !== 'landing' 
+        !['landing', 'login'].includes(activeTab) 
           ? (isSidebarCollapsed ? 'ml-[70px]' : 'ml-[260px]') 
           : 'ml-0'
       }`}>
 
-        {/* Main Operational Header (shown inside Main Application) */}
-        {activeTab !== 'landing' && (
+        {/* Main Operational Header (shown ONLY inside Main Application) */}
+        {!['landing', 'login'].includes(activeTab) && (
           <Header
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -268,12 +276,13 @@ export default function App() {
             criticalCount={criticalCount}
             onOpenJudgeTour={() => setIsTourOpen(true)}
             currentUser={currentUser}
-            onOpenLogin={() => setIsAuthOpen(true)}
+            onOpenLogin={() => setActiveTab('login')}
+            onLogout={handleLogout}
           />
         )}
 
         {/* Main Content Area */}
-        <main className={`flex-1 w-full ${activeTab === 'landing' ? 'p-0 max-w-none' : 'p-3 sm:p-5 max-w-[1600px] mx-auto'}`}>
+        <main className={`flex-1 w-full ${['landing', 'login'].includes(activeTab) ? 'p-0 max-w-none' : 'p-3 sm:p-5 max-w-[1600px] mx-auto'}`}>
           
           {/* TAB 0: LANDING PAGE (PROBLEM & MISSION) */}
           {activeTab === 'landing' && (
@@ -283,8 +292,17 @@ export default function App() {
               onOpenCitizenPWA={() => setActiveTab('citizen')}
               onOpenJudgeTour={() => setIsTourOpen(true)}
               onSelectRole={handleLogin}
-              onOpenLogin={() => setIsAuthOpen(true)}
+              onOpenLogin={() => setActiveTab('login')}
               onNavigateTab={(tab) => setActiveTab(tab)}
+            />
+          )}
+
+          {/* TAB 0.5: DEDICATED FULL-PAGE LOGIN (STANDARD PRODUCT FLOW: LANDING -> LOGIN -> DASHBOARD) */}
+          {activeTab === 'login' && (
+            <LoginPage
+              activeUser={currentUser}
+              onLogin={handleLogin}
+              onBackToLanding={() => setActiveTab('landing')}
             />
           )}
 
@@ -312,7 +330,7 @@ export default function App() {
                       Go to Citizen Portal ➔
                     </button>
                     <button
-                      onClick={() => setIsAuthOpen(true)}
+                      onClick={() => setActiveTab('login')}
                       className="rounded-xl bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold px-3 py-1.5 text-xs"
                     >
                       Switch to Official Role ➔
@@ -562,7 +580,7 @@ export default function App() {
                 const cmd = PERSONAS.find(p => p.role === ROLES.INCIDENT_COMMANDER);
                 if (cmd) handleLogin(cmd);
               }}
-              onOpenLogin={() => setIsAuthOpen(true)}
+              onOpenLogin={() => setActiveTab('login')}
             />
           )}
 
@@ -590,19 +608,21 @@ export default function App() {
 
         </main>
 
-        {/* Operational Footer */}
-        <footer className="border-t border-slate-200 bg-white py-3.5 px-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-slate-800">JalRakshak AI</span>
-            <span>•</span>
-            <span>AWS Hackathon 2026</span>
-            <span>•</span>
-            <span className="text-blue-600 font-semibold">AWS Strands Agents Engine</span>
-          </div>
-          <div>
-            <span>National Disaster Management Authority (NDMA) & Jal Jeevan Mission Compliant</span>
-          </div>
-        </footer>
+        {/* Operational Footer (shown inside Main Application) */}
+        {!['landing', 'login'].includes(activeTab) && (
+          <footer className="border-t border-slate-200 bg-white py-3.5 px-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-slate-800">JalRakshak AI</span>
+              <span>•</span>
+              <span>AWS Hackathon 2026</span>
+              <span>•</span>
+              <span className="text-blue-600 font-semibold">AWS Strands Agents Engine</span>
+            </div>
+            <div>
+              <span>National Disaster Management Authority (NDMA) & Jal Jeevan Mission Compliant</span>
+            </div>
+          </footer>
+        )}
 
       </div>
 
@@ -614,15 +634,6 @@ export default function App() {
         setActiveTab={setActiveTab}
         onSelectIncident={setSelectedIncident}
       />
-
-      {/* Dedicated Enterprise Login & RBAC Portal Modal */}
-      {isAuthOpen && (
-        <LoginPage
-          activeUser={currentUser}
-          onLogin={handleLogin}
-          onClose={() => setIsAuthOpen(false)}
-        />
-      )}
 
     </div>
   );

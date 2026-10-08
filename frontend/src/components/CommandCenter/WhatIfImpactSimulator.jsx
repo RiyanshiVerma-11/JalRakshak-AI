@@ -15,9 +15,15 @@ import {
 } from 'lucide-react';
 
 export default function WhatIfImpactSimulator({ incident }) {
-  const [timeStep, setTimeStep] = useState(2); // 0: T+0m, 1: T+15m, 2: T+30m, 3: T+60m, 4: T+120m
+  const [timeStep, setTimeStep] = useState(1); // 0: T+0m, 1: T+15m, 2: T+30m, 3: T+60m, 4: T+120m
 
-  const timeLabels = ['T+0m (Cloudburst)', 'T+15m (Pump En Route)', 'T+30m (Dewatering Active)', 'T+60m (Water Receding)', 'T+120m (Drain Cleared)'];
+  const timeLabels = [
+    'T+0m (Cloudburst)',
+    'T+15m (Pump En Route)',
+    'T+30m (Dewatering Active)',
+    'T+60m (Water Receding)',
+    'T+120m (Drain Cleared)'
+  ];
 
   // Simulation Timeline Data
   const steps = [
@@ -139,42 +145,47 @@ export default function WhatIfImpactSimulator({ incident }) {
   ];
 
   const current = steps[timeStep];
+  const savedLakhs = current.no_ai.economic_loss_lakhs - current.with_ai.economic_loss_lakhs;
+  const savedCr = (savedLakhs / 100).toFixed(2);
 
   return (
-    <div className="rounded-2xl glass-panel-elevated p-5 border border-slate-800 shadow-2xl mt-4">
+    <div className="rounded-2xl bg-white p-5 border border-slate-200 shadow-xl mt-4 transition-all">
       
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
-            <TrendingDown className="h-4 w-4" />
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-sm">
+            <TrendingDown className="h-5 w-5" />
           </div>
           <div>
-            <h4 className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-1.5">
-              Predictive "What-If" Impact Simulator (Proof of Impact)
+            <h4 className="text-sm font-black uppercase tracking-tight text-slate-900 flex items-center gap-2">
+              Predictive "What-If" Impact Simulator
+              <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-800">
+                Live Scenario Proof
+              </span>
             </h4>
-            <p className="text-[11px] text-slate-400">
-              Comparing Status Quo (4-hour manual delay) vs JalRakshak Autonomous Response
+            <p className="text-xs text-slate-500 font-medium">
+              Real-time comparison: Status Quo (4-hour manual delay) vs JalRakshak Autonomous Response
             </p>
           </div>
         </div>
 
         {/* Loss Avoided Pill */}
-        <div className="flex items-center gap-1.5 rounded-xl bg-emerald-500/15 px-3 py-1.5 text-xs font-black text-emerald-400 border border-emerald-500/40 shadow-sm self-start sm:self-auto">
-          <Sparkles className="h-3.5 w-3.5" />
-          <span>₹{(current.no_ai.economic_loss_lakhs - current.with_ai.economic_loss_lakhs) / 100} Cr Losses Prevented</span>
+        <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3.5 py-1.5 text-xs font-black text-emerald-800 border border-emerald-300 shadow-xs self-start sm:self-auto">
+          <Sparkles className="h-4 w-4 text-emerald-600" />
+          <span>₹{savedCr} Cr Losses Prevented</span>
         </div>
       </div>
 
       {/* Interactive Time Scrubber Slider */}
-      <div className="py-4 border-b border-slate-800/80">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-300 mb-2">
-          <span className="flex items-center gap-1.5 text-cyan-400">
-            <Clock className="h-3.5 w-3.5" />
-            Simulation Horizon: <strong>{timeLabels[timeStep]}</strong>
+      <div className="py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between text-xs font-bold mb-2.5">
+          <span className="flex items-center gap-1.5 text-blue-900 text-xs font-extrabold">
+            <Clock className="h-4 w-4 text-blue-600" />
+            Simulation Horizon: <span className="text-blue-700 font-black">{timeLabels[timeStep]}</span>
           </span>
-          <span className="text-[11px] text-slate-400 font-mono">
-            Precipitation: <strong className="text-blue-300">{current.rain_rate}</strong>
+          <span className="text-xs text-slate-600 font-medium">
+            Precipitation: <strong className="text-slate-900 font-mono font-bold">{current.rain_rate}</strong>
           </span>
         </div>
 
@@ -185,103 +196,129 @@ export default function WhatIfImpactSimulator({ incident }) {
           step="1"
           value={timeStep}
           onChange={(e) => setTimeStep(parseInt(e.target.value))}
-          className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+          className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-blue-600 hover:accent-blue-700 transition-all"
         />
 
-        <div className="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
-          <span>T+0m (Cloudburst)</span>
-          <span>T+15m (Dispatch)</span>
-          <span>T+30m (Dewatering)</span>
-          <span>T+60m (Receding)</span>
-          <span>T+120m (Restored)</span>
+        <div className="flex justify-between text-[11px] font-medium text-slate-600 mt-2">
+          {['T+0m (Cloudburst)', 'T+15m (Dispatch)', 'T+30m (Dewatering)', 'T+60m (Receding)', 'T+120m (Restored)'].map((label, idx) => (
+            <button
+              key={label}
+              onClick={() => setTimeStep(idx)}
+              className={`transition-all rounded-md px-1.5 py-0.5 text-center ${
+                timeStep === idx
+                  ? 'bg-blue-600 text-white font-bold shadow-xs'
+                  : 'text-slate-600 hover:text-blue-700 hover:bg-slate-100'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Side-by-Side Dual Pathway Comparison */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4">
         
         {/* Pathway A: Without JalRakshak AI (Status Quo) */}
-        <div className="rounded-xl bg-red-950/20 p-4 border border-red-500/30 flex flex-col justify-between space-y-3">
+        <div className="rounded-2xl bg-gradient-to-b from-rose-50/70 to-rose-100/40 p-5 border-2 border-rose-200/90 shadow-sm flex flex-col justify-between space-y-4">
           <div>
-            <div className="flex items-center justify-between pb-2 border-b border-red-500/20">
-              <span className="text-xs font-black uppercase text-red-400 flex items-center gap-1.5">
-                <AlertTriangle className="h-4 w-4" />
+            <div className="flex items-center justify-between pb-3 border-b border-rose-200">
+              <span className="text-xs font-black uppercase text-rose-900 flex items-center gap-1.5 tracking-wider">
+                <AlertTriangle className="h-4 w-4 text-rose-600" />
                 Status Quo (No AI Intervention)
               </span>
-              <span className="text-[10px] font-mono text-red-400/80">Manual 4-hr Lag</span>
+              <span className="text-[11px] font-bold font-mono text-rose-800 bg-rose-200/60 px-2 py-0.5 rounded-full border border-rose-300">
+                Manual 4-hr Lag
+              </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
-              <div className="rounded-lg bg-slate-950/70 p-2 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Water Depth</span>
-                <strong className="text-red-400 text-sm">{current.no_ai.depth_cm} cm</strong>
+            <div className="grid grid-cols-2 gap-3 mt-3.5 text-xs">
+              <div className="rounded-xl bg-white p-3 border border-rose-100 shadow-xs">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Water Depth</span>
+                <strong className="text-rose-700 text-xl font-black block">{current.no_ai.depth_cm} cm</strong>
               </div>
-              <div className="rounded-lg bg-slate-950/70 p-2 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Inundation Area</span>
-                <strong className="text-red-300 text-sm">{current.no_ai.inundation_sqkm} km²</strong>
+              <div className="rounded-xl bg-white p-3 border border-rose-100 shadow-xs">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Inundation Area</span>
+                <strong className="text-rose-700 text-xl font-black block">{current.no_ai.inundation_sqkm} km²</strong>
               </div>
-              <div className="rounded-lg bg-slate-950/70 p-2 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Stalled Vehicles</span>
-                <strong className="text-amber-400 text-sm">{current.no_ai.stalled_vehicles} units</strong>
+              <div className="rounded-xl bg-white p-3 border border-rose-100 shadow-xs">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Stalled Vehicles</span>
+                <strong className="text-amber-800 text-xl font-black block">{current.no_ai.stalled_vehicles} units</strong>
               </div>
-              <div className="rounded-lg bg-slate-950/70 p-2 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Municipal Damage</span>
-                <strong className="text-red-400 text-sm">₹{current.no_ai.economic_loss_lakhs} Lakhs</strong>
+              <div className="rounded-xl bg-white p-3 border border-rose-100 shadow-xs">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Municipal Damage</span>
+                <strong className="text-rose-900 text-xl font-black block">₹{current.no_ai.economic_loss_lakhs} Lakhs</strong>
               </div>
             </div>
 
             {/* Hospital Vulnerability status */}
-            <div className="mt-3 p-2.5 rounded-lg bg-red-950/40 border border-red-500/40 text-xs">
-              <span className="text-[10px] font-bold text-red-400 block mb-0.5">Bhabha Municipal Hospital Status:</span>
-              <p className="font-semibold text-slate-200 text-[11px]">{current.no_ai.hospital_status}</p>
+            <div className="mt-3.5 p-3 rounded-xl bg-white border-2 border-rose-300 shadow-xs">
+              <span className="text-[11px] font-extrabold text-rose-900 block mb-1 flex items-center gap-1.5">
+                <Building className="h-3.5 w-3.5 text-rose-600" />
+                Bhabha Municipal Hospital Status:
+              </span>
+              <p className="font-bold text-rose-800 text-xs leading-snug">
+                {current.no_ai.hospital_status}
+              </p>
             </div>
           </div>
 
-          <div className="text-[10px] text-red-400 font-mono pt-2 border-t border-red-500/20">
-            ⚠️ Severe ICU threat & unmitigated road gridlock
+          <div className="text-xs text-rose-900 font-extrabold pt-2.5 border-t border-rose-200 flex items-center gap-1.5">
+            <span>⚠️ Severe ICU threat & unmitigated road gridlock</span>
           </div>
         </div>
 
         {/* Pathway B: With JalRakshak AI (Automated 5-Agent Response) */}
-        <div className="rounded-xl bg-cyan-950/20 p-4 border border-cyan-500/40 flex flex-col justify-between space-y-3 ring-1 ring-cyan-500/30">
+        <div className="rounded-2xl bg-gradient-to-b from-emerald-50/70 to-teal-50/50 p-5 border-2 border-emerald-400 shadow-md flex flex-col justify-between space-y-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500"></div>
+
           <div>
-            <div className="flex items-center justify-between pb-2 border-b border-cyan-500/20">
-              <span className="text-xs font-black uppercase text-cyan-300 flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-cyan-400" />
+            <div className="flex items-center justify-between pb-3 border-b border-emerald-200">
+              <span className="text-xs font-black uppercase text-emerald-950 flex items-center gap-1.5 tracking-wider">
+                <ShieldCheck className="h-4 w-4 text-emerald-600" />
                 With JalRakshak AI (Pump P-04 Dispatched)
               </span>
-              <span className="text-[10px] font-mono text-emerald-400">Response in &lt; 60s</span>
+              <span className="text-[11px] font-black font-mono text-emerald-900 bg-emerald-200/80 px-2.5 py-0.5 rounded-full border border-emerald-400">
+                Response in &lt; 60s
+              </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
-              <div className="rounded-lg bg-slate-950/70 p-2 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Water Depth</span>
-                <strong className="text-emerald-400 text-sm">{current.with_ai.depth_cm} cm</strong>
+            <div className="grid grid-cols-2 gap-3 mt-3.5 text-xs">
+              <div className="rounded-xl bg-white p-3 border border-emerald-200 shadow-xs">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Water Depth</span>
+                <strong className="text-emerald-700 text-xl font-black block">{current.with_ai.depth_cm} cm</strong>
               </div>
-              <div className="rounded-lg bg-slate-950/70 p-2 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Inundation Area</span>
-                <strong className="text-cyan-300 text-sm">{current.with_ai.inundation_sqkm} km²</strong>
+              <div className="rounded-xl bg-white p-3 border border-emerald-200 shadow-xs">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Inundation Area</span>
+                <strong className="text-teal-700 text-xl font-black block">{current.with_ai.inundation_sqkm} km²</strong>
               </div>
-              <div className="rounded-lg bg-slate-950/70 p-2 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Traffic Stalls</span>
-                <strong className="text-emerald-400 text-sm">0 (Diverted to BKC)</strong>
+              <div className="rounded-xl bg-white p-3 border border-emerald-200 shadow-xs">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Traffic Stalls</span>
+                <strong className="text-emerald-700 text-xl font-black block">{current.with_ai.stalled_vehicles} (Diverted to BKC)</strong>
               </div>
-              <div className="rounded-lg bg-slate-950/70 p-2 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">Controlled Damage</span>
-                <strong className="text-emerald-400 text-sm">₹{current.with_ai.economic_loss_lakhs} Lakhs</strong>
+              <div className="rounded-xl bg-white p-3 border border-emerald-200 shadow-xs">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Controlled Damage</span>
+                <strong className="text-emerald-900 text-xl font-black block">₹{current.with_ai.economic_loss_lakhs} Lakhs</strong>
               </div>
             </div>
 
             {/* Hospital Protection Status */}
-            <div className="mt-3 p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-xs">
-              <span className="text-[10px] font-bold text-emerald-400 block mb-0.5">Bhabha Municipal Hospital Status:</span>
-              <p className="font-semibold text-emerald-200 text-[11px]">{current.with_ai.hospital_status}</p>
+            <div className="mt-3.5 p-3 rounded-xl bg-white border-2 border-emerald-300 shadow-xs">
+              <span className="text-[11px] font-extrabold text-emerald-900 block mb-1 flex items-center gap-1.5">
+                <Building className="h-3.5 w-3.5 text-emerald-600" />
+                Bhabha Municipal Hospital Status:
+              </span>
+              <p className="font-extrabold text-emerald-800 text-xs leading-snug">
+                {current.with_ai.hospital_status}
+              </p>
             </div>
           </div>
 
-          <div className="text-[10px] text-cyan-300 font-mono pt-2 border-t border-cyan-500/30 flex items-center justify-between">
-            <span>Active: {current.with_ai.action_active}</span>
-            <span className="text-emerald-400 font-bold">91% Damage Avoided</span>
+          <div className="text-xs text-emerald-950 font-bold pt-2.5 border-t border-emerald-200 flex items-center justify-between">
+            <span className="text-[11px] font-medium text-slate-700">Active: {current.with_ai.action_active}</span>
+            <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-md font-black text-[11px] shadow-xs">
+              91% Damage Avoided
+            </span>
           </div>
         </div>
 

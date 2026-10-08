@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { 
   Play, 
+  Pause,
   X, 
   ChevronRight, 
   ChevronLeft, 
@@ -14,7 +15,9 @@ import {
   CheckCircle2, 
   Award,
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  Minimize2,
+  Maximize2
 } from 'lucide-react';
 import { emergencyAudio } from '../utils/audioAlert';
 
@@ -27,6 +30,9 @@ export default function JudgeDemoTour({
 }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [countdown, setCountdown] = useState(8);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [lastActionExecutedStep, setLastActionExecutedStep] = useState(null);
 
   const tourSteps = [
     {
@@ -80,7 +86,6 @@ export default function JudgeDemoTour({
       actionLabel: 'Open What-If Recession Simulator',
       onAction: () => {
         setActiveTab('command');
-        // Dispatch custom event so ActionPlanPanel switches to its 'whatif' sub-tab
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('jalrakshak:openWhatIf'));
         }, 400);
@@ -116,23 +121,143 @@ export default function JudgeDemoTour({
     }
   ];
 
+  // Auto-execute the action when a step is entered during Auto-Play
   useEffect(() => {
-    let timer;
     if (isAutoPlaying && isOpen) {
-      timer = setTimeout(() => {
-        if (currentStep < tourSteps.length - 1) {
-          setCurrentStep(c => c + 1);
-        } else {
-          setIsAutoPlaying(false);
+      if (lastActionExecutedStep !== currentStep) {
+        setLastActionExecutedStep(currentStep);
+        try {
+          tourSteps[currentStep].onAction();
+        } catch (e) {
+          console.error('Error executing tour step action:', e);
         }
-      }, 15000);
+      }
     }
-    return () => clearTimeout(timer);
+  }, [isAutoPlaying, currentStep, isOpen]);
+
+  // Handle countdown & auto-advance timer
+  useEffect(() => {
+    let interval;
+    if (isAutoPlaying && isOpen) {
+      setCountdown(8);
+      interval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            if (currentStep < tourSteps.length - 1) {
+              setCurrentStep((c) => c + 1);
+              return 8;
+            } else {
+              setIsAutoPlaying(false);
+              return 0;
+            }
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
   }, [isAutoPlaying, currentStep, isOpen]);
 
   if (!isOpen) return null;
 
   const current = tourSteps[currentStep];
+
+  // If minimized, render as a sleek floating HUD in bottom-right corner so user can see entire dashboard!
+  if (isMinimized) {
+    return (
+      <div className="fixed bottom-5 right-5 z-50 w-96 rounded-2xl bg-white/95 backdrop-blur-md shadow-2xl border border-blue-300 p-4 animate-slide-up">
+        {/* Progress bar on top */}
+        {isAutoPlaying && (
+          <div className="absolute top-0 left-0 right-0 h-1 bg-slate-100 overflow-hidden rounded-t-2xl">
+            <div
+              className="h-full bg-blue-600 transition-all duration-1000 ease-linear"
+              style={{ width: `${((8 - countdown) / 8) * 100}%` }}
+            />
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-700 text-xs font-black">
+              {current.step}
+            </span>
+            <span className="text-xs font-bold text-slate-800 truncate max-w-[180px]">
+              {current.title}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setIsMinimized(false)}
+              title="Expand Tour Modal"
+              className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={onClose}
+              title="Close Tour"
+              className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-slate-100"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <p className="text-[11px] text-slate-600 mt-2 line-clamp-2 leading-relaxed">
+          {current.quote}
+        </p>
+
+        {isAutoPlaying && (
+          <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-200">
+            <span>⚡ Auto-Playing Step {current.step}/6</span>
+            <span>Next in {countdown}s</span>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100">
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCurrentStep((c) => Math.max(0, c - 1))}
+              disabled={currentStep === 0}
+              className="p-1 rounded-lg bg-slate-100 text-slate-700 disabled:opacity-30"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <span className="text-[10px] font-mono font-bold text-slate-500">
+              {currentStep + 1}/6
+            </span>
+            <button
+              onClick={() => setCurrentStep((c) => Math.min(tourSteps.length - 1, c + 1))}
+              disabled={currentStep === tourSteps.length - 1}
+              className="p-1 rounded-lg bg-slate-100 text-slate-700 disabled:opacity-30"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                isAutoPlaying
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              {isAutoPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+              <span>{isAutoPlaying ? 'Pause' : 'Auto'}</span>
+            </button>
+            <button
+              onClick={current.onAction}
+              className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold shadow-xs hover:bg-emerald-700"
+            >
+              Run Action
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
@@ -140,8 +265,16 @@ export default function JudgeDemoTour({
       {/* Modal Card */}
       <div className="w-full max-w-2xl rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 relative overflow-hidden">
         
-        {/* Top Glowing Ambient Light */}
+        {/* Top Glowing Ambient Light & Countdown Bar */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500"></div>
+        {isAutoPlaying && (
+          <div className="absolute top-1.5 left-0 right-0 h-1 bg-blue-100">
+            <div
+              className="h-full bg-blue-600 transition-all duration-1000 ease-linear"
+              style={{ width: `${((8 - countdown) / 8) * 100}%` }}
+            />
+          </div>
+        )}
 
         {/* Header Bar */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -162,12 +295,22 @@ export default function JudgeDemoTour({
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="rounded-full p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setIsMinimized(true)}
+              title="Dock to bottom corner to see full dashboard"
+              className="flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-blue-700 hover:bg-blue-50 transition-all border border-slate-200"
+            >
+              <Minimize2 className="h-3.5 w-3.5" />
+              <span>Dock & View Dashboard</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded-full p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Step Progress Bar */}
@@ -183,7 +326,7 @@ export default function JudgeDemoTour({
                 onClick={() => setCurrentStep(idx)}
                 className={`h-2 rounded-full cursor-pointer transition-all ${
                   idx === currentStep
-                    ? 'bg-blue-600 shadow-xs'
+                    ? 'bg-blue-600 shadow-xs ring-2 ring-blue-300'
                     : idx < currentStep
                     ? 'bg-emerald-500'
                     : 'bg-slate-200'
@@ -196,10 +339,15 @@ export default function JudgeDemoTour({
         {/* Main Tour Content Stage */}
         <div className="py-4 space-y-3">
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between">
             <span className={`rounded-md px-2 py-0.5 text-[10px] font-black tracking-wider uppercase border ${current.badgeColor}`}>
               {current.tag}
             </span>
+            {isAutoPlaying && (
+              <span className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-700 border border-blue-200 animate-pulse">
+                <span>⚡ Auto-advancing in {countdown}s...</span>
+              </span>
+            )}
           </div>
 
           <h2 className="text-xl font-black text-slate-900 leading-tight">
@@ -217,13 +365,22 @@ export default function JudgeDemoTour({
 
           {/* Interactive Trigger Button for This Step */}
           {current.actionLabel && (
-            <div className="pt-2">
+            <div className="pt-2 flex items-center gap-3">
               <button
                 onClick={current.onAction}
                 className="flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-black text-white shadow-md active:scale-95 transition-all"
               >
                 <Sparkles className="h-4 w-4 text-white" />
                 <span>{current.actionLabel}</span>
+              </button>
+              <button
+                onClick={() => {
+                  current.onAction();
+                  setIsMinimized(true);
+                }}
+                className="text-xs text-blue-600 hover:text-blue-800 font-bold underline underline-offset-2"
+              >
+                Run & View on Dashboard →
               </button>
             </div>
           )}
@@ -234,7 +391,7 @@ export default function JudgeDemoTour({
         <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentStep(c => Math.max(0, c - 1))}
+              onClick={() => setCurrentStep((c) => Math.max(0, c - 1))}
               disabled={currentStep === 0}
               className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 disabled:opacity-30 disabled:cursor-not-allowed shadow-xs"
             >
@@ -243,7 +400,7 @@ export default function JudgeDemoTour({
             </button>
 
             <button
-              onClick={() => setCurrentStep(c => Math.min(tourSteps.length - 1, c + 1))}
+              onClick={() => setCurrentStep((c) => Math.min(tourSteps.length - 1, c + 1))}
               disabled={currentStep === tourSteps.length - 1}
               className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 disabled:opacity-30 disabled:cursor-not-allowed shadow-xs"
             >
@@ -254,20 +411,35 @@ export default function JudgeDemoTour({
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+              onClick={() => {
+                const nextState = !isAutoPlaying;
+                setIsAutoPlaying(nextState);
+                if (nextState) {
+                  current.onAction(); // Immediately trigger current action on auto play start!
+                }
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
                 isAutoPlaying 
-                  ? 'bg-purple-50 text-purple-700 border-purple-200' 
-                  : 'text-slate-600 hover:text-slate-800 border-slate-200'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-300' 
+                  : 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
               }`}
             >
-              <Play className={`h-3 w-3 ${isAutoPlaying ? 'animate-pulse' : ''}`} />
-              <span>{isAutoPlaying ? 'Auto-Advancing (15s)' : 'Auto-Play Tour'}</span>
+              {isAutoPlaying ? (
+                <>
+                  <Pause className="h-3 w-3" />
+                  <span>Auto-Playing ({countdown}s)</span>
+                </>
+              ) : (
+                <>
+                  <Play className="h-3 w-3" />
+                  <span>Start Auto-Play Tour</span>
+                </>
+              )}
             </button>
 
             <button
               onClick={onClose}
-              className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black shadow-sm"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"
             >
               Exit Tour
             </button>

@@ -30,7 +30,8 @@ import {
   ChevronRight,
   Shield,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  LogOut
 } from 'lucide-react';
 import { ROLES, PERSONAS } from '../data/rolesData';
 
@@ -45,7 +46,8 @@ export default function Sidebar({
   criticalCount, 
   incidentsCount, 
   currentUser, 
-  onOpenLogin 
+  onOpenLogin,
+  onLogout 
 }) {
   const [restrictedModal, setRestrictedModal] = useState(null);
   const role = currentUser?.role || ROLES.INCIDENT_COMMANDER;
@@ -94,6 +96,14 @@ export default function Sidebar({
               icon: <Globe className="h-4 w-4 shrink-0" />,
               badge: null,
               desc: 'Platform Overview'
+            },
+            {
+              id: 'login',
+              label: 'Portal Login & Roles',
+              icon: <Key className="h-4 w-4 shrink-0 text-amber-400" />,
+              badge: 'Cognito',
+              badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800',
+              desc: 'Switch Persona & Credentials'
             }
           ],
           restrictedItems: [
@@ -168,6 +178,14 @@ export default function Sidebar({
               icon: <Globe className="h-4 w-4 shrink-0" />,
               badge: null,
               desc: 'Platform Overview'
+            },
+            {
+              id: 'login',
+              label: 'Portal Login & Roles',
+              icon: <Key className="h-4 w-4 shrink-0 text-amber-400" />,
+              badge: 'Cognito',
+              badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800',
+              desc: 'Switch Persona & Credentials'
             }
           ],
           restrictedItems: [
@@ -219,6 +237,14 @@ export default function Sidebar({
               icon: <Globe className="h-4 w-4 shrink-0" />,
               badge: null,
               desc: 'Platform Overview'
+            },
+            {
+              id: 'login',
+              label: 'Portal Login & Roles',
+              icon: <Key className="h-4 w-4 shrink-0 text-amber-400" />,
+              badge: 'Cognito',
+              badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800',
+              desc: 'Switch Persona & Credentials'
             }
           ],
           restrictedItems: [
@@ -317,6 +343,14 @@ export default function Sidebar({
               icon: <Globe className="h-4 w-4 shrink-0" />,
               badge: null,
               desc: 'Platform Overview'
+            },
+            {
+              id: 'login',
+              label: 'Portal Login & Roles',
+              icon: <Key className="h-4 w-4 shrink-0 text-amber-400" />,
+              badge: 'Cognito',
+              badgeColor: 'bg-amber-950/80 text-amber-300 border-amber-800',
+              desc: 'Switch Persona & Credentials'
             }
           ],
           restrictedItems: []
@@ -431,14 +465,24 @@ export default function Sidebar({
                   <ShieldCheck className="h-3 w-3 text-cyan-400" />
                   Active Persona & Tier
                 </span>
-                <button
-                  onClick={onOpenLogin}
-                  className="text-[9px] font-bold text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-0.5"
-                  title="Switch to another persona"
-                >
-                  <span>Switch</span>
-                  <ChevronRight className="h-2.5 w-2.5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={onOpenLogin}
+                    className="text-[9px] font-bold text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-0.5"
+                    title="Switch to another persona"
+                  >
+                    <span>Switch</span>
+                    <ChevronRight className="h-2.5 w-2.5" />
+                  </button>
+                  <button
+                    onClick={onLogout}
+                    className="text-[9px] font-bold text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-0.5"
+                    title="Sign Out of AWS Cognito session"
+                  >
+                    <LogOut className="h-2.5 w-2.5" />
+                    <span>Exit</span>
+                  </button>
+                </div>
               </div>
 
               <div 
@@ -761,7 +805,28 @@ export default function Sidebar({
             )}
 
             {!isCollapsed && (
-              <Key className="h-3.5 w-3.5 text-slate-500 hover:text-white shrink-0 mr-1" />
+              <div className="flex items-center gap-1.5 shrink-0 mr-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onOpenLogin) onOpenLogin();
+                  }}
+                  className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-800 transition-colors"
+                  title="Switch Persona"
+                >
+                  <Key className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onLogout) onLogout();
+                  }}
+                  className="p-1 rounded text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 transition-colors"
+                  title="Sign Out of session"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </button>
+              </div>
             )}
           </div>
         </div>

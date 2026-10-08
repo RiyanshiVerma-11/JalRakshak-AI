@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import uuid
+import base64
 from datetime import datetime
 
 from .data.mock_db import db
@@ -319,25 +320,39 @@ async def submit_citizen_report(
     image: Optional[UploadFile] = File(None)
 ):
     """
-    Citizen PWA Report Submission with Computer Vision Analysis.
+    Citizen PWA Report Submission with Real Multimodal Computer Vision Analysis.
+    Supports real user photo uploads and live webcam snapshots.
     """
     report_id = f"CR-{uuid.uuid4().hex[:4].upper()}"
+    image_bytes = b""
+    image_url = None
 
-    # Analyze with multimodal computer vision
+    if image and hasattr(image, "read"):
+        try:
+            image_bytes = await image.read()
+            if len(image_bytes) > 0:
+                content_type = image.content_type or "image/jpeg"
+                encoded = base64.b64encode(image_bytes).decode("utf-8")
+                image_url = f"data:{content_type};base64,{encoded}"
+        except Exception as e:
+            print("Error reading uploaded image:", e)
+
+    # Analyze with multimodal computer vision on actual bytes
     vision_result = image_analyzer.analyze_image(
         category=category,
         description=user_description,
-        image_bytes_len=0
+        image_bytes_len=len(image_bytes),
+        image_bytes=image_bytes
     )
 
-    # Mock S3 upload
-    sample_images = {
-        "waterlogging": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80",
-        "leak": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=600&q=80",
-        "heatwave": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
-        "water_shortage": "https://images.unsplash.com/photo-1541888946425-d0fbb186f5f7?auto=format&fit=crop&w=600&q=80"
-    }
-    image_url = sample_images.get(category, sample_images["waterlogging"])
+    if not image_url:
+        sample_images = {
+            "waterlogging": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80",
+            "leak": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=600&q=80",
+            "heatwave": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
+            "water_shortage": "https://images.unsplash.com/photo-1541888946425-d0fbb186f5f7?auto=format&fit=crop&w=600&q=80"
+        }
+        image_url = sample_images.get(category, sample_images["waterlogging"])
 
     report_record = {
         "id": report_id,
@@ -345,7 +360,7 @@ async def submit_citizen_report(
         "ward_id": ward_id,
         "address": address or "Sector Main Road",
         "reporter_name": reporter_name,
-        "created_at": "Just now",
+        "created_at": datetime.now().strftime("%I:%M %p, %d %b"),
         "status": "AI_VERIFIED",
         "image_url": image_url,
         "user_description": user_description,
@@ -361,13 +376,28 @@ async def submit_citizen_report(
         detail={"report_id": report_id, "category": category, "ward_id": ward_id, "severity": vision_result["severity_score"]}
     )
 
-    db.log_audit("CITIZEN_PWA", "REPORT_INGESTED", f"Ingested report {report_id} from {ward_id} (AI Score: {vision_result['severity_score']})")
+    db.log_audit("CITIZEN_PWA", "REPORT_INGESTED", f"Ingested real citizen report {report_id} from {ward_id} (AI Score: {vision_result['severity_score']})")
 
     return {
         "success": True,
         "report_id": report_id,
+        "report": report_record,
         "ai_analysis": vision_result,
-        "message": "Report analyzed by Computer Vision and synchronized to Emergency Command Center."
+        "message": "Real photo analyzed by Computer Vision and synchronized to Emergency Command Center."
+    }
+
+@app.post("/api/citizen/query")
+def citizen_query_assistant(req: CopilotQuery):
+    """
+    Direct Citizen AI Water & Climate Helpline.
+    Answers any questions about water quality, tanker dispatches, waterlogging, or open shelters.
+    """
+    res = copilot.answer_query(req.query)
+    return {
+        "query": req.query,
+        "answer": res.get("situation_summary", "No emergency warnings in your area."),
+        "recommended_actions": res.get("recommended_actions", []),
+        "reference": res.get("statutory_sop_citation", {}).get("reference", "NDMA Water Safety Guidelines")
     }
 
 @app.post("/api/copilot/chat")

@@ -190,3 +190,39 @@ def test_sam_infrastructure_as_code_template():
     assert "DynamoDBLeastPrivilegeAccess" in policy_names
     assert "BedrockModelInvocationAccess" in policy_names
     assert "SNSEmergencyPublishAccess" in policy_names
+
+def test_serverless_lambda_handlers_execution():
+    """
+    Test 6: Verifies that AWS Lambda handlers defined in SAM template
+    (citizen_ingest_handler and strands_agent_orchestrator_handler) execute cleanly.
+    """
+    import json
+    from aws_infra import lambda_handlers
+
+    # 1. Citizen Ingest Handler
+    citizen_event = {
+        "body": json.dumps({
+            "category": "waterlogging",
+            "ward_id": "WARD-17",
+            "user_description": "Water logging near bridge"
+        })
+    }
+    cit_res = lambda_handlers.citizen_ingest_handler(citizen_event, None)
+    assert cit_res["statusCode"] == 200
+    cit_body = json.loads(cit_res["body"])
+    assert cit_body["success"] is True
+    assert cit_body["report_id"].startswith("CR-")
+    assert cit_body["ai_analysis"]["severity_score"] > 0
+
+    # 2. Strands Orchestrator Handler
+    strands_event = {
+        "detail": {
+            "category": "flood",
+            "ward_id": "WARD-17"
+        }
+    }
+    strands_res = lambda_handlers.strands_agent_orchestrator_handler(strands_event, None)
+    assert strands_res["statusCode"] == 200
+    strands_body = json.loads(strands_res["body"])
+    assert strands_body["status"] == "COMPLETED"
+    assert strands_body["plan_generated"] is True

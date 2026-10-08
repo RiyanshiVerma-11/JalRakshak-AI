@@ -9,7 +9,8 @@ import {
   PanelLeftOpen, 
   Clock, 
   Award,
-  Activity
+  Activity,
+  LogOut
 } from 'lucide-react';
 
 export default function Header({ 
@@ -24,7 +25,8 @@ export default function Header({
   criticalCount,
   onOpenJudgeTour,
   currentUser,
-  onOpenLogin
+  onOpenLogin,
+  onLogout
 }) {
   const [timeStr, setTimeStr] = useState('');
 
@@ -46,6 +48,7 @@ export default function Header({
       case 'citizen': return 'Citizen PWA & Vision Reports';
       case 'copilot': return 'AI Emergency Copilot';
       case 'aws': return 'AWS Strands Architecture';
+      case 'login': return 'Portal Login & Statutory Roles (AWS Cognito)';
       default: return 'Overview & Mission';
     }
   };
@@ -100,6 +103,16 @@ export default function Header({
           <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-900 text-slate-300 border border-slate-700 font-mono">
             {currentUser?.role === 'incident_commander' ? '👑 Commander' : currentUser?.role === 'field_responder' ? '🚜 Field Ops' : currentUser?.role === 'scada_analyst' ? '🔬 SCADA' : '👥 Citizen'}
           </span>
+        </button>
+
+        {/* Sign Out Button (SDE-3 Production Polish) */}
+        <button
+          onClick={onLogout}
+          className="flex h-7 items-center gap-1 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-white px-2 text-[11px] font-bold border border-rose-800/80 shadow-xs transition-all active:scale-95 shrink-0"
+          title="Sign Out of AWS Cognito Session"
+        >
+          <LogOut className="h-3 w-3 text-rose-400" />
+          <span className="hidden sm:inline">Sign Out</span>
         </button>
 
         {/* 3-Min Judge Tour Pill */}

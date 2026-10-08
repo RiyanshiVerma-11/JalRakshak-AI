@@ -197,6 +197,19 @@ export default function LandingPageView({
               <span className="sm:hidden">Tour</span>
             </button>
 
+            {/* Sign In Button (Standard SaaS / Enterprise UX) */}
+            <button
+              onClick={() => {
+                if (onNavigateTab) onNavigateTab('login');
+                else if (onOpenLogin) onOpenLogin();
+              }}
+              className="flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
+              title="Sign in with AWS Cognito / Select Officer Role"
+            >
+              <Lock className="h-3.5 w-3.5 text-blue-600" />
+              <span>Sign In</span>
+            </button>
+
             {/* Enter Command Center (Primary CTA) */}
             <button
               onClick={onEnterCommandCenter}
@@ -289,6 +302,17 @@ export default function LandingPageView({
                   <LayoutDashboard className="h-4 w-4" />
                   <span>OPEN COMMAND CENTER</span>
                   <ArrowRight className="h-4 w-4" />
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (onNavigateTab) onNavigateTab('login');
+                    else if (onOpenLogin) onOpenLogin();
+                  }}
+                  className="flex items-center gap-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 hover:border-slate-400 px-5 py-3.5 text-sm font-bold active:scale-95 transition-all shadow-xs"
+                >
+                  <Lock className="h-4 w-4 text-blue-600" />
+                  <span>Sign In / Roles</span>
                 </button>
 
                 <button
