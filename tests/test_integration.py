@@ -390,33 +390,134 @@ def test_mathematical_confidence_score_bounds():
 
 def test_live_aws_bedrock_invocation():
     """
-    Test 10 (Live Cloud Gate): Gated on AWS_EXECUTION_MODE=LIVE.
-    Invokes Amazon Bedrock Runtime in ap-south-1 when real credentials are present.
+    Test 10 (Bedrock Invocation):
+    - When AWS_EXECUTION_MODE=LIVE and credentials exist, invokes Amazon Bedrock Runtime.
+    - When in Build It route (Local / Zero-Config), verifies canonical model ID and
+      verifies that the Strands local model bridge executes protocol-grounded inference.
     """
-    import os
-    import boto3
-    if os.environ.get("AWS_EXECUTION_MODE") != "LIVE":
-        pytest.skip("Skipping live Bedrock test: AWS_EXECUTION_MODE != LIVE (skips safely when offline)")
+    from backend.cloud.config import get_backend_mode, get_bedrock_model_id, has_aws_credentials, DEFAULT_BEDROCK_MODEL_ID
+    from backend.cloud.aws_bridge import aws_bridge
 
-    client = boto3.client("bedrock-runtime", region_name=os.environ.get("AWS_REGION", "ap-south-1"))
-    response = client.converse(
-        modelId="anthropic.claude-3-5-sonnet-20241022-v2:0",
-        messages=[{"role": "user", "content": [{"text": "JalRakshak ping"}]}]
-    )
-    assert response["ResponseMetadata"]["HTTPStatusCode"] == 200
+    model_id = get_bedrock_model_id()
+    assert model_id == DEFAULT_BEDROCK_MODEL_ID
+
+    mode = get_backend_mode()
+    if mode == "AWS" and has_aws_credentials():
+        import boto3
+        import os
+        region = os.environ.get("AWS_DEFAULT_REGION", os.environ.get("AWS_REGION", "ap-south-1"))
+        client = boto3.client("bedrock-runtime", region_name=region)
+        response = client.converse(
+            modelId=model_id,
+            messages=[{"role": "user", "content": [{"text": "JalRakshak ping"}]}]
+        )
+        assert response["ResponseMetadata"]["HTTPStatusCode"] == 200
+    else:
+        # Build It route: executes model bridge offline fallback without network/credentials
+        resp = aws_bridge.invoke_bedrock_claude(
+            prompt="Generate flood warning for Ward 17",
+            system_prompt="You are municipal disaster controller"
+        )
+        assert resp is not None
+        assert isinstance(resp, str)
+        assert len(resp) > 0
 
 
 def test_live_aws_dynamodb_persistence():
     """
-    Test 11 (Live Cloud Gate): Gated on AWS_EXECUTION_MODE=LIVE.
-    Verifies live DynamoDB table connectivity in ap-south-1 when real credentials are present.
+    Test 11 (DynamoDB Persistence):
+    - When AWS_EXECUTION_MODE=LIVE and credentials exist, verifies live DynamoDB table connectivity.
+    - When in Build It route (Local / Zero-Config), verifies round-trip persistence in InMemoryStateStore.
     """
-    import os
-    import boto3
-    if os.environ.get("AWS_EXECUTION_MODE") != "LIVE":
-        pytest.skip("Skipping live DynamoDB test: AWS_EXECUTION_MODE != LIVE (skips safely when offline)")
+    from backend.cloud.config import get_backend_mode, has_aws_credentials
+    from backend.cloud.aws_bridge import aws_bridge
+    from backend.data.state_store import state_store
 
-    client = boto3.client("dynamodb", region_name=os.environ.get("AWS_REGION", "ap-south-1"))
-    response = client.describe_table(TableName="JalRakshak-IncidentsTable")
-    assert response["Table"]["TableStatus"] in ["ACTIVE", "UPDATING"]
+    mode = get_backend_mode()
+    if mode == "AWS" and has_aws_credentials():
+        import boto3
+        import os
+        region = os.environ.get("AWS_DEFAULT_REGION", os.environ.get("AWS_REGION", "ap-south-1"))
+        table_name = os.environ.get("INCIDENTS_TABLE", "JalRakshak-IncidentsTable")
+        client = boto3.client("dynamodb", region_name=region)
+        response = client.describe_table(TableName=table_name)
+        assert response["Table"]["TableStatus"] in ["ACTIVE", "UPDATING"]
+    else:
+        # Build It route: zero-config state store persistence
+        test_inc = {
+            "id": "INC-TEST-DYN-01",
+            "ward_name": "Kurla L-Ward",
+            "severity": "CRITICAL",
+            "status": "PENDING_APPROVAL",
+            "simulated": True
+        }
+        res = aws_bridge.persist_incident_to_dynamodb(test_inc)
+        assert res is True
+        persisted = state_store.get_incident("INC-TEST-DYN-01")
+        assert persisted is not None
+        assert persisted["id"] == "INC-TEST-DYN-01"
+
+
+def test_zero_config_boot_and_health_endpoint():
+    """
+    Test 12: Verifies that the platform boots with zero configuration and zero credentials,
+    serves /api/health with 200 OK and honest subsystem status, and runs the simulation pipeline.
+    """
+    from fastapi.testclient import TestClient
+    from backend.main import app
+    client = TestClient(app)
+
+    # Health check
+    resp = client.get("/api/health")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "HEALTHY"
+    assert data["route"] == "Build It"
+    assert data["agents_online"] == 5
+    assert "orchestrator" in data
+
+    # Incident Simulation
+    sim_resp = client.post(
+        "/api/incidents/simulate",
+        json={"scenario": "flood", "ward_id": "WARD-17"}
+    )
+    assert sim_resp.status_code == 200
+    sim_data = sim_resp.json()
+    incident = sim_data["incident"]
+    assert incident["id"].startswith("INC-")
+    assert len(incident["agent_trace"]) == 5
+
+
+def test_simulated_flags_on_offline_responses():
+    """
+    Test 13: Verifies that every response carrying simulated values explicitly sets simulated=True
+    and delivered=False, adhering strictly to the zero-fabrication hackathon rule.
+    """
+    from backend.cloud.aws_bridge import aws_bridge
+    from backend.vision.image_analyzer import image_analyzer
+    from backend.cloud.config import get_backend_mode
+
+    mode = get_backend_mode()
+    if mode != "AWS":
+        # SNS alert without live credentials must be explicitly flagged simulated
+        sns_res = aws_bridge.publish_sns_emergency_alert(
+            subject="Test Advisory",
+            message="Test message",
+            languages={"english": "Test"},
+            ward_id="WARD-17"
+        )
+        assert sns_res["simulated"] is True
+        assert sns_res["delivered"] is False
+        assert sns_res["message_id"] is None
+
+        # Image analyzer without live Rekognition credentials must be flagged simulated
+        vision_res = image_analyzer.analyze_image("waterlogging", "Heavy flood in street")
+        assert vision_res["simulated"] is True
+        assert "Local PIL" in vision_res["provider"]
+
+        # Cloud metrics must explicitly flag unbacked services
+        metrics = aws_bridge.get_cloud_metrics()
+        assert metrics["services"]["Amazon_SNS"]["simulated"] is True
+        assert metrics["services"]["Amazon_Rekognition"]["simulated"] is True
+
 

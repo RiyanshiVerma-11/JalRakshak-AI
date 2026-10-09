@@ -105,24 +105,35 @@ def verify_jwt_token(token: str) -> Dict[str, Any]:
         )
 
 
-def evaluate_cedar_policy(
+def get_cedar_engine_name() -> str:
+    """Returns the active statutory authorization engine name."""
+    return "cedarpy" if (CEDAR_AVAILABLE and _CACHED_POLICY) else "fallback"
+
+
+def evaluate_cedar_policy_with_details(
     principal_role: str,
     action: str,
     resource_id: str = "INC-ALL"
-) -> bool:
+) -> Dict[str, Any]:
     """
-    Evaluates permission using genuine AWS Cedar engine (cedarpy).
-    Grounded in statutory permissions defined in policies/incident_policy.cedar.
+    Evaluates statutory permission using AWS Cedar engine (cedarpy).
+    Fixes D7: Transparently states which engine decided (cedarpy vs fallback) and logs it.
     """
     if not CEDAR_AVAILABLE or not _CACHED_POLICY:
-        # Fallback to statutory rules if cedarpy engine failed to link
-        logger.warning("AWS Cedar engine evaluating via deterministic statutory matrix.")
+        engine = "fallback"
+        allowed = False
         if principal_role == "incident_commander":
-            return True
-        if principal_role in ("scada_analyst", "field_operator") and action in ("read_incidents", "read_telemetry"):
-            return True
-        return False
+            allowed = True
+        elif principal_role in ("scada_analyst", "field_operator") and action in ("read_incidents", "read_telemetry"):
+            allowed = True
+        logger.info(f"[CEDAR AUTH] Engine: {engine} | Decision: {'ALLOW' if allowed else 'DENY'} | Role: {principal_role} | Action: {action}")
+        return {
+            "allowed": allowed,
+            "engine": engine,
+            "policy": "deterministic-statutory-rules"
+        }
 
+    engine = "cedarpy"
     request = {
         "principal": f'JalRakshak::Role::"{principal_role}"',
         "action": f'JalRakshak::Action::"{action}"',
@@ -137,8 +148,24 @@ def evaluate_cedar_policy(
 
     try:
         result = cedarpy.is_authorized(request, _CACHED_POLICY, entities)
-        # Result decision is Decision.Allow or Decision.Deny
-        return str(result.decision) == "Decision.Allow" or result.decision == cedarpy.Decision.Allow
+        allowed = (str(result.decision) == "Decision.Allow" or result.decision == cedarpy.Decision.Allow)
+        logger.info(f"[CEDAR AUTH] Engine: {engine} | Decision: {'ALLOW' if allowed else 'DENY'} | Role: {principal_role} | Action: {action}")
+        return {
+            "allowed": allowed,
+            "engine": engine,
+            "decision": str(result.decision),
+            "policy_source": "policies/incident_policy.cedar"
+        }
     except Exception as exc:
-        logger.error(f"AWS Cedar evaluation error: {exc}")
-        return False
+        logger.error(f"[CEDAR AUTH] Error during cedarpy evaluation: {exc}")
+        return {"allowed": False, "engine": engine, "error": str(exc)}
+
+
+def evaluate_cedar_policy(
+    principal_role: str,
+    action: str,
+    resource_id: str = "INC-ALL"
+) -> bool:
+    """Evaluates permission using AWS Cedar. Backwards-compatible bool wrapper."""
+    details = evaluate_cedar_policy_with_details(principal_role, action, resource_id)
+    return details["allowed"]

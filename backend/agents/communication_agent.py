@@ -24,16 +24,11 @@ class CommunicationAgent:
     def __init__(self):
         self.name = "Communication Agent"
         self.role = "Multilingual Public Alert & Citizen Warning Synthesizer"
-        # Standardized on production Claude 3.5 Sonnet in ap-south-1
-        self.model_id = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-3-5-sonnet-20240620-v1:0")
-        self.region = os.environ.get("AWS_DEFAULT_REGION", "ap-south-1")
-        self._bedrock_client = None
-
-        if BOTO3_AVAILABLE:
-            try:
-                self._bedrock_client = boto3.client("bedrock-runtime", region_name=self.region)
-            except Exception as e:
-                logger.info(f"Bedrock runtime client init deferred: {e}")
+        from ..cloud.config import get_bedrock_model_id, get_aws_region
+        from ..cloud.aws_bridge import create_boto_client
+        self.model_id = get_bedrock_model_id()
+        self.region = get_aws_region()
+        self._bedrock_client = create_boto_client("bedrock-runtime", region_name=self.region)
 
     def generate_alerts(
         self, 

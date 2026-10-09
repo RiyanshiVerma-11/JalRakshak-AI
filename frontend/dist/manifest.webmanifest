@@ -1,0 +1,17 @@
+{
+  "name": "JalRakshak AI — Climate Emergency Response",
+  "short_name": "JalRakshak AI",
+  "description": "Urban flood & heat emergency decision-support platform with offline advisory cache",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080d1a",
+  "theme_color": "#06b6d4",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

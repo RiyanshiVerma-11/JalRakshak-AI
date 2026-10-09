@@ -3,7 +3,7 @@ AI Emergency Copilot for Municipal Controllers & Incident Commanders.
 Provides context-aware, RAG-grounded, actionable reasoning instead of generic chat.
 """
 from typing import Dict, Any, List
-from .data.mock_db import db
+from .data.state_store import state_store as db
 from .rag.sop_knowledge import query_sop_knowledge
 
 class EmergencyCopilot:

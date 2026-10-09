@@ -1,9 +1,11 @@
 node_modules/
 frontend/
+frontend/dist/
 .git/
 .pytest_cache/
 tests/
 docs/
+docs/screenshots/
 *.md
 .env*
 venv/

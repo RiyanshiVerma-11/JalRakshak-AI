@@ -58,6 +58,8 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
   const [citizenAnswer, setCitizenAnswer] = useState(null);
   const [isQueryingAI, setIsQueryingAI] = useState(false);
 
+  const [lang, setLang] = useState('en'); // 'en', 'hi', 'mr'
+
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -65,11 +67,11 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
 
   // Categories config
   const categories = [
-    { id: 'waterlogging', label: 'Waterlogging', hindi: 'जलभराव', icon: <Droplet className="h-4 w-4" /> },
-    { id: 'flood', label: 'Severe Flood', hindi: 'बाढ़', icon: <CloudRain className="h-4 w-4" /> },
-    { id: 'heatwave', label: 'Extreme Heat', hindi: 'लू / गर्मी', icon: <Flame className="h-4 w-4" /> },
-    { id: 'leak', label: 'Pipe Rupture', hindi: 'पाइपलाइन लीकेज', icon: <Wrench className="h-4 w-4" /> },
-    { id: 'water_shortage', label: 'Water Shortage', hindi: 'पानी की कमी', icon: <Droplet className="h-4 w-4" /> },
+    { id: 'waterlogging', label: 'Waterlogging', hindi: 'जलभराव', marathi: 'पाणी साचणे', icon: <Droplet className="h-4 w-4" /> },
+    { id: 'flood', label: 'Severe Flood', hindi: 'भीषण बाढ़', marathi: 'तीव्र पूर', icon: <CloudRain className="h-4 w-4" /> },
+    { id: 'heatwave', label: 'Extreme Heat', hindi: 'लू / भीषण गर्मी', marathi: 'तीव्र उष्णतेची लाट', icon: <Flame className="h-4 w-4" /> },
+    { id: 'leak', label: 'Pipe Rupture', hindi: 'पाइपलाइन लीकेज', marathi: 'जलवाहिनी गळती', icon: <Wrench className="h-4 w-4" /> },
+    { id: 'water_shortage', label: 'Water Shortage', hindi: 'पानी की कमी', marathi: 'पाण्याची टंचाई', icon: <Droplet className="h-4 w-4" /> },
   ];
 
   // Fetch live reports when opening feed
@@ -369,8 +371,42 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
               </div>
             </div>
 
+            {/* Language Toggle: English | हिंदी | मराठी (Fix D11/Phase 8) */}
+            <div className="flex items-center justify-between px-2 py-1.5 mt-2 bg-slate-900/60 rounded-xl border border-slate-800/80 text-[10px]">
+              <span className="text-slate-400 font-bold">भाषा / Lang:</span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setLang('en')}
+                  className={`px-2 py-0.5 rounded-lg transition-all ${
+                    lang === 'en' ? 'bg-cyan-500 text-slate-950 font-black shadow-xs' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLang('hi')}
+                  className={`px-2 py-0.5 rounded-lg transition-all ${
+                    lang === 'hi' ? 'bg-cyan-500 text-slate-950 font-black shadow-xs' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  हिंदी
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLang('mr')}
+                  className={`px-2 py-0.5 rounded-lg transition-all ${
+                    lang === 'mr' ? 'bg-cyan-500 text-slate-950 font-black shadow-xs' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  मराठी
+                </button>
+              </div>
+            </div>
+
             {/* Navigation Tabs (Report vs Feed vs AI Query) */}
-            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-900 rounded-xl my-3 text-[11px] font-bold border border-slate-800">
+            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-900 rounded-xl my-2.5 text-[11px] font-bold border border-slate-800">
               <button
                 type="button"
                 onClick={() => { setActiveTab('report'); setSubmittedReport(null); }}
@@ -378,7 +414,7 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                   activeTab === 'report' ? 'bg-cyan-500 text-slate-950 font-black shadow-xs' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Report Incident
+                {lang === 'hi' ? 'घटना रिपोर्ट' : (lang === 'mr' ? 'घटना नोंद' : 'Report Incident')}
               </button>
               <button
                 type="button"
@@ -387,7 +423,7 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                   activeTab === 'feed' ? 'bg-cyan-500 text-slate-950 font-black shadow-xs' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Live Alerts
+                {lang === 'hi' ? 'लाइव अलर्ट' : (lang === 'mr' ? 'थेट सूचना' : 'Live Alerts')}
               </button>
               <button
                 type="button"
@@ -396,7 +432,7 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                   activeTab === 'ai_help' ? 'bg-cyan-500 text-slate-950 font-black shadow-xs' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                AI Helpline
+                {lang === 'hi' ? 'AI हेल्पलाइन' : (lang === 'mr' ? 'AI मदत' : 'AI Helpline')}
               </button>
             </div>
 
@@ -479,8 +515,12 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                       >
                         {c.icon}
                         <div className="leading-tight">
-                          <span className="block text-[11px]">{c.label}</span>
-                          <span className="block text-[9px] text-slate-500 font-normal">{c.hindi}</span>
+                          <span className="block text-[11px]">
+                            {lang === 'hi' ? c.hindi : (lang === 'mr' ? c.marathi : c.label)}
+                          </span>
+                          <span className="block text-[9px] text-slate-500 font-normal">
+                            {lang === 'hi' ? c.label : (lang === 'mr' ? c.hindi : c.hindi)}
+                          </span>
                         </div>
                       </button>
                     ))}
@@ -732,6 +772,26 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                     <RefreshCw className={`h-3 w-3 ${isLoadingFeed ? 'animate-spin' : ''}`} />
                     <span>Refresh</span>
                   </button>
+                </div>
+
+                {/* Official Municipal Advisory Banner (Multilingual EN/HI/MR - Fix D11/Phase 8) */}
+                <div className="rounded-xl bg-cyan-950/40 p-3 border border-cyan-500/40 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between text-[10px] text-cyan-300 font-bold border-b border-cyan-800/60 pb-1">
+                    <span className="flex items-center gap-1.5">
+                      <Radio className="h-3 w-3 text-cyan-400 animate-pulse" />
+                      {lang === 'hi' ? 'आधिकारिक आपातकालीन चेतावनी' : (lang === 'mr' ? 'अधिकृत आपत्कालीन सूचना' : 'Official Emergency Advisory')}
+                    </span>
+                    <span className="font-mono text-[9px] uppercase px-1.5 py-0.2 rounded bg-cyan-900/60 text-cyan-200">
+                      {lang.toUpperCase()} DISPATCH
+                    </span>
+                  </div>
+                  <p className="text-slate-200 text-[11px] leading-relaxed">
+                    {lang === 'hi'
+                      ? 'कुर्ला एल-वार्ड: मीठी नदी जलस्तर वृद्धि चेतावनी। जलभराव वाले क्षेत्रों में जाने से बचें। आपातकालीन सहायता: 1077।'
+                      : (lang === 'mr'
+                        ? 'कुर्ला एल-वॉर्ड: मिठी नदी पाणी पातळी इशारा. पाणी साचलेल्या सखल भागातून प्रवास टाळा. आपत्कालीन मदत: 1077.'
+                        : 'Kurla L-Ward: Mithi River level rise advisory. Avoid submerged underpasses and arterial roads. Emergency helpline: 1077.')}
+                  </p>
                 </div>
 
                 {liveReports.map((report) => (

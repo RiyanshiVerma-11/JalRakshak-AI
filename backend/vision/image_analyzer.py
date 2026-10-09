@@ -15,27 +15,38 @@ logger = logging.getLogger("jalrakshak.vision")
 
 class CitizenImageAnalyzer:
     def __init__(self):
-        self.region = os.environ.get("AWS_REGION", "ap-south-1")
+        self.region = os.environ.get("AWS_DEFAULT_REGION", os.environ.get("AWS_REGION", "ap-south-1"))
         self.rekognition_client = None
-        try:
-            self.rekognition_client = boto3.client("rekognition", region_name=self.region)
-        except Exception:
-            self.rekognition_client = None
+
+    def get_client(self):
+        if not self.rekognition_client:
+            try:
+                from backend.cloud.aws_bridge import create_boto_client
+                self.rekognition_client = create_boto_client("rekognition")
+            except Exception:
+                self.rekognition_client = None
+        return self.rekognition_client
 
     def analyze_image(self, category: str, description: str, image_bytes_len: int = 0, image_bytes: bytes = b"") -> Dict[str, Any]:
         """
-        Extracts structured environmental hazard indicators from real uploaded image bytes and user notes.
-        Integrates Amazon Rekognition detect_labels with graceful fallback to PIL pixel statistics.
+        Extracts structured environmental hazard indicators from image bytes and user notes.
+        Integrates Amazon Rekognition detect_labels when live credentials exist,
+        with honest fallback to Local PIL statistical analysis (labeled simulated).
         """
         desc_lower = description.lower()
-        image_metadata = {"has_image": False}
+        image_metadata = {
+            "has_image": False,
+            "provider": "Local PIL Heuristic Engine",
+            "simulated": True
+        }
 
         # Analyze real image pixels if image_bytes are present
         if image_bytes:
             # 1. Attempt Amazon Rekognition detect_labels
-            if self.rekognition_client:
+            client = self.get_client()
+            if client:
                 try:
-                    rek_resp = self.rekognition_client.detect_labels(
+                    rek_resp = client.detect_labels(
                         Image={"Bytes": image_bytes},
                         MaxLabels=8,
                         MinConfidence=60.0
@@ -44,9 +55,12 @@ class CitizenImageAnalyzer:
                     if detected_labels:
                         image_metadata["rekognition_labels"] = detected_labels
                         image_metadata["provider"] = "Amazon Rekognition"
+                        image_metadata["simulated"] = False
                 except (BotoCoreError, ClientError, Exception) as err:
                     logger.debug(f"Amazon Rekognition offline, using PIL: {err}")
-                    image_metadata["rekognition_note"] = "Local PIL engine active"
+                    image_metadata["provider"] = "Local PIL Heuristic Engine"
+                    image_metadata["simulated"] = True
+                    image_metadata["note"] = "Local PIL engine active (Build It zero-config)"
 
             # 2. Local PIL statistical validation
             if Image:
@@ -75,6 +89,9 @@ class CitizenImageAnalyzer:
                     image_metadata["error"] = str(e)
 
         # Category-specific inference
+        is_sim = image_metadata.get("simulated", True)
+        active_prov = image_metadata.get("provider", "Local PIL Heuristic Engine")
+
         if category == "waterlogging" or "water" in desc_lower or "flood" in desc_lower:
             has_deep_keywords = any(w in desc_lower for w in ["waist", "knee", "submerged", "stuck", "heavy", "deep", "drown"])
             has_debris_keywords = any(w in desc_lower for w in ["garbage", "choked", "trash", "debris", "drain", "blocked", "clogged"])
@@ -98,6 +115,8 @@ class CitizenImageAnalyzer:
                 "model_confidence": confidence,
                 "vision_tags": ["water_inundation", "roadway_obstruction", "curb_submerged", "traffic_standstill"],
                 "image_metadata": image_metadata,
+                "provider": active_prov,
+                "simulated": is_sim,
                 "bounding_boxes": [
                     {"label": "Submerged Road Surface", "confidence": 0.94, "box": [0.15, 0.40, 0.85, 0.90]},
                     {"label": "Waterline Curb Datum", "confidence": 0.91, "box": [0.30, 0.55, 0.70, 0.75]},
@@ -116,6 +135,8 @@ class CitizenImageAnalyzer:
                 "model_confidence": 0.94 if image_metadata.get("has_image") else 0.90,
                 "vision_tags": ["potable_water_spurt", "asphalt_fissure", "utility_duct_leak"],
                 "image_metadata": image_metadata,
+                "provider": active_prov,
+                "simulated": is_sim,
                 "bounding_boxes": [
                     {"label": "Pressurized Water Jet", "confidence": 0.92, "box": [0.25, 0.35, 0.75, 0.80]}
                 ]
@@ -132,6 +153,8 @@ class CitizenImageAnalyzer:
                 "model_confidence": 0.92 if image_metadata.get("has_image") else 0.88,
                 "vision_tags": ["sun_exposure", "asphalt_thermal_radiation", "pedestrian_vulnerability"],
                 "image_metadata": image_metadata,
+                "provider": active_prov,
+                "simulated": is_sim,
                 "bounding_boxes": [
                     {"label": "Unshaded Pedestrian Corridor", "confidence": 0.89, "box": [0.10, 0.20, 0.90, 0.85]}
                 ]
@@ -148,6 +171,8 @@ class CitizenImageAnalyzer:
                 "model_confidence": 0.93 if image_metadata.get("has_image") else 0.89,
                 "vision_tags": ["empty_receptacles", "water_ration_queue", "dry_distribution_point"],
                 "image_metadata": image_metadata,
+                "provider": active_prov,
+                "simulated": is_sim,
                 "bounding_boxes": [
                     {"label": "Depleted Water Point", "confidence": 0.90, "box": [0.20, 0.30, 0.80, 0.85]}
                 ]
