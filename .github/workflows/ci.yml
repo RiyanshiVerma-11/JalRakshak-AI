@@ -25,6 +25,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.lock
 
+    - name: Set up AWS SAM CLI
+      uses: aws-actions/setup-sam@v2
+      with:
+        use-installer: true
+
     - name: Validate AWS SAM Template
       run: |
         sam validate --template aws_infra/template.yaml --region ap-south-1 --lint

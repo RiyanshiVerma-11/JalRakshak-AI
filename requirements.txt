@@ -23,10 +23,9 @@ strands-agents==1.58.0
 cedarpy==4.12.1
 PyJWT==2.13.0
 
-# AWS SDK & Serverless IaC CLI (Pinned)
+# AWS SDK & Cloud Integration (Pinned)
 boto3==1.43.83
 botocore==1.43.108
-aws-sam-cli==1.166.2
 
 # Vector RAG & Numerical Computing (Pinned)
 scikit-learn==1.4.2
@@ -39,7 +38,7 @@ pillow==10.4.0
 httpx>=0.28.0
 python-multipart>=0.0.6
 python-dotenv>=1.0.0
-watchdog>=4.0.0
+watchdog>=6.0.0
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
 pyyaml>=6.0.0

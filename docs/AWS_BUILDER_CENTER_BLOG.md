@@ -45,10 +45,10 @@ To qualify for the hackathon's **Build It** route, our architectural mandate was
                  │   Risk ──► Impact ──► Resource ──► Comms ──► SOP│
                  └──────────────┬───────────────────┬──────────────┘
                                 │                   │
-       ┌────────────────────────▼─────────┐   ┌─────▼────────────────────────────┐
-       │   AWS Cedar Policy Engine (Rust) │   │     Amazon Bedrock / Local Fallback │
-       │  Statutory Commander Sign-off    │   │  TF-IDF SOP RAG (NDMA 2024 / NHAP)│
-       └──────────────────────────────────┘   └──────────────────────────────────┘
+       ┌────────────────────────▼─────────┐   ┌─────▼──────────────────────────────────┐
+       │   AWS Cedar Policy Engine (Rust) │   │     Amazon Bedrock / Local Fallback    │
+       │  Statutory Commander Sign-off    │   │  TF-IDF SOP RAG (NDMA 2024 / NHAP)     │
+       └──────────────────────────────────┘   └────────────────────────────────────────┘
 ```
 
 ![Figure 1: AWS Strands Architecture](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/strands_dag.jpg)
