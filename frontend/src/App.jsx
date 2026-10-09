@@ -103,6 +103,7 @@ export default function App() {
   const [focusedGISAction, setFocusedGISAction] = useState(null);
   const [isSimulating, setIsSimulating] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [snsSubscribers, setSnsSubscribers] = useState(null);
 
   const showNotification = (msg, type = 'info') => {
     setNotification({ msg, type });
@@ -183,6 +184,24 @@ export default function App() {
     }, 6000);
     return () => clearInterval(interval);
   }, [fetchIncidents, fetchResources]);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const res = await fetch('/api/aws/metrics');
+        if (res.ok) {
+          const data = await res.json();
+          const subs = data?.services?.Amazon_SNS?.subscribers;
+          setSnsSubscribers(typeof subs === 'number' ? subs : null);
+        }
+      } catch (err) {
+        // Fallback gracefully without fabricating numbers
+      }
+    };
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Cinematic Live Scenario Trigger
   const handleSimulate = async (scenario, customRainfall = null) => {
@@ -668,6 +687,7 @@ export default function App() {
               <StatRibbon
                 incidents={incidents}
                 resources={resources}
+                snsSubscribers={snsSubscribers}
               />
 
               {/* MODULE 1: TACTICAL DECISION ROOM (Focused on Action Plan, Directives & Inline Edit — Zero Scrolling) */}

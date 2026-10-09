@@ -36,6 +36,13 @@ jobs:
       run: |
         python -m pytest tests/ -v
 
+    - name: Run Strands Agent Benchmark (Non-blocking)
+      continue-on-error: true
+      env:
+        PYTHONPATH: .
+      run: |
+        python tests/benchmark_strands.py
+
     - name: Set up Node.js 22
       uses: actions/setup-node@v4
       with:

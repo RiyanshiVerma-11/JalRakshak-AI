@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertCircle, AlertTriangle, Users, Truck, Radio, ShieldCheck } from 'lucide-react';
 
-export default function StatRibbon({ incidents, resources }) {
+export default function StatRibbon({ incidents, resources, snsSubscribers = null }) {
   const criticalCount = incidents.filter(i => i.severity === 'CRITICAL').length;
   const highCount = incidents.filter(i => i.severity === 'HIGH').length;
   const moderateCount = incidents.filter(i => i.severity === 'MODERATE' || i.severity === 'LOW').length;
@@ -84,12 +84,18 @@ export default function StatRibbon({ incidents, resources }) {
       {/* Broadcasts Sent */}
       <div className="rounded-xl bg-white p-3 border-l-4 border-l-purple-600 border border-slate-200 shadow-2xs hover:shadow-xs transition-all">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">SNS Subscribers</span>
+          <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+            {snsSubscribers != null ? "SNS Subscribers" : "SNS Topic"}
+          </span>
           <Radio className="h-3.5 w-3.5 text-purple-600" />
         </div>
         <div className="mt-1 flex items-baseline gap-2">
-          <span className="text-2xl font-black text-purple-700">18,450</span>
-          <span className="text-[11px] text-purple-700 font-semibold">Active</span>
+          <span className="text-2xl font-black text-purple-700">
+            {snsSubscribers != null ? Number(snsSubscribers).toLocaleString() : "—"}
+          </span>
+          <span className={`text-[11px] font-semibold ${snsSubscribers != null ? "text-purple-700" : "text-slate-500"}`}>
+            {snsSubscribers != null ? "Active" : "SNS Topic (not configured)"}
+          </span>
         </div>
       </div>
 

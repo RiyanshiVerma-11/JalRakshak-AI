@@ -214,7 +214,7 @@ class EmergencyCopilot:
                     },
                     {
                         "priority": "P4",
-                        "action": "Send multilingual SMS warning in English, Hindi, and Marathi to 18,450 geo-fenced residents",
+                        "action": "Send multilingual SMS warning in English, Hindi, and Marathi to geo-fenced residents in Ward-17",
                         "authority": "Public Relations Cell",
                         "eta": "Immediate",
                         "resource_id": "SNS-BROADCAST",

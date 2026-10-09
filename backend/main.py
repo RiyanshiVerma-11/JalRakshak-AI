@@ -16,7 +16,7 @@ from datetime import datetime
 from .data.mock_db import db
 from .agents.strands_workflow import strands_orchestrator
 from .vision.image_analyzer import image_analyzer
-from .aws_simulator.aws_bridge import aws_bridge
+from .cloud.aws_bridge import aws_bridge
 from .rag.rag_engine import rag_engine
 from .copilot import copilot
 from .auth.cedar_auth import (

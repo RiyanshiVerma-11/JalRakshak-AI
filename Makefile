@@ -28,4 +28,5 @@ sam-validate:
 	sam validate --template aws_infra/template.yaml --region ap-south-1 --lint
 
 clean:
-	rm -rf .pytest_cache __pycache__ backend/**/__pycache__ .aws-sam/build
+	rm -rf .pytest_cache __pycache__ .aws-sam/build
+	find . -name __pycache__ -type d -prune -exec rm -rf {} +

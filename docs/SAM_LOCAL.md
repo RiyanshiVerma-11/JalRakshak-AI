@@ -15,7 +15,7 @@ sam validate --template aws_infra/template.yaml --region ap-south-1 --lint
 ```
 **Raw Acceptance Output**:
 ```
-d:\Riyanshi\01_coding\projects\41 JalRakshak AI\aws_infra\template.yaml is a valid SAM Template
+aws_infra/template.yaml is a valid SAM Template
 ```
 
 ## 3. Production Build
@@ -26,7 +26,7 @@ sam build --template aws_infra/template.yaml --region ap-south-1
 ```
 **Raw Acceptance Output**:
 ```
-Building codeuri: d:\Riyanshi\01_coding\projects\41 JalRakshak AI\aws_infra runtime: python3.11 metadata: {} architecture: arm64 functions: CitizenReportIngestLambda, TelemetryProcessorLambda, DispatchActionLambda, BedrockAgentInvokerLambda
+Building codeuri: aws_infra runtime: python3.11 metadata: {} architecture: arm64 functions: CitizenReportIngestLambda, TelemetryProcessorLambda, DispatchActionLambda, BedrockAgentInvokerLambda
 Running PythonPipBuilder:ResolveDependencies
 Running PythonPipBuilder:CopySource
 Build Succeeded
@@ -35,14 +35,19 @@ Built Artifacts  : .aws-sam\build
 Built Template   : .aws-sam\build\template.yaml
 ```
 
-## 4. Local Lambda Invocation
+## 4. Local Lambda Invocation — NOT YET RUN (requires Docker)
 To invoke individual serverless Lambdas locally using sample EventBridge events:
 
-1. Ensure **Docker Desktop** is running on the host.
+1. Ensure **Docker Desktop** is running on the host (required for local container emulation).
 2. Execute invocation using the test event payload:
 ```bash
 sam local invoke CitizenReportIngestLambda -e events/citizen_event.json
 ```
 
-**Expected Event Processing**:
-The handler reads the citizen report payload, logs event correlation ID to CloudWatch, persists the record, and emits an EventBridge event to `aws.iot.environment`.
+**Real Command Execution Output**:
+```
+No current session found, using default AWS::AccountId
+Error: Running AWS SAM projects locally requires a container runtime. Do you have Docker installed and running?
+```
+
+> **Docker Status Note**: On this host environment, Docker Desktop daemon is not currently active, so container runtime emulation cannot launch the Lambda execution container locally. The serverless Lambda handlers (`aws_infra/lambda_handlers.py`) are independently verified and exercised directly via `pytest tests/test_integration.py::test_serverless_lambda_handlers_execution` (which passes 100% without container overhead).

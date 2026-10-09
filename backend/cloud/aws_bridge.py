@@ -1,11 +1,24 @@
 """
-AWS Cloud Architecture Simulator & Production Cloud Bridge
+AWS Cloud Architecture Bridge & Production Cloud Connector
 Hybrid architecture: real boto3 clients when credentials available, deterministic simulation otherwise.
 Services: EventBridge, S3, DynamoDB, SNS, Amazon Bedrock Claude 3.5 Sonnet.
 Judge terminal logs use ANSI colour for instant readability.
 """
 import os, uuid, time, json, random
-from datetime import datetime
+from datetime import datetime as _dt, timezone
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = timezone.utc
+
+class _DateTimeMeta(type):
+    def __getattr__(cls, name):
+        if name == 'UTC':
+            return UTC
+        return getattr(_dt, name)
+
+class datetime(_dt, metaclass=_DateTimeMeta):
+    pass
 from decimal import Decimal
 from typing import Dict, Any, List, Optional
 from ..data.mock_db import db
@@ -214,7 +227,7 @@ def publish_emergency_sns(message: str, ward_name: str, priority: str = "HIGH") 
     print(f"  \u251c\u2500\u2500 Ward     : {ward_name} | Priority: {_Y}{priority}{_R}")
     print(f"  \u2514\u2500\u2500 Channels : [SMS_GATEWAY_TRAI, CIVIL_DEFENSE_WHATSAPP, MUNICIPAL_PA_SPEAKERS]")
     return {"message_id": msg_id, "topic_arn": topic_arn, "http_status": 200,
-            "live": live, "timestamp": datetime.utcnow().isoformat() + "Z"}
+            "live": live, "timestamp": datetime.now(datetime.UTC).isoformat()}
 
 
 # ── AWSCloudBridge (all existing methods preserved, new invoke_bedrock added) ─
@@ -245,7 +258,7 @@ class AWSCloudBridge:
         always records into the CloudEvents audit trail in db.log_aws_event.
         """
         event_id = f"evt-eb-{uuid.uuid4().hex[:8]}"
-        timestamp = datetime.utcnow().isoformat() + "Z"
+        timestamp = datetime.now(datetime.UTC).isoformat()
         cloudevent_envelope = {
             "version": "0",
             "id": event_id,
@@ -267,7 +280,7 @@ class AWSCloudBridge:
                     "DetailType": detail_type,
                     "Detail": json.dumps(detail),
                     "EventBusName": self.event_bus_name,
-                    "Time": datetime.utcnow()
+                    "Time": datetime.now(datetime.UTC)
                 }])
             except Exception as exc:
                 print(f"{_Y}[EVENTBRIDGE FALLBACK]{_R} Live emit failed ({type(exc).__name__}). Logged locally.")
@@ -341,6 +354,15 @@ class AWSCloudBridge:
 
     def get_cloud_metrics(self) -> Dict[str, Any]:
         """Returns real-time AWS service health & metrics."""
+        sns_subscribers = None
+        if self._sns_client and _credentials_available() and self.sns_topic_arn:
+            try:
+                attrs = self._sns_client.get_topic_attributes(TopicArn=self.sns_topic_arn).get("Attributes", {})
+                if "SubscriptionsConfirmed" in attrs:
+                    sns_subscribers = int(attrs["SubscriptionsConfirmed"])
+            except Exception:
+                sns_subscribers = None
+
         return {
             "region":           self.region,
             "execution_mode":   AWS_EXECUTION_MODE,
@@ -352,7 +374,7 @@ class AWSCloudBridge:
                 "Amazon_EventBridge": {"status": "ACTIVE",  "events_this_session": len(db.aws_event_bus)},
                 "Amazon_DynamoDB":    {"status": "ONLINE",  "tables": self.dynamodb_tables},
                 "Amazon_S3":          {"status": "ONLINE",  "bucket": self.s3_bucket},
-                "Amazon_SNS":         {"status": "HEALTHY", "topic_arn": self.sns_topic_arn},
+                "Amazon_SNS":         {"status": "HEALTHY", "topic_arn": self.sns_topic_arn, "subscribers": sns_subscribers},
                 "AWS_Lambda":         {"status": "HEALTHY", "concurrency": "Auto-scaling"},
             },
             "recent_events": db.aws_event_bus[:10],

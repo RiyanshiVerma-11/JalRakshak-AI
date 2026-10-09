@@ -8,7 +8,7 @@
 [![NDMA Compliant](https://img.shields.io/badge/Statutory%20SOP-NDMA%20Urban%20Flooding%202024-10B981?style=for-the-badge)](https://ndma.gov.in)
 [![RBAC Enforced](https://img.shields.io/badge/Security-AWS%20Cedar%20(cedarpy)%20RBAC-E11D48?style=for-the-badge)](policies/incident_policy.cedar)
 [![Integration Tests](https://img.shields.io/badge/Tests-17%2F17%20Passing-10B981?style=for-the-badge&logo=pytest)](tests/)
-[![Hybrid Architecture](https://img.shields.io/badge/Hybrid%20Architecture-Real--Time%20GIS%20%2B%20Bedrock%20RAG-8B5CF6?style=for-the-badge&logo=amazonaws)](backend/aws_simulator/aws_bridge.py)
+[![Hybrid Architecture](https://img.shields.io/badge/Hybrid%20Architecture-Real--Time%20GIS%20%2B%20Bedrock%20RAG-8B5CF6?style=for-the-badge&logo=amazonaws)](backend/cloud/aws_bridge.py)
 [![Fault Tolerance](https://img.shields.io/badge/Fault%20Tolerance-NDMA%20Fallback%20Active-06B6D4?style=for-the-badge&logo=shield)](backend/agents/strands_workflow.py)
 [![AWS SAM IaC](https://img.shields.io/badge/AWS%20SAM-Template%20Validated-FF9900?style=for-the-badge&logo=amazon-aws)](aws_infra/template.yaml)
 
@@ -102,7 +102,7 @@ flowchart TD
     style EXECUTION fill:#082f49,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
 ```
 
-### ⚡ Hybrid Real-Time & Generative Architecture: Sub-50ms GIS Routing + Asynchronous Bedrock Synthesis
+### ⚡ Hybrid Real-Time & Generative Architecture: Deterministic Fast-Lane Routing (Measured p50: 1.41ms) + Asynchronous Bedrock Synthesis
 
 JalRakshak AI solves the fundamental tension between **real-time field safety** and **nuanced generative intelligence** through a dual-lane Hybrid Architecture:
 
@@ -202,10 +202,10 @@ timeline
 ## ⚡ Measured Multi-Agent Execution Benchmark
 
 Measured locally across 20 consecutive runs of the complete 5-agent AWS Strands workflow (`tests/benchmark_strands.py`):
-* **p50 Latency:** $3.38\text{ ms}$
-* **p95 Latency:** $7.60\text{ ms}$
-* **Min / Max:** $2.75\text{ ms}$ / $7.60\text{ ms}$
-* **Platform:** Windows 11 AMD64, Python 3.11, `ap-south-1` local runtime
+* **p50 Latency:** $1.41\text{ ms}$
+* **p95 Latency:** $2.16\text{ ms}$
+* **Min / Max:** $1.23\text{ ms}$ / $2.16\text{ ms}$
+* **Platform:** Windows 10 AMD64, Python 3.11.3, `ap-south-1` local runtime
 * **Fault Tolerance Fallback:** $<1\text{ ms}$ deterministic NDMA matrix
 
 ---
@@ -265,22 +265,20 @@ JalRakshak AI features a built-in, automated interactive tour for reviewers and 
 
 ## ☁️ AWS Cloud Services Architecture
 
-| AWS Service | Production Architectural Role | In-App Realization |
-| :--- | :--- | :--- |
-| **Collaborative 5-Agent Pipeline** | Deterministic multi-agent collaborative state graph | `backend/agents/strands_workflow.py` executing 5-agent graph |
-| **Amazon Bedrock** | Foundation model inference (Claude 3.5 Sonnet) | Asynchronous multilingual advisory synthesis (~1.4s) & tactical reasoning via Boto3 |
-| **Amazon EventBridge** | Decoupled event bus for telemetry thresholds & citizen tickets | Emits `SensorThresholdExceeded` CloudEvents 1.0 payloads |
-| **Amazon DynamoDB** | Single-digit millisecond state storage for incidents & assets | Schemas defined in `aws_infra/template.yaml`; live PutItem with Decimal serialization |
-| **Amazon SNS** | High-throughput multilingual SMS emergency broadcaster | Localized broadcasts in English, Hindi, and Marathi via Boto3 |
-| **Amazon S3** | Encrypted object lake for citizen evidence photos | Tamper-proof storage specified in SAM template |
-| **AWS SAM IaC** | Production serverless infrastructure specification | Declarative `aws_infra/template.yaml` with PoLP IAM roles |
+| AWS Service | Production Architectural Role | In-App Realization | Real AWS call? (file:line) |
+| :--- | :--- | :--- | :--- |
+| **Amazon Bedrock** | Foundation model inference (Claude 3.5 Sonnet) | Asynchronous multilingual advisory synthesis & tactical reasoning via Boto3 | `backend/cloud/aws_bridge.py:127` |
+| **Amazon EventBridge** | Decoupled event bus for telemetry thresholds & citizen tickets | Emits `SensorThresholdExceeded` CloudEvents 1.0 payloads | `backend/cloud/aws_bridge.py:278` |
+| **Amazon DynamoDB** | Single-digit millisecond state storage for incidents & assets | Live `PutItem` with Decimal serialization for incident state | `backend/cloud/aws_bridge.py:340` |
+| **Amazon SNS** | High-throughput multilingual SMS emergency broadcaster | Localized broadcasts in English, Hindi, and Marathi via Boto3 | `backend/cloud/aws_bridge.py:211` |
+| **Amazon Rekognition** | Multimodal computer vision analysis for citizen evidence photos | Detects flood hazards, water depth, and road passability via Boto3 | `backend/vision/image_analyzer.py:38` |
 
 ---
 
 ### 🛡️ Resilient Dual-Mode Execution & Statutory Safety Net
 JalRakshak AI utilizes a dual-mode runtime architecture (`LIVE` and `HYBRID`). In `LIVE` mode with active AWS credentials, the system executes real Boto3 calls against Amazon Bedrock (Claude 3.5 Sonnet), writes incident state directly to Amazon DynamoDB (`JalRakshak-IncidentsTable`), publishes CloudEvents 1.0 payloads to Amazon EventBridge, and broadcasts multilingual alerts over Amazon SNS. 
 
-During civic emergencies, cloud networks can suffer throttling (HTTP 429) or upstream timeouts. If Bedrock degrades or latency exceeds safety thresholds, the orchestrator triggers an automated circuit-breaker into an embedded **Statutory NDMA 2024 Deterministic Matrix**, guaranteeing legally binding, sub-50ms evacuation and pump dispatches with zero civic downtime.
+During civic emergencies, cloud networks can suffer throttling (HTTP 429) or upstream timeouts. If Bedrock degrades or latency exceeds safety thresholds, the orchestrator triggers an automated circuit-breaker into an embedded **Statutory NDMA 2024 Deterministic Matrix**, guaranteeing statutorily grounded (NDMA 2024 Ch.4 Sec 4.3), deterministic fast-lane evacuation and pump dispatches with zero civic downtime.
 
 ---
 

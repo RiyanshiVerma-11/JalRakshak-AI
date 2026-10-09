@@ -8,7 +8,20 @@ import os
 import json
 import uuid
 import logging
-from datetime import datetime
+from datetime import datetime as _dt, timezone
+try:
+    from datetime import UTC
+except ImportError:
+    UTC = timezone.utc
+
+class _DateTimeMeta(type):
+    def __getattr__(cls, name):
+        if name == 'UTC':
+            return UTC
+        return getattr(_dt, name)
+
+class datetime(_dt, metaclass=_DateTimeMeta):
+    pass
 from typing import Dict, Any, Optional
 
 # Root-anchoring for AWS Lambda (/var/task) and local SAM execution
@@ -68,7 +81,7 @@ def citizen_ingest_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any
         category = body.get('category', 'waterlogging')
         ward_id = body.get('ward_id', 'WARD-17')
         user_description = body.get('user_description', '')
-        timestamp = datetime.utcnow().isoformat() + "Z"
+        timestamp = datetime.now(datetime.UTC).isoformat()
 
         # Multimodal Vision Analysis (Simulated / Rekognition inference)
         ai_analysis = {
@@ -109,7 +122,7 @@ def citizen_ingest_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any
                     "DetailType": "CitizenReportIngested",
                     "Detail": json.dumps(record),
                     "EventBusName": bus_name,
-                    "Time": datetime.utcnow()
+                    "Time": datetime.now(datetime.UTC)
                 }])
                 logger.info(f"Emitted CitizenReportIngested event to EventBridge bus {bus_name}")
             except Exception as eb_err:
