@@ -48,7 +48,8 @@ We leveraged four AWS open-source technologies to establish a zero-config, produ
        └──────────────────────────────────┘   └──────────────────────────────────┘
 ```
 
-![AWS Strands 5-Agent Collaborative DAG](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/strands_dag.jpg)
+![Figure 1: AWS Strands Architecture](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/strands_dag.jpg)
+
 *Figure 1: AWS Strands Agents SDK Architecture — Visualizing the 5-Agent DAG sequence and sub-4ms circuit-breaker lifecycle.*
 
 ### The Tooling Matrix
@@ -70,11 +71,7 @@ from strands import Agent, tool
 from strands.hooks import HookProvider, HookRegistry, events
 
 @tool
-def evaluate_risk_tool(
-    category: str,
-    ward_info: dict,
-    telemetry: dict
-) -> dict:
+def evaluate_risk_tool(category: str, ward_info: dict, telemetry: dict) -> dict:
     """Evaluates hazard deltas against drainage capacity or wet-bulb thermal limits."""
     return risk_agent.evaluate(category, ward_info, telemetry)
 
@@ -183,10 +180,12 @@ Every serious build involves architectural friction. Here are the four biggest c
 
 ## 5. Operational Results and Impact
 
-![JalRakshak AI Live Municipal Command Center](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/command_center.jpg)
+![Figure 2: JalRakshak AI Live Command Center](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/command_center.jpg)
+
 *Figure 2: JalRakshak AI Live Command Center — Incident Triage, GIS Flood Contours, and Human-in-the-Loop Action Approval.*
 
-![SCADA Hydrology Telemetry Console](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/scada_telemetry.jpg)
+![Figure 3: SCADA Hydrology Console](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/scada_telemetry.jpg)
+
 *Figure 3: SCADA Hydrology Console — Real-Time Pipeline Pressure Waveforms & Drainage Outfall Saturation.*
 
 * **Integration Suite:** **30 out of 30 tests passing (100%)** with zero skips across authentication, multi-agent orchestration, and SAM IaC.
@@ -210,7 +209,8 @@ You can clone and run JalRakshak AI on your laptop in under 60 seconds with zero
 ```bash
 git clone https://github.com/RiyanshiVerma-11/JalRakshak-AI.git
 cd JalRakshak-AI
-pip install -r requirements.txt && python run_app.py
+pip install -r requirements.txt
+python run_app.py
 ```
 
 Once running, navigate to `http://localhost:8004` to explore the live multi-agent command center and disaster simulations.
