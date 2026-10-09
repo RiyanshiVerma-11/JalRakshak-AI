@@ -115,6 +115,25 @@ _CORPUS: List[Dict[str, Any]] = [
             "Enforce non-essential water bans (vehicle washing, ornamental fountains, turf irrigation)",
         ],
     },
+    {
+        "id":    "SOP-GW-501",
+        "title": "CGWB & NDMA - Critical Urban Groundwater Depletion & Aquifer Stress Protocol",
+        "category": "groundwater",
+        "text": (
+            "groundwater aquifer water table depletion borewell overextraction drought "
+            "saline intrusion recharge well water tanker augmentation rainwater harvesting "
+            "central ground water board cgwb ndma drought contingency emergency water security "
+            "shallow aquifer critical depth subsoil monitoring"
+        ),
+        "section":  "Central Ground Water Board (CGWB) & NDMA Urban Drought Guidelines, Sec 5.4",
+        "citation": "SOP-GW-501 | CGWB / NDMA Groundwater SOP | Sec 5.4",
+        "mandatory_actions": [
+            "Trigger automated rationing of deep borewell extraction across critical stress sectors",
+            "Mobilize GPS-tracked emergency water tankers to buffer drinking water deficits",
+            "Mandate emergency artificial aquifer recharge diversion from non-polluted stormwater channels",
+            "Issue public water conservation advisory and halt industrial groundwater drawing",
+        ],
+    },
 ]
 
 # ── Vectoriser bootstrap ──────────────────────────────────────────────────────

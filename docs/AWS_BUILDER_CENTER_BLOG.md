@@ -78,21 +78,27 @@ risk_detection_agent = Agent(
 )
 ```
 
-The pipeline executes as a deterministic directed acyclic graph (DAG) across both track dimensions:
-
-* **In Flood Scenarios (`URBAN_FLOOD`):**
+* **In Flood & Monsoon Waterlogging Scenarios (`URBAN_FLOOD`):**
   1. **Risk Agent:** Computes rainfall intensity (118 mm/hr) against stormwater drain saturation (92%).
-  2. **Impact Agent:** Intersects flood footprint with GIS layers (Bhabha Hospital ICU, school basements).
+  2. **Impact Agent:** Intersects flood footprint with GIS layers (Bhabha Hospital ICU, arterial transit routes).
   3. **Resource Agent:** Geospatially pairs nearest high-capacity dewatering pumps (Pump P-04, 18 min ETA).
   4. **Comms Agent:** Synthesizes localized advisories across English, Hindi, and Marathi.
   5. **Coordinator Agent:** Retrieves statutory **NDMA SOP-FLD-101** guidelines to formulate the operational action plan.
 
-* **In Heatwave Scenarios (`HEATWAVE`):**
+* **In Extreme Heatwave Scenarios (`HEATWAVE`):**
   1. **Risk Agent:** Detects 48.6°C wet-bulb thermal distress thresholds exceeding municipal survivability limits.
   2. **Impact Agent:** Maps exposed vulnerable populations (outdoor construction clusters, unshaded transit stops).
   3. **Resource Agent:** Dispatches mobile climate-controlled cooling vans and misting bowsers to transit hubs.
   4. **Comms Agent:** Broadcasts multilingual hydration and heat-stroke safety advisories.
   5. **Coordinator Agent:** Retrieves statutory **NHAP SOP-HEAT-04** protocols, recommending halting outdoor labour between 11:30 AM and 4:30 PM.
+
+* **In Pipeline Leaks & Hydraulic Ruptures (`LEAKS`):**
+  1. **SCADA Hydrology Agent:** Detects -2.4 Bar pressure drop anomalies across transmission lines.
+  2. **Action Plan:** Remotely throttles isolating valves V-14A/V-14B under **CPHEEO SOP-PIPE-82** to prevent millions of litres of treated municipal water loss.
+
+* **In Droughts, Tankers & Groundwater Depletion (`DROUGHTS` / `GROUNDWATER`):**
+  1. **Resource Routing:** When reservoirs and subsoil aquifers experience critical stress, the platform dispatches GPS-tracked potable water tankers (`RES-TANKER-01`, 10,000L) to unpiped informal settlements under **Jal Jeevan Mission SOP-WTR-301**.
+  2. **Aquifer Governance:** Triggers automated borewell extraction rationing and artificial stormwater recharge diversion under **CGWB / NDMA SOP-GW-501**.
 
 ---
 
