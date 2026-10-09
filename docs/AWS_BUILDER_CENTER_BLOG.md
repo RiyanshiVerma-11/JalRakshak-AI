@@ -1,30 +1,33 @@
 # Building JalRakshak AI: AWS Strands & Cedar for Floods and Heat (and What Fought Back)
 
-*Built by Team SheBuilds for WeMakeDevs × AWS Environmental Hacks (Track 02: Heat and Water — Build It Route).*
+**Track:** Heat and Water | **Route:** Build It (100% Local, Zero Cloud Credentials Required)  
+**Authors:** Team SheBuilds (Riyanshi Verma & Team) | **Repository:** [https://github.com/RiyanshiVerma-11/JalRakshak-AI](https://github.com/RiyanshiVerma-11/JalRakshak-AI)  
+**Hackathon:** WeMakeDevs × AWS "Environmental Hacks"  
+**Tags:** `AWS`, `serverless`, `agents`, `disaster-management`, `sustainability`, `climate`, `open-source`
 
 ---
 
-Every year, Indian metropolises face a brutal dual climate cycle: in July, a 118 mm/hr cloudburst submerses low-lying municipal wards within 40 minutes, flooding hospital ICUs and turning arterial roads into canals. Nine months later, May brings lethal 48.6°C wet-bulb heatwaves, water pipeline ruptures, and parched municipal reservoirs.
+## The Crisis: Urban Disaster Decision Latency
 
-When examining municipal emergency control rooms, there is a striking paradox: **the bottleneck is never a lack of sensors**. Modern command centers receive gigabytes of IoT rain gauge feeds, Doppler radar telemetry, SCADA pipeline pressure waveforms, and ambient thermal sensors every second.
+Every year, Indian metropolises face a brutal dual climate cycle: in July, an intense 118 mm/hr cloudburst inundates low-lying municipal wards within 40 minutes, submerging hospital ICUs, tripping electrical substations, and turning arterial roadways into canals. Nine months later, May brings lethal 48.6°C wet-bulb heatwaves, water pipeline ruptures, and parched municipal reservoirs.
+
+When examining municipal emergency control rooms during these disasters, there is a striking paradox: **the bottleneck is never a lack of sensors**. Modern command centers receive gigabytes of IoT rain gauge feeds, Doppler radar telemetry, SCADA pipeline pressure waveforms, and ambient thermal sensors every second.
 
 The breakdown occurs in **operational decision latency**:
 1. During a flash flood or severe heatwave, control rooms receive over 1,200 panicked citizen calls in under 30 minutes.
-2. Correlating environmental telemetry against infrastructure capacities, hospital registries, and emergency resource fleets (dewatering pumps or mobile cooling units) requires 3 to 4 hours of manual cross-departmental coordination.
-3. In civic governance, an ungrounded, probabilistic AI cannot legally dispatch emergency equipment, isolate power grids, or issue statutory evacuation sirens.
+2. Correlating environmental telemetry against infrastructure capacities, hospital registries, and emergency resource fleets (1000 GPM dewatering pumps or mobile cooling vans) requires 3 to 4 hours of manual cross-departmental coordination.
+3. In civic governance, an ungrounded, probabilistic AI cannot legally dispatch emergency equipment, isolate power grids, or issue statutory evacuation sirens under the **Disaster Management Act 2005**.
 
 > **Our core design question:**  
-> *Most civic dashboards tell administrators what is happening. Can we build an autonomous, protocol-grounded system that determines what statutory action to authorize next within 18 minutes — for both flash floods and extreme heatwaves?*
+> *Most civic dashboards tell administrators what is happening. Can we build an autonomous, protocol-grounded system that determines what statutory action to authorize next within 18 minutes — for both flash floods and extreme heatwaves — running completely offline without cloud dependencies?*
 
 This led **Team SheBuilds** to engineer **JalRakshak AI** (Water & Climate Guardian) for the WeMakeDevs × AWS Environmental Hacks (**Track 02: Heat and Water — Build It Route**).
 
 ---
 
-## 1. Architecture Overview: An Open-Source AWS Triad
+## 1. Architecture Overview: The AWS Open-Source Triad
 
-To qualify for the hackathon's **Build It** route, our architectural mandate was strict: **the entire platform had to run 100% locally on a laptop, without requiring judges to configure AWS API keys, personal credit cards, or paid cloud infrastructure.**
-
-We leveraged four AWS open-source technologies to establish a zero-config, production-grade foundation:
+To qualify for the hackathon's **Build It** route, our architectural mandate was absolute: **the entire platform must run 100% locally on a developer laptop, without requiring judges to create an AWS account, configure API keys, enter credit cards, or incur cloud bills.**
 
 ```text
                   ┌──────────────────────────────────────────────┐
@@ -50,181 +53,231 @@ We leveraged four AWS open-source technologies to establish a zero-config, produ
 
 ![Figure 1: AWS Strands Architecture](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/strands_dag.jpg)
 
-*Figure 1: AWS Strands Agents SDK Architecture — Visualizing the 5-Agent DAG sequence and sub-4ms circuit-breaker lifecycle.*
-
-### The Tooling Matrix
-* **Multi-Agent Orchestration:** **AWS Strands Agents SDK** (`strands-agents` v1.58.0)
-* **Authorization & Statutory Policy:** **AWS Cedar** (`cedarpy` v4.12.1)
-* **Serverless IaC:** **AWS SAM CLI** (`aws_infra/template.yaml`)
-* **Local Emulation:** **LocalStack** & `boto3` endpoint resolution
-* **Model Layer:** Dual-Mode — Amazon Bedrock Claude 3.5 Sonnet (Live Cloud) / `LocalDeterministicModel` (Offline Build It)
-* **Knowledge Retrieval:** In-memory TF-IDF vector RAG grounded in NDMA Urban Flooding Guidelines 2024 & National Heat Action Plan (NHAP) 2024
+*Figure 1: AWS Strands Agents SDK Architecture — Visualizing the 5-Agent DAG sequence and circuit-breaker lifecycle. (Editor note: upload directly to Builder Center to avoid hotlink dependency).*
 
 ---
 
-## 2. Multi-Agent Orchestration with AWS Strands Agents SDK
+## 2. Build It Route: What Actually Runs on a Laptop
 
-Instead of relying on a monolithic prompt that hallucinates during complex crises, we structured our workflow using the **AWS Strands Agents SDK**. Each agent is an independent `strands.Agent` instance equipped with specialized `@tool` functions and system constraints:
+In accordance with the Build It route specifications:
+
+```bash
+# Three-command quickstart (Zero config, no .env required)
+git clone https://github.com/RiyanshiVerma-11/JalRakshak-AI.git
+pip install -r requirements.txt
+python run_app.py
+```
+
+### The Architectural Truth Table: Real vs. Simulated
+
+| Component | What Runs For Real on Your Laptop | What is Honestly Simulated |
+| :--- | :--- | :--- |
+| **AWS Strands Agents SDK** | Genuine `strands.Agent` loop, `@tool` invocation cycles, and `StrandsCircuitBreakerHook` lifecycle | In OFFLINE mode, LLM inference is fulfilled locally by `LocalDeterministicModel`; real Bedrock calls run when `AWS_EXECUTION_MODE=LIVE`. |
+| **AWS Cedar Policy Engine** | Real Rust-backed Cedar policy evaluations via `cedarpy` against `policies/incident_policy.cedar` | None. Every permit/forbid decision is computed live by the Cedar engine. |
+| **AWS SAM CLI** | Real SAM template validation (`sam validate`) and artifact build (`sam build`) | Container emulation (`sam local invoke`) requires Docker Desktop on the host. Direct handlers are tested via pytest. |
+| **Incident State & Storage** | Real in-memory state store with thread locking, query indexing, and JSON serialization | DynamoDB network calls are skipped in offline mode (`simulated: true`), connecting live when credentials exist. |
+| **Emergency Notifications** | Real alert generation in 3 languages (English, Hindi, Marathi) with SMS/WhatsApp payloads | Real SNS network publishing requires AWS credentials; offline mode queues payloads with `simulated: true`. |
+| **Multimodal Vision** | Real computer vision feature extraction on actual uploaded image bytes via Pillow/NumPy | AWS Rekognition API call is bypassed offline in favor of local computer vision feature analysis. |
+
+### Build It Tool Inventory (Live System Status)
+
+The following inventory is generated dynamically by querying `/api/health -> build_it_tools`:
+
+```json
+[
+  {
+    "tool": "AWS Strands Agents SDK",
+    "route": "Build It",
+    "category": "Agents and AI",
+    "status": "ACTIVE",
+    "evidence": "strands-agents v1.58.0 | 5-agent DAG orchestrator"
+  },
+  {
+    "tool": "AWS Cedar",
+    "route": "Build It",
+    "category": "Auth and policy",
+    "status": "ACTIVE",
+    "evidence": "cedarpy v4.12.1 | Policy: policies/incident_policy.cedar"
+  },
+  {
+    "tool": "AWS SAM CLI",
+    "route": "Build It",
+    "category": "Serverless IaC",
+    "status": "ACTIVE",
+    "evidence": "Template: aws_infra/template.yaml | SAM CLI: sam.exe"
+  },
+  {
+    "tool": "LocalStack",
+    "route": "Build It",
+    "category": "Serverless Emulation",
+    "status": "FALLBACK",
+    "evidence": "Endpoint: OFFLINE mode (docker-compose.local.yml ready) | boto3 v1.43.83"
+  }
+]
+```
+
+---
+
+## 3. Multi-Agent Orchestration with AWS Strands Agents SDK
+
+Instead of relying on a fragile prompt chain, our workflow is powered by the **AWS Strands Agents SDK**. Each agent is an independent `strands.Agent` instance equipped with `@tool` functions:
 
 ```python
-from strands import Agent, tool
-from strands.hooks import HookProvider, HookRegistry, events
-
 @tool
 def evaluate_risk_tool(category: str, ward_info: dict, telemetry: dict) -> dict:
-    """Evaluates hazard deltas against drainage capacity or wet-bulb thermal limits."""
+    """
+    Strands Tool: Evaluates hydrological and meteorological hazard risk
+    from real-time sensor streams and drainage capacities.
+    """
     return risk_agent.evaluate(category, ward_info, telemetry)
+```
+*Source File:* [backend/agents/strands_workflow.py](file:///d:/Riyanshi/01_coding/projects/41%20JalRakshak%20AI/backend/agents/strands_workflow.py)
 
-# Instantiating the Strands Risk Agent with genuine SDK contracts
+```python
 risk_detection_agent = Agent(
     agent_id="strands-agent-risk-01",
     name="Risk Detection Agent",
-    description="Calculates sensor deltas and mathematical explainability weights.",
-    system_prompt="You evaluate sensor telemetry and calculate explainability weights.",
+    description="Evaluates sensor deltas, hydrological saturation, and calculates mathematical explainability scores.",
+    system_prompt="You are Strands Risk Detection Agent for JalRakshak AI. You evaluate real-time sensor streams and determine hazard severity.",
     tools=[evaluate_risk_tool],
     hooks=[circuit_breaker_hook],
     model=get_strands_model("Risk Detection Agent")
 )
 ```
+*Source File:* [backend/agents/strands_workflow.py](file:///d:/Riyanshi/01_coding/projects/41%20JalRakshak%20AI/backend/agents/strands_workflow.py)
 
-The pipeline executes as a deterministic directed acyclic graph (DAG) covering all key Track 02 operational challenges:
-
-* **In Flood & Monsoon Waterlogging Scenarios (`URBAN_FLOOD`):**
-  1. **Risk Agent:** Computes rainfall intensity (118 mm/hr) against stormwater drain saturation (92%).
-  2. **Impact Agent:** Intersects flood footprint with GIS layers (Bhabha Hospital ICU, arterial transit routes).
-  3. **Resource Agent:** Geospatially pairs nearest high-capacity dewatering pumps (Pump P-04, 18 min ETA).
-  4. **Comms Agent:** Synthesizes localized advisories across English, Hindi, and Marathi.
-  5. **Coordinator Agent:** Retrieves statutory **NDMA SOP-FLD-101** guidelines to formulate the operational action plan.
-
-* **In Extreme Heatwave Scenarios (`HEATWAVE`):**
-  1. **Risk Agent:** Detects 48.6°C wet-bulb thermal distress thresholds exceeding municipal survivability limits.
-  2. **Impact Agent:** Maps exposed vulnerable populations (outdoor construction clusters, unshaded transit stops).
-  3. **Resource Agent:** Dispatches mobile climate-controlled cooling vans and misting bowsers to transit hubs.
-  4. **Comms Agent:** Broadcasts multilingual hydration and heat-stroke safety advisories.
-  5. **Coordinator Agent:** Retrieves statutory **NHAP SOP-HEAT-04** protocols, recommending halting outdoor labour between 11:30 AM and 4:30 PM.
-
-* **In Pipeline Leaks & Hydraulic Ruptures (`LEAKS`):**
-  1. **SCADA Hydrology Agent:** Detects -2.4 Bar pressure drop anomalies across transmission lines.
-  2. **Action Plan:** Remotely throttles isolating valves V-14A/V-14B under **CPHEEO SOP-PIPE-82** to prevent millions of litres of treated municipal water loss.
-
-* **In Droughts, Tankers & Groundwater Depletion (`DROUGHTS` / `GROUNDWATER`):**
-  1. **Resource Routing:** When reservoirs and subsoil aquifers experience critical stress, the platform dispatches GPS-tracked potable water tankers (`RES-TANKER-01`, 10,000L) to unpiped informal settlements under **Jal Jeevan Mission SOP-WTR-301**.
-  2. **Aquifer Governance:** Triggers automated borewell extraction rationing and artificial stormwater recharge diversion under **CGWB / NDMA SOP-GW-501**.
+The 5 agents collaborate sequentially:
+1. **Risk Detection Agent:** Evaluates sensor deltas against hydrological saturation.
+2. **Impact Assessment Agent:** Correlates GIS perimeters with demographic registries and hospital ICUs.
+3. **Resource & Response Agent:** Optimizes municipal asset allocation (pumps, misting bowsers, tankers).
+4. **Multilingual Communication Agent:** Synthesizes localized warnings in English, Hindi, and Marathi.
+5. **Coordinator Agent:** Queries statutory NDMA / CPHEEO SOP knowledge base to formulate the actionable plan.
 
 ---
 
-## 3. Statutory Governance with the AWS Cedar Policy Engine
+## 4. Statutory Governance with AWS Cedar
 
-Under the **Indian Disaster Management Act of 2005**, an AI system cannot legally authorize emergency deployments, isolate electrical grids, or enforce heatwave labour halts. Physical civil interventions require verified statutory human command sign-off.
-
-We implemented statutory Role-Based Access Control using **AWS Cedar** via the official Rust-backed Python library `cedarpy`:
+Under the Indian Disaster Management Act 2005, an AI cannot legally dispatch municipal machinery or isolate transformers without statutory authorization. We enforce this through declarative policies evaluated by the official Rust-backed **AWS Cedar** engine (`cedarpy`):
 
 ```cedar
-// policies/incident_policy.cedar
-permit (
+// 1. Municipal Incident Commander (Tier 1 Apex Command)
+permit(
     principal in JalRakshak::Role::"incident_commander",
+    action in [
+        JalRakshak::Action::"read_incidents",
+        JalRakshak::Action::"approve_action",
+        JalRakshak::Action::"dispatch_resource",
+        JalRakshak::Action::"broadcast_sns",
+        JalRakshak::Action::"simulate_scenario"
+    ],
+    resource
+);
+
+// 5. Explicit Denial of Sensitive Command Actions to Citizens
+forbid(
+    principal in JalRakshak::Role::"citizen",
     action in [
         JalRakshak::Action::"approve_action",
         JalRakshak::Action::"dispatch_resource",
         JalRakshak::Action::"broadcast_sns"
     ],
-    resource is JalRakshak::Incident
-);
-
-forbid (
-    principal in JalRakshak::Role::"citizen",
-    action in [
-        JalRakshak::Action::"approve_action",
-        JalRakshak::Action::"dispatch_resource"
-    ],
-    resource is JalRakshak::Incident
+    resource
 );
 ```
+*Source File:* [policies/incident_policy.cedar](file:///d:/Riyanshi/01_coding/projects/41%20JalRakshak%20AI/policies/incident_policy.cedar)
 
-When an incident commander clicks **"Approve & Execute"**, the backend verifies cryptographic JWT signatures and delegates policy evaluation to Cedar:
+During evaluation, cryptographic JWT claims are extracted and validated directly by Cedar:
 
 ```python
-result = cedarpy.is_authorized(request, _CACHED_POLICY, entities)
-if result.decision != cedarpy.Decision.Allow:
-    raise HTTPException(
-        status_code=403,
-        detail="Statutory Cedar policy denied approval."
-    )
+    try:
+        result = cedarpy.is_authorized(request, _CACHED_POLICY, entities)
+        allowed = (str(result.decision) == "Decision.Allow" or result.decision == cedarpy.Decision.Allow)
+        logger.info(f"[CEDAR AUTH] Engine: {engine} | Decision: {'ALLOW' if allowed else 'DENY'} | Role: {principal_role} | Action: {action}")
+        return {
+            "allowed": allowed,
+            "engine": engine,
+            "decision": str(result.decision),
+            "policy_source": "policies/incident_policy.cedar"
+        }
+    except Exception as exc:
+        logger.error(f"[CEDAR AUTH] Error during cedarpy evaluation: {exc}")
+        return {"allowed": False, "engine": engine, "error": str(exc)}
 ```
-
-If a field operator or citizen attempts to tamper with request headers to authorize resource deployment, Cedar intercepts and halts execution at the kernel level.
+*Source File:* [backend/auth/cedar_auth.py](file:///d:/Riyanshi/01_coding/projects/41%20JalRakshak%20AI/backend/auth/cedar_auth.py)
 
 ---
 
-## 4. What Fought Back: Four Engineering Battles
+## 5. What Fought Back: Four Engineering Battles
 
-Every serious build involves architectural friction. Here are the four biggest challenges we encountered during the hackathon sprint — and how we resolved them:
-
-### Battle 1: LLM Latency & Throttling During Live Crises
-* **The Challenge:** During concurrent sensor spikes, cloud LLM API calls to Amazon Bedrock risked hitting HTTP 429 rate throttles or 12-second latency spikes. In life-critical disaster mitigation, a 12-second stall is unacceptable.
-* **The Resolution:** We built a custom `StrandsCircuitBreakerHook` subclassing `strands.hooks.HookProvider`. By listening to `AfterToolCallEvent` and `AfterInvocationEvent`, the hook detects any rate throttle, network latency, or API failure and instantaneously triggers deterministic NDMA/NHAP statutory fallback in **under 4 milliseconds**, without crashing the user session.
+### Battle 1: LLM Latency & Rate Throttling During Live Crises
+- **The Challenge:** During concurrent rainfall spikes, cloud LLM APIs risk HTTP 429 throttling or multi-second latency spikes.
+- **The Resolution:** We built `StrandsCircuitBreakerHook` subclassing `strands.hooks.HookProvider`. By listening to `AfterToolCallEvent` and `AfterInvocationEvent`, the hook detects rate throttling and immediately engages deterministic statutory NDMA Chapter 4 fallbacks without crashing the user session.
 
 ### Battle 2: The "Zero-Config" Honest Execution Dilemma
-* **The Challenge:** In many hackathons, projects fake external AWS services with static mocks (`{"MessageId": "fake-1234", "status": 200}`). We refused to compromise on engineering honesty.
-* **The Resolution:** We engineered a **Dual-Mode Architecture**. When running in Build It mode with zero credentials, our system explicitly marks responses with `{"delivered": false, "mode": "OFFLINE", "simulated": true}`. When LocalStack or live AWS credentials are provided (`AWS_EXECUTION_MODE=LIVE`), Boto3 transparently routes to real SNS SMS gateways and real DynamoDB tables. Judges see authentic transparency, not synthetic tricks.
+- **The Challenge:** Many hackathon submissions fake external cloud calls with deceptive mock IDs (`MessageId: fake-1234`).
+- **The Resolution:** We implemented explicit runtime transparency. In offline Build It mode, payloads clearly declare `simulated: true` and `mode: "OFFLINE"`. Real boto3 client creation occurs only when valid credentials matching `^(AKIA|ASIA)[A-Z0-9]{16}$` are present.
 
-### Battle 3: Mathematical Explainability vs. Black-Box Trust
-* **The Challenge:** Civic disaster boards reject automated AI scores because standard LLMs cannot explain why a risk score is 87% vs 65%.
-* **The Resolution:** We anchored the Risk Agent's scoring in a strict mathematical explainability equation combining rainfall/thermal spike weight (+38%), drainage/grid saturation (+25%), geotagged citizen reports (+21%), and hospital proximity (+16%). Every calculation is mathematically provable and bounded between 0.0 and 1.0.
+### Battle 3: Mathematical Explainability vs. Black-Box Scoring
+- **The Challenge:** Municipal disaster controllers reject ungrounded AI scores because standard LLMs cannot mathematically justify why an emergency is 87% vs 65%.
+- **The Resolution:** We anchored the Risk Agent's scoring in a physical explainability equation combining rainfall/thermal spike deltas (+38%), drainage saturation (+25%), verified citizen photo reports (+21%), and hospital proximity (+16%), bounded deterministically between 0.0 and 1.0.
 
-### Battle 4: SAM Local Packaging & Monorepo CodeUri
-* **The Challenge:** Running `sam build` within a unified React + FastAPI repository caused SAM CLI to attempt packaging the entire frontend `dist/` and `node_modules` into the Lambda zip file, exceeding AWS Lambda's 250 MB unzipped limit.
-* **The Resolution:** We refactored `aws_infra/template.yaml` using strict `.samignore` filters and localized `CodeUri: .` anchors with explicit handler entrypoints (`aws_infra.lambda_handlers.citizen_ingest_handler`). SAM build size dropped from 290 MB to a lean 4.2 MB.
+### Battle 4: SAM Packaging & Monorepo CodeUri
+- **The Challenge:** Running `sam build` in a monorepo caused SAM CLI to try packaging the entire frontend `dist/` and `node_modules` into the Lambda bundle, exceeding AWS Lambda limits.
+- **The Resolution:** We refactored `aws_infra/template.yaml` using strict `.samignore` rules and localized `CodeUri: .` anchors with explicit handlers (`lambda_handlers.strands_agent_orchestrator_handler` and `lambda_handlers.citizen_ingest_handler`).
 
 ---
 
-## 5. Operational Results and Impact
+## 6. Operational Results & Quantified Benchmarks
 
 ![Figure 2: JalRakshak AI Live Command Center](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/command_center.jpg)
 
-*Figure 2: JalRakshak AI Live Command Center — Incident Triage, GIS Flood Contours, and Human-in-the-Loop Action Approval.*
+*Figure 2: Live Command Center — Incident Triage, GIS Flood Contours, and Human-in-the-Loop Action Approval. Notice the Cedar RBAC badge and tactical dispatch approval buttons.*
 
 ![Figure 3: SCADA Hydrology Console](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/scada_telemetry.jpg)
 
-*Figure 3: SCADA Hydrology Console — Real-Time Pipeline Pressure Waveforms & Drainage Outfall Saturation.*
+*Figure 3: SCADA Hydrology Console — Real-Time Pipeline Pressure Waveforms & Drainage Outfall Saturation for Kurla Ward 17.*
 
-* **Integration Suite:** **30 out of 30 tests passing (100%)** with zero skips across authentication, multi-agent orchestration, and SAM IaC.
-* **Workflow Latency:** **3.4 ms p50** for the complete local 5-agent decision loop.
-* **Quantified ROI:** Traditional municipal escalation takes 4 hours (averaging ₹1.4 Crore in flood and thermal damage for a dense urban ward). JalRakshak AI enables pre-emptive intervention (pump dispatch or cooling shelter activation) in **18 minutes**, saving over ₹80 Lakhs in civic assets.
+### Reproducible Performance Benchmarks (Measured Empirical Data)
 
-### Quantified Performance Benchmarks
+* **Command Executed:** `python tests/benchmark_strands.py 100`
+* **Test Machine:** AMD64 Family 23 Model 104 Stepping 1 (12 logical cores), 7.3 GB RAM, Windows 10, Python 3.11.3
+* **Full Documentation:** [docs/BENCHMARK.md](file:///d:/Riyanshi/01_coding/projects/41%20JalRakshak%20AI/docs/BENCHMARK.md)
 
-| Metric | Measured Value | Architectural Context |
+| Metric | Measured Value | Notes & Context |
 | :--- | :---: | :--- |
-| **Test Suite Coverage** | **30 / 30 Passed (100%)** | Zero skips; validates Cedar RBAC, Strands DAG, and SAM IaC |
-| **Agent Decision Latency (Local)** | **3.4 ms p50** (5.1 ms p95) | Sub-millisecond DAG traversal via local deterministic execution |
-| **Circuit-Breaker Recovery** | **< 4.0 ms** | Instant fallback to NDMA Chapter 4 statutory protocols |
-| **Municipal Decision Window** | **18 minutes** (vs 4 hrs manual) | Automated pump routing, GIS triage, and multilingual broadcast |
-| **Statutory SOP Corpus** | **6 Official Protocols** | Grounded in NDMA 2024, NHAP 2024, CPHEEO 2021, JJM, and CGWB |
-| **Serverless IaC Footprint** | **10+ AWS Resources** | EventBridge, DynamoDB, S3, SNS, and PoLP Lambda Roles |
-| **Package Build Size** | **4.2 MB** (down from 290 MB) | Optimized SAM build using strict `.samignore` filters |
+| **Iterations** | **100 runs** | 100 consecutive executions of the full 5-agent DAG |
+| **p50 Latency (Median)** | **62.14 ms** | Full local 5-agent loop in ~62 ms p50 on 12-core host |
+| **p95 Latency** | **82.51 ms** | High percentile under local background scheduler jitter |
+| **Min Latency** | **57.74 ms** | Fastest complete 5-agent traversal |
+| **Max Latency** | **127.34 ms** | Peak traversal latency |
+| **Test Suite Status** | **Passing** | Integration, Cedar RBAC, Build It route, and SAM validation |
+| **SAM Build Artifact** | **Built Succeeded** | `StrandsAgentOrchestratorLambda`, `CitizenReportIngestLambda` |
+
+### Quantified Economic ROI & Modelled Assumptions
+
+* **Baseline Traditional Escalation:** 4 hours manual phone tree escalation.
+* **JalRakshak AI Decision Window:** **18 minutes** from telemetry trigger to authorized tactical pump deployment.
+* **Modelled Economic Impact:** Based on a modeled 118 mm/hr cloudburst in Ward 17 (Kurla East):
+  - *Unmitigated Damage Baseline:* ₹1.4 Crore (computed from flood ingress into 3 ground-floor hospital wards @ ₹45L, 2 basement distribution transformer failures @ ₹55L, and arterial LBS Marg traffic gridlock loss @ ₹40L).
+  - *Mitigated Damage with JalRakshak AI:* ₹60 Lakhs (early dewatering pump pre-deployment keeps flood depth under 25 cm, preventing hospital ICU ingress and electrical substation submergence).
+  - *Net Modelled Civic Assets Protected:* **₹80+ Lakhs saved** per severe cloudburst event.
 
 ---
 
-## 6. Key Takeaways for AWS Builders
+## 7. What I'd Build with AWS Credits Next
 
-1. **AWS Strands Agents SDK makes multi-agent coordination production-ready:** The separation between `@tool` functions, model interfaces, and lifecycle hooks (`HookProvider`) makes building agentic systems far cleaner and more fault-tolerant than raw prompt chaining.
-2. **Cedar is the gold standard for AI Safety & Governance:** Never let LLMs make irreversible physical decisions without guardrails. Wrap agent actions in declarative AWS Cedar policies to guarantee deterministic, auditable human-in-the-loop sign-off.
-3. **Build with honesty:** Transparent fallback mechanisms and dual-mode architectures build far more trust with judges and users than fabricated cloud responses.
+If granted production AWS Cloud Credits, we would scale JalRakshak AI from a laptop-tested architecture to citywide municipal infrastructure:
 
----
-
-## 7. Future Roadmap: From Hackathon to Municipal Deployment
-
-1. **Physical IoT Inundation Gateways:** Ingesting field-hardened ultrasonic level sensors deployed along vulnerable river outfalls directly into the SAM EventBridge bus.
-2. **Precipitation Doppler Nowcasting:** Ingesting IMD radar netCDF4 spatial streams 90 minutes before precipitation hits urban drainage basins.
-3. **Cross-Agency Decentralized Governance:** Extending AWS Cedar policy stores to federate authorization across Municipal Corporations, NDRF rescue commands, and Traffic Police.
+1. **Physical IoT River Inundation Gateways:** Ingesting solar-powered LoRaWAN ultrasonic water-level sensors deployed along the Mithi River directly into the Amazon EventBridge custom bus.
+2. **Doppler Radar Nowcasting Ingestion:** Streaming IMD (India Meteorological Department) Doppler radar netCDF4 spatial grids through AWS Lambda 90 minutes before precipitation hits urban drainage basins.
+3. **OpenSearch Serverless Semantic Retrieval:** Upgrading the TF-IDF SOP store to Amazon OpenSearch Serverless with multi-vector embeddings for complex multi-jurisdictional disaster manuals.
+4. **Cross-Agency AWS Cedar Policy Federation:** Federating Cedar policy stores across Municipal Corporations, the National Disaster Response Force (NDRF), and Traffic Police for unified inter-agency sign-offs.
 
 ---
 
-## Try It Locally (Zero-Config)
+## 8. Try It Yourself
 
-You can clone and run JalRakshak AI on your laptop in under 60 seconds with zero AWS accounts or billing required:
+You can clone and run JalRakshak AI on your machine in 60 seconds with zero AWS configuration:
 
 ```bash
 git clone https://github.com/RiyanshiVerma-11/JalRakshak-AI.git
@@ -233,7 +286,9 @@ pip install -r requirements.txt
 python run_app.py
 ```
 
-Once running, navigate to `http://localhost:8004` to explore the live multi-agent command center and disaster simulations.
+Then visit [http://localhost:8004](http://localhost:8004) to test the emergency command center, simulate cloudbursts, and evaluate the Cedar authorization engine.
 
-*Explore the codebase, test suite, and IaC templates on GitHub:*  
-👉 **[GitHub Repository: JalRakshak-AI](https://github.com/RiyanshiVerma-11/JalRakshak-AI)**
+---
+
+*Submitted to WeMakeDevs × AWS Environmental Hacks — Heat and Water Track (Build It Route).*  
+*Project Repository:* [https://github.com/RiyanshiVerma-11/JalRakshak-AI](https://github.com/RiyanshiVerma-11/JalRakshak-AI)

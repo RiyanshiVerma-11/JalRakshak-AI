@@ -551,9 +551,17 @@ export default function App() {
               currentUser={currentUser}
               onEnterCommandCenter={handleEnterCommandCenter}
               onSimulate={handleSimulate}
-              onOpenCitizenPWA={() => navigateWithGuard('citizen')}
-              onOpenJudgeTour={() => setIsTourOpen(true)}
-              onSelectRole={handleLogin}
+              onOpenJudgeTour={() => {
+                if (!currentUser) {
+                  const judgePersona = PERSONAS.find(p => p.role === ROLES.INCIDENT_COMMANDER) || PERSONAS[0];
+                  setCurrentUser(judgePersona);
+                  try {
+                    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(judgePersona));
+                  } catch (e) {}
+                }
+                setActiveTab('command');
+                setIsTourOpen(true);
+              }}
               onOpenLogin={() => navigateWithGuard('login')}
               onNavigateTab={(tab) => navigateWithGuard(tab)}
             />

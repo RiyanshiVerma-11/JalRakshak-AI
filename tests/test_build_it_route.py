@@ -1,7 +1,7 @@
 """
-Test Suite: Build It Route Security, Honesty & Offline Invariants (TASK 21)
+Test Suite: Build It Route Security, Honesty & Offline Invariants (TASK 21 + PART A)
 
-Validates the 8 core requirements of the WeMakeDevs x AWS Build It route:
+Validates the 13 core requirements of the WeMakeDevs x AWS Build It route:
 1. test_no_header_only_auth_bypass: POST /api/actions/{id}/approve with only X-Officer-Role returns 401.
 2. test_self_serve_token_requires_credential: POST /api/auth/token with missing/wrong credential returns 401.
 3. test_no_duplicate_incident_on_simulate: two simulate calls add exactly two incidents.
@@ -10,6 +10,11 @@ Validates the 8 core requirements of the WeMakeDevs x AWS Build It route:
 6. test_zero_credential_offline_boot: with no AWS credentials, app reports mode OFFLINE and simulate completes.
 7. test_offline_run_makes_no_network_calls: assert no boto3 client or network calls are attempted in OFFLINE mode.
 8. test_build_it_tool_inventory_is_honest: health/judge payload lists the 4 Build It tools with honest statuses.
+9. test_app_boots_without_strands_sdk: app boots and reports Strands as FALLBACK if SDK import fails.
+10. test_env_example_copy_has_no_credentials: copying .env.example does not flip app into has credentials mode.
+11. test_public_endpoint_allowlist_matches_counts: verify PUBLIC_DEMO_ENDPOINTS matches and protected endpoints return 401.
+12. test_readme_testnames_match_suite: verify every test token in README.md exists in pytest suite.
+13. test_benchmark_numbers_match_docs: verify any ms p50 claim in README/blog matches docs/BENCHMARK.md.
 """
 import io
 import os
@@ -257,3 +262,165 @@ def test_build_it_tool_inventory_is_honest():
             assert t["status"] == "FALLBACK"
         if t["tool"] == "LocalStack" and os.environ.get("AWS_EXECUTION_MODE") != "LOCALSTACK":
             assert t["status"] == "FALLBACK"
+
+
+# --------------------------------------------------------------------------
+# 9. App Boots & Degrades Gracefully Without Strands SDK (TASK A2)
+# --------------------------------------------------------------------------
+def test_app_boots_without_strands_sdk():
+    """
+    Asserts that if the Strands SDK is unavailable, the app still boots,
+    /api/health returns HTTP 200 with HEALTHY status and reports Strands as FALLBACK,
+    and the pipeline degrades gracefully to deterministic execution without crashing.
+    """
+    import sys
+    from unittest.mock import patch
+
+    with patch.dict(sys.modules, {"strands": None}):
+        resp = client.get("/api/health")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "HEALTHY"
+
+        strands_tool = next(t for t in data["build_it_tools"] if "Strands" in t["tool"])
+        assert strands_tool["status"] == "FALLBACK"
+
+
+# --------------------------------------------------------------------------
+# 10. Copying .env.example Has No Live Credentials (TASK A4)
+# --------------------------------------------------------------------------
+def test_env_example_copy_has_no_credentials(monkeypatch):
+    """
+    Asserts that copying .env.example template placeholders to .env or environment
+    does NOT flip the application into 'has credentials' mode and does NOT
+    produce a live boto3 client.
+    """
+    from backend.cloud.config import has_aws_credentials
+    from backend.cloud.aws_bridge import create_boto_client
+
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "your_aws_access_key_here")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "your_aws_secret_access_key_here")
+    monkeypatch.setenv("AWS_ACCOUNT_ID", "123456789012")
+
+    assert has_aws_credentials() is False
+    assert create_boto_client("s3") is None
+    assert create_boto_client("dynamodb") is None
+
+
+# --------------------------------------------------------------------------
+# 11. Public Endpoint Allowlist Matches Counts (TASK A5)
+# --------------------------------------------------------------------------
+def test_public_endpoint_allowlist_matches_counts():
+    """
+    Asserts that PUBLIC_DEMO_ENDPOINTS contains all 16 judge-safe unauthenticated endpoints,
+    each is registered in the route table, and protected endpoints strictly reject
+    unauthenticated requests with HTTP 401.
+    """
+    from backend.main import PUBLIC_DEMO_ENDPOINTS, app
+
+    expected_endpoints = {
+        "/health",
+        "/api/health",
+        "/api/judge/overview",
+        "/api/demo/pipeline",
+        "/api/incidents/simulate",
+        "/api/resources",
+        "/api/aws/metrics",
+        "/api/citizen/reports",
+        "/api/telemetry/live",
+        "/api/rag/protocols",
+        "/api/wards",
+        "/api/auth/token",
+        "/api/citizen/report",
+        "/api/citizen/query",
+        "/api/copilot/chat",
+        "/api/v1/simulate/dynamic-telemetry",
+    }
+    assert PUBLIC_DEMO_ENDPOINTS == expected_endpoints
+    assert len(PUBLIC_DEMO_ENDPOINTS) == 16
+
+    route_paths = {r.path for r in app.routes if hasattr(r, "path")}
+    for endpoint in PUBLIC_DEMO_ENDPOINTS:
+        assert endpoint in route_paths, f"Missing route {endpoint} from FastAPI route table"
+
+    # Strictly verify protected routes return 401 without token
+    resp_incidents = client.get("/api/incidents")
+    assert resp_incidents.status_code == 401
+
+    resp_approve = client.post("/api/actions/ACT-001/approve", json={"officer_role": "incident_commander"})
+    assert resp_approve.status_code == 401
+
+
+# --------------------------------------------------------------------------
+# 12. README Testnames Match Test Suite (TASK A7)
+# --------------------------------------------------------------------------
+def test_readme_testnames_match_suite():
+    """
+    Parses README.md, extracts every 'tests/...::test_x' token, and asserts
+    that every extracted test name exists in `pytest --collect-only -q` output.
+    Prevents fabricated or stale test listings in README documentation.
+    """
+    import re
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    readme_path = Path(__file__).resolve().parent.parent / "README.md"
+    assert readme_path.exists(), "README.md must exist at repository root"
+    readme_content = readme_path.read_text(encoding="utf-8")
+
+    readme_tests = set(re.findall(r"tests/[a-zA-Z0-9_]+\.py::test_[a-zA-Z0-9_]+", readme_content))
+    assert len(readme_tests) > 0, "Expected to find tests/...::test_... entries in README.md"
+
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", "--collect-only", "-q"],
+        capture_output=True,
+        text=True,
+        check=True
+    )
+    collected_tests = set()
+    for line in result.stdout.splitlines():
+        line = line.strip()
+        if "::test_" in line:
+            normalized = line.replace("\\", "/")
+            collected_tests.add(normalized)
+
+    for test_id in readme_tests:
+        assert test_id in collected_tests, (
+            f"Test '{test_id}' in README.md was not found in the pytest test suite! "
+            f"Collected tests: {sorted(collected_tests)}"
+        )
+
+
+# --------------------------------------------------------------------------
+# 13. Benchmark Numbers Match Docs (TASK A8)
+# --------------------------------------------------------------------------
+def test_benchmark_numbers_match_docs():
+    """
+    Asserts that any 'ms p50' latency claims in README or blog posts
+    match real measurements documented in docs/BENCHMARK.md.
+    """
+    import re
+    from pathlib import Path
+
+    repo_root = Path(__file__).resolve().parent.parent
+    benchmark_file = repo_root / "docs" / "BENCHMARK.md"
+    assert benchmark_file.exists(), "docs/BENCHMARK.md must exist"
+    benchmark_text = benchmark_file.read_text(encoding="utf-8")
+
+    targets = [
+        repo_root / "README.md",
+        repo_root / "docs" / "AWS_BUILDER_CENTER_BLOG.md",
+    ]
+
+    p50_pattern = re.compile(r"(\d+(?:\.\d+)?)\s*ms\s*(?:p50|\(p50\)|P50)")
+    for target in targets:
+        if not target.exists():
+            continue
+        content = target.read_text(encoding="utf-8")
+        matches = p50_pattern.findall(content)
+        for num in matches:
+            assert num in benchmark_text, (
+                f"Latency claim '{num} ms p50' in {target.name} is not documented "
+                f"in docs/BENCHMARK.md! Empirical reproducibility violation."
+            )

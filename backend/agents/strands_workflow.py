@@ -7,6 +7,11 @@ Grounded in statutory National Disaster Management Authority (NDMA) Urban Floodi
 National Heat Action Plan (NHAP), and CPHEEO Municipal Water Supply Manual.
 
 Built using genuine AWS Strands Agents SDK (strands.Agent, @tool, and HookProvider).
+
+Offline Model Role:
+In OFFLINE mode the AWS Strands Agents SDK event loop, @tool dispatch, HookProvider lifecycle
+and AWS Cedar decisions all execute for real; only the LLM inference is replaced by
+LocalDeterministicModel. Real inference runs via BedrockModel when AWS_EXECUTION_MODE=LIVE.
 """
 import time
 import uuid
@@ -15,10 +20,62 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 import json
 
-# AWS Strands Agents SDK Imports
-from strands import Agent, tool
-from strands.hooks import HookProvider, HookRegistry, events
-from strands.models import Model, BedrockModel
+# AWS Strands Agents SDK Imports (Guarded with deterministic fallbacks - Task A2)
+try:
+    from strands import Agent, tool
+    from strands.hooks import HookProvider, HookRegistry, events
+    from strands.models import Model, BedrockModel
+    STRANDS_AVAILABLE = True
+except ImportError:
+    STRANDS_AVAILABLE = False
+    BedrockModel = None
+
+    class HookProvider:
+        """Fallback base class when AWS Strands SDK is unavailable."""
+        def __init__(self):
+            pass
+
+    class HookRegistry:
+        def add_callback(self, *args, **kwargs):
+            pass
+
+    class _Events:
+        AfterToolCallEvent = object
+        AfterInvocationEvent = object
+
+    events = _Events()
+
+    class Model:
+        """Fallback base Model class when AWS Strands SDK is unavailable."""
+        pass
+
+    def tool(func):
+        """Fallback decorator that leaves tool function un-wrapped when SDK is absent."""
+        return func
+
+    class Agent:
+        """Fallback Agent class that degrades gracefully to deterministic tools."""
+        def __init__(
+            self,
+            agent_id: str = "",
+            name: str = "",
+            description: str = "",
+            system_prompt: str = "",
+            tools: Optional[list] = None,
+            hooks: Optional[list] = None,
+            model: Any = None
+        ):
+            self.agent_id = agent_id
+            self.name = name
+            self.description = description
+            self.system_prompt = system_prompt
+            self.tools = tools or []
+            self.hooks = hooks or []
+            self.model = model
+            self.messages = []
+
+        def __call__(self, *args, **kwargs):
+            return None
 
 from .risk_agent import risk_agent
 from .impact_agent import impact_agent
@@ -224,9 +281,9 @@ class LocalDeterministicModel(Model):
             # Fabricated token usage removed per Task 19 specification
 
 
-def get_strands_model(role_name: str) -> Model:
+def get_strands_model(role_name: str) -> Any:
     """Returns BedrockModel if credentials active, otherwise LocalDeterministicModel."""
-    if is_live_cloud_active():
+    if STRANDS_AVAILABLE and is_live_cloud_active() and BedrockModel is not None:
         try:
             return BedrockModel(model_id=get_bedrock_model_id(), region_name=get_aws_region())
         except Exception:
@@ -236,6 +293,8 @@ def get_strands_model(role_name: str) -> Model:
 
 def get_strands_model_provider() -> str:
     """Returns human-readable name of active Strands model provider."""
+    if not STRANDS_AVAILABLE:
+        return "Deterministic Tool Functions (Strands SDK Fallback)"
     if is_live_cloud_active():
         return f"Amazon Bedrock ({get_bedrock_model_id()})"
     return "LocalDeterministicModel (AWS Strands SDK)"
@@ -296,22 +355,29 @@ coordinator_agent_instance = Agent(
 )
 
 
-def invoke_strands_agent(agent: Agent, prompt: str, tool_args: Dict[str, Any]) -> Any:
+def invoke_strands_agent(agent: Any, prompt: str, tool_args: Dict[str, Any]) -> Any:
     """
     Executes genuine Strands Agent through Agent.__call__, running the full event loop,
     tool execution cycle, and hook interception.
+    Gracefully returns None if Strands SDK is unavailable so workflow degrades to deterministic tools.
     """
-    agent.messages.clear()
-    agent(prompt, invocation_state={"tool_args": tool_args})
-    for m in agent.messages:
-        for c in m.get("content", []):
-            if "toolResult" in c:
-                for blk in c["toolResult"].get("content", []):
-                    if "text" in blk:
-                        try:
-                            return json.loads(blk["text"])
-                        except Exception:
-                            return blk["text"]
+    if not STRANDS_AVAILABLE or agent is None:
+        return None
+    try:
+        agent.messages.clear()
+        agent(prompt, invocation_state={"tool_args": tool_args})
+        for m in agent.messages:
+            for c in m.get("content", []):
+                if "toolResult" in c:
+                    for blk in c["toolResult"].get("content", []):
+                        if "text" in blk:
+                            try:
+                                return json.loads(blk["text"])
+                            except Exception:
+                                return blk["text"]
+    except Exception as e:
+        logger.warning(f"Strands Agent invocation failed: {e}")
+        return None
     return None
 
 

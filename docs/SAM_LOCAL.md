@@ -4,8 +4,10 @@ JalRakshak AI provides production-ready AWS Serverless Application Model (SAM) t
 
 ## 1. Prerequisites
 - **AWS SAM CLI**: Installed (`sam --version` -> `SAM CLI, version 1.166.2`)
-- **Python Runtime**: Python 3.11
+- **Python Runtime**: Python 3.11 (`x86_64`)
 - **Docker Desktop** (Required exclusively for local container emulation during `sam local invoke`)
+
+---
 
 ## 2. Validation & Linting (Verified Zero-Warning)
 Validate template structure and SAM specification without requiring Docker:
@@ -14,9 +16,11 @@ Validate template structure and SAM specification without requiring Docker:
 sam validate --template aws_infra/template.yaml --region ap-south-1 --lint
 ```
 **Raw Acceptance Output**:
-```
+```text
 aws_infra/template.yaml is a valid SAM Template
 ```
+
+---
 
 ## 3. Production Build
 Compile serverless functions and package dependencies into `.aws-sam/build`:
@@ -24,16 +28,29 @@ Compile serverless functions and package dependencies into `.aws-sam/build`:
 ```bash
 sam build --template aws_infra/template.yaml --region ap-south-1
 ```
-**Raw Acceptance Output**:
-```
-Building codeuri: aws_infra runtime: python3.11 metadata: {} architecture: arm64 functions: CitizenReportIngestLambda, TelemetryProcessorLambda, DispatchActionLambda, BedrockAgentInvokerLambda
-Running PythonPipBuilder:ResolveDependencies
-Running PythonPipBuilder:CopySource
+**Raw Acceptance Output (Verbatim from `sam build`)**:
+```text
+Building codeuri: D:\Riyanshi\01_coding\projects\41 JalRakshak AI\aws_infra runtime: python3.11 architecture: x86_64 functions: StrandsAgentOrchestratorLambda, CitizenReportIngestLambda
+ Running PythonPipBuilder:ResolveDependencies
+ Running PythonPipBuilder:CopySource
+
 Build Succeeded
 
 Built Artifacts  : .aws-sam\build
 Built Template   : .aws-sam\build\template.yaml
 ```
+
+### Verified Serverless Functions & Handlers (`aws_infra/template.yaml`)
+1. **`StrandsAgentOrchestratorLambda`**:
+   - **Handler**: `lambda_handlers.strands_agent_orchestrator_handler`
+   - **Runtime**: `python3.11` (`x86_64`)
+   - **Role**: Least-Privilege IAM role (`StrandsExecutionRole`) with access to DynamoDB, EventBridge, Bedrock, and SNS.
+2. **`CitizenReportIngestLambda`**:
+   - **Handler**: `lambda_handlers.citizen_ingest_handler`
+   - **Runtime**: `python3.11` (`x86_64`)
+   - **Role**: Least-Privilege IAM role (`CitizenIngestExecutionRole`) with access to S3, Rekognition, and CitizenReportsTable.
+
+---
 
 ## 4. Local Lambda Invocation — NOT YET RUN (requires Docker)
 To invoke individual serverless Lambdas locally using sample EventBridge events:
@@ -45,7 +62,7 @@ sam local invoke CitizenReportIngestLambda -e events/citizen_event.json
 ```
 
 **Real Command Execution Output**:
-```
+```text
 No current session found, using default AWS::AccountId
 Error: Running AWS SAM projects locally requires a container runtime. Do you have Docker installed and running?
 ```

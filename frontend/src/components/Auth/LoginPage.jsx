@@ -151,7 +151,7 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30 text-slate-800 font-sans flex flex-col justify-between selection:bg-blue-100 selection:text-blue-900">
+    <div lang="en" className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30 text-slate-800 font-sans flex flex-col justify-between selection:bg-blue-100 selection:text-blue-900">
       
       {/* 1. TOP LIGHT HEADER */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
@@ -161,8 +161,9 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
           <div className="flex items-center gap-3">
             <button 
               onClick={onBackToLanding}
-              className="flex items-center gap-2.5 text-left group"
+              className="flex items-center gap-2.5 text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl"
               title="Return to Product Landing Page"
+              aria-label="Return to JalRakshak AI Product Landing Page"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
                 <ShieldAlert className="h-5 w-5" />
@@ -192,7 +193,8 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
 
             <button
               onClick={onBackToLanding}
-              className="flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 text-xs transition-colors border border-slate-200 shadow-xs"
+              aria-label="Return to landing page"
+              className="flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 text-xs transition-colors border border-slate-200 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span>Back to Home</span>
@@ -224,10 +226,13 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
           
           {/* Tab Selection Navigation */}
           <div className="flex flex-wrap items-center justify-between border-b border-slate-200 bg-slate-50/80 px-4 sm:px-6 py-2.5 gap-2">
-            <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold" role="tablist" aria-label="Authentication modes">
               <button
+                role="tab"
+                aria-selected={activeTab === 'personas'}
+                aria-label="1-Click Role Access Fast-Track"
                 onClick={() => setActiveTab('personas')}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                   activeTab === 'personas'
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
@@ -238,8 +243,11 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
               </button>
 
               <button
+                role="tab"
+                aria-selected={activeTab === 'credentials'}
+                aria-label="AWS Cognito Form Login"
                 onClick={() => setActiveTab('credentials')}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                   activeTab === 'credentials'
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
@@ -250,8 +258,11 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
               </button>
 
               <button
+                role="tab"
+                aria-selected={activeTab === 'register'}
+                aria-label="Register or Sign Up New Account"
                 onClick={() => { setActiveTab('register'); setRegSuccessMsg(null); }}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                   activeTab === 'register'
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
@@ -262,8 +273,11 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
               </button>
 
               <button
+                role="tab"
+                aria-selected={activeTab === 'matrix'}
+                aria-label="Statutory RBAC and Principle of Least Privilege Matrix"
                 onClick={() => setActiveTab('matrix')}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                   activeTab === 'matrix'
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
@@ -296,8 +310,12 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
                   return (
                     <div
                       key={persona.role}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Select and sign in as ${persona.name}, ${persona.title}`}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelectPersonaAndLogin(persona); } }}
                       onClick={() => handleSelectPersonaAndLogin(persona)}
-                      className={`rounded-2xl border p-5 transition-all cursor-pointer flex flex-col justify-between group shadow-xs hover:shadow-md ${
+                      className={`rounded-2xl border p-5 transition-all cursor-pointer flex flex-col justify-between group shadow-xs hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                         isCurrent
                           ? 'border-blue-500 bg-blue-50/40 ring-2 ring-blue-500/20'
                           : 'border-slate-200 bg-white hover:border-blue-400 hover:bg-slate-50/60'
@@ -379,7 +397,8 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
                         <button
                           type="button"
                           disabled={isAuthenticating}
-                          className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-black transition-all bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/10 active:scale-95"
+                          aria-label={`Sign In as ${persona.title.split(' ')[0]}`}
+                          className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-black transition-all bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/10 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         >
                           <span>Sign In as {persona.title.split(' ')[0]} ➔</span>
                           <ArrowRight className="h-3.5 w-3.5" />
@@ -416,8 +435,9 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
                         <button
                           key={p.role}
                           type="button"
+                          aria-label={`Fill test credentials for ${p.title}`}
                           onClick={() => fillPreset(p)}
-                          className={`text-[10px] py-1 px-2 rounded-lg font-bold border transition-all flex items-center justify-center gap-1 ${
+                          className={`text-[10px] py-1 px-2 rounded-lg font-bold border transition-all flex items-center justify-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                             selectedPersona.role === p.role
                               ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                               : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200'
@@ -433,14 +453,16 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
 
                 <form onSubmit={handleCredentialsSubmit} className="space-y-3.5 text-xs">
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Target Persona</label>
+                    <label htmlFor="target-persona-select" className="block font-bold text-slate-700 mb-1">Target Persona</label>
                     <select
+                      id="target-persona-select"
+                      aria-label="Target Persona Select"
                       value={selectedPersona.role}
                       onChange={(e) => {
                         const found = PERSONAS.find(p => p.role === e.target.value);
                         if (found) fillPreset(found);
                       }}
-                      className="w-full rounded-xl bg-white border border-slate-300 px-3 py-2 text-slate-900 font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                      className="w-full rounded-xl bg-white border border-slate-300 px-3 py-2 text-slate-900 font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus-visible:outline-none outline-none"
                     >
                       {PERSONAS.map(p => (
                         <option key={p.role} value={p.role}>
@@ -451,43 +473,50 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Government Officer Email / ID</label>
+                    <label htmlFor="officer-email-input" className="block font-bold text-slate-700 mb-1">Government Officer Email / ID</label>
                     <input
+                      id="officer-email-input"
+                      aria-label="Government Officer Email or Identifier"
                       type="text"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-xl bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-mono"
+                      className="w-full rounded-xl bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus-visible:outline-none outline-none font-mono"
                       placeholder="officer@bmc.gov.in"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Password / Security Key</label>
+                    <label htmlFor="officer-password-input" className="block font-bold text-slate-700 mb-1">Password / Security Key</label>
                     <input
+                      id="officer-password-input"
+                      aria-label="Password or Security Key"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-xl bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                      className="w-full rounded-xl bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus-visible:outline-none outline-none"
                     />
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-bold text-slate-700">Cognito MFA Token (TOTP)</label>
+                      <label htmlFor="cognito-mfa-input" className="font-bold text-slate-700">Cognito MFA Token (TOTP)</label>
                       <span className="text-[10px] text-emerald-700 font-mono font-bold">Hardware Token Synced</span>
                     </div>
                     <input
+                      id="cognito-mfa-input"
+                      aria-label="Cognito MFA TOTP Token"
                       type="text"
                       value={cognitoMfaCode}
                       onChange={(e) => setCognitoMfaCode(e.target.value)}
-                      className="w-full rounded-xl bg-white border border-slate-300 px-3 py-2 text-blue-700 font-mono tracking-widest text-center text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                      className="w-full rounded-xl bg-white border border-slate-300 px-3 py-2 text-blue-700 font-mono tracking-widest text-center text-sm font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus-visible:outline-none outline-none"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={isAuthenticating}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-2.5 shadow-md shadow-blue-500/20 active:scale-95 transition-all mt-4"
+                    aria-label="Authenticate and launch dashboard"
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-2.5 shadow-md shadow-blue-500/20 active:scale-95 transition-all mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   >
                     <UserCheck className="h-4 w-4" />
                     <span>{isAuthenticating ? 'Validating Cognito JWT...' : 'Authenticate & Launch Dashboard ➔'}</span>
@@ -523,8 +552,9 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
               <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
                 <button
                   type="button"
+                  aria-label="Select Resident or Citizen account type"
                   onClick={() => setRegisterType('citizen')}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                     registerType === 'citizen'
                       ? 'bg-white text-blue-700 shadow-xs border border-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -535,8 +565,9 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
                 </button>
                 <button
                   type="button"
+                  aria-label="Select Field Responder or Officer account type"
                   onClick={() => setRegisterType('officer')}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                     registerType === 'officer'
                       ? 'bg-white text-emerald-700 shadow-xs border border-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
@@ -557,51 +588,59 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
               <form onSubmit={handleRegisterSubmit} className="space-y-3.5 text-xs">
                 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">
+                  <label htmlFor="reg-fullname" className="block font-bold text-slate-700 mb-1">
                     {registerType === 'citizen' ? 'Full Name (पूरा नाम)' : 'Officer Name & Designation'}
                   </label>
                   <input
+                    id="reg-fullname"
+                    aria-label={registerType === 'citizen' ? 'Full Name' : 'Officer Name and Designation'}
                     type="text"
                     required
                     value={regFullName}
                     onChange={(e) => setRegFullName(e.target.value)}
                     placeholder={registerType === 'citizen' ? 'e.g. Priya Sharma' : 'e.g. Insp. Vikram Singh'}
-                    className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                    className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus-visible:outline-none outline-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Mobile Number (SMS Alerts)</label>
+                    <label htmlFor="reg-phone" className="block font-bold text-slate-700 mb-1">Mobile Number (SMS Alerts)</label>
                     <input
+                      id="reg-phone"
+                      aria-label="Mobile Number for SMS Alerts"
                       type="tel"
                       required
                       value={regPhone}
                       onChange={(e) => setRegPhone(e.target.value)}
                       placeholder="+91 98765 XXXXX"
-                      className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-mono"
+                      className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus-visible:outline-none outline-none font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Email Address</label>
+                    <label htmlFor="reg-email" className="block font-bold text-slate-700 mb-1">Email Address</label>
                     <input
+                      id="reg-email"
+                      aria-label="Email Address"
                       type="email"
                       required
                       value={regEmail}
                       onChange={(e) => setRegEmail(e.target.value)}
                       placeholder={registerType === 'citizen' ? 'citizen@gmail.com' : 'officer@gov.in'}
-                      className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-mono"
+                      className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus-visible:outline-none outline-none font-mono"
                     />
                   </div>
                 </div>
 
                 {registerType === 'citizen' ? (
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Residential Ward / Area</label>
+                    <label htmlFor="reg-ward" className="block font-bold text-slate-700 mb-1">Residential Ward / Area</label>
                     <select
+                      id="reg-ward"
+                      aria-label="Residential Ward or Area"
                       value={regWard}
                       onChange={(e) => setRegWard(e.target.value)}
-                      className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                      className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus-visible:outline-none outline-none"
                     >
                       <option value="WARD-17">Ward 17 — Kurla West & LBS Marg (High Vulnerability Zone)</option>
                       <option value="WARD-12">Ward 12 — Dadar & Hindmata (Flood Lowland Basin)</option>
@@ -613,11 +652,13 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">Department / Unit</label>
+                      <label htmlFor="reg-dept" className="block font-bold text-slate-700 mb-1">Department / Unit</label>
                       <select
+                        id="reg-dept"
+                        aria-label="Department or Unit"
                         value={regDepartment}
                         onChange={(e) => setRegDepartment(e.target.value)}
-                        className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                        className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 font-bold focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus-visible:outline-none outline-none"
                       >
                         <option value="NDRF 8th Battalion">NDRF 8th Battalion</option>
                         <option value="SDRF Quick Response Unit">SDRF Quick Response Unit</option>
@@ -626,28 +667,32 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
                       </select>
                     </div>
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">Official Badge / Service ID</label>
+                      <label htmlFor="reg-official-id" className="block font-bold text-slate-700 mb-1">Official Badge / Service ID</label>
                       <input
+                        id="reg-official-id"
+                        aria-label="Official Badge or Service ID"
                         type="text"
                         required
                         value={regOfficialId}
                         onChange={(e) => setRegOfficialId(e.target.value)}
                         placeholder="e.g. MH-NDRF-8041"
-                        className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none font-mono"
+                        className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus-visible:outline-none outline-none font-mono"
                       />
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Account Password</label>
+                  <label htmlFor="reg-password" className="block font-bold text-slate-700 mb-1">Account Password</label>
                   <input
+                    id="reg-password"
+                    aria-label="Account Password"
                     type="password"
                     required
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
                     placeholder="Create a secure password"
-                    className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                    className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus-visible:outline-none outline-none"
                   />
                   <p className="text-[10px] text-slate-400 mt-1">
                     Enforced by AWS Cognito Password Policy: min 8 characters, letters & numbers.
@@ -664,7 +709,8 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
                 <button
                   type="submit"
                   disabled={isAuthenticating}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 shadow-md shadow-blue-500/20 active:scale-95 transition-all text-xs"
+                  aria-label={`Create ${registerType === 'officer' ? 'Officer' : 'Citizen'} Account`}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 shadow-md shadow-blue-500/20 active:scale-95 transition-all text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   <UserPlus className="h-4 w-4" />
                   <span>{isAuthenticating ? 'Creating Cognito User & Provisioning...' : `Create ${registerType === 'officer' ? 'Officer' : 'Citizen'} Account ➔`}</span>
@@ -674,8 +720,9 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
               <div className="text-center pt-2">
                 <button
                   type="button"
+                  aria-label="Return to 1-Click Fast Track Login"
                   onClick={() => setActiveTab('personas')}
-                  className="text-xs font-bold text-blue-600 hover:underline"
+                  className="text-xs font-bold text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md"
                 >
                   ← Already have access? Use 1-Click Fast Track Login
                 </button>
@@ -783,7 +830,8 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
 
             <button
               onClick={() => handleSelectPersonaAndLogin(selectedPersona)}
-              className="rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 text-xs shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5"
+              aria-label={`Launch ${selectedPersona.title} Portal`}
+              className="rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 text-xs shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               <span>Launch {selectedPersona.title.split(' ')[0]} Portal ➔</span>
             </button>

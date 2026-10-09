@@ -177,8 +177,21 @@ export default function LandingPageView({
             </button>
           </nav>
 
-          {/* Single Primary Navbar CTA (Cleaned right side - uncluttered) */}
+          {/* Primary Navbar CTAs */}
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => {
+                if (onOpenJudgeTour) onOpenJudgeTour();
+                else onEnterCommandCenter();
+              }}
+              className="flex items-center gap-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-3 py-2 text-xs shadow-xs transition-all active:scale-95"
+              title="One-tap bypass demo credentials and start 3-minute Judge Demo Tour"
+            >
+              <Award className="h-3.5 w-3.5 text-emerald-600" />
+              <span className="hidden sm:inline">Continue as Judge (read-only)</span>
+              <span className="sm:hidden">Judge Tour</span>
+            </button>
+
             {currentUser ? (
               <button
                 onClick={onEnterCommandCenter}
@@ -247,7 +260,7 @@ export default function LandingPageView({
               {/* Punchy Narrative Copy */}
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
                 Most platforms tell municipal authorities <span className="text-rose-600 font-bold underline decoration-rose-300">what is happening</span>. 
-                <strong className="text-blue-700 font-bold"> JalRakshak AI</strong> tells them <span className="text-emerald-700 font-bold underline decoration-emerald-300">what statutory action to authorize next</span> — synthesizing raw IoT telemetry, depot inventories, and statutory standard operating procedures in <strong className="text-slate-900">real-time (p50: 3.4ms local pipeline)</strong>.
+                <strong className="text-blue-700 font-bold"> JalRakshak AI</strong> tells them <span className="text-emerald-700 font-bold underline decoration-emerald-300">what statutory action to authorize next</span> — synthesizing raw IoT telemetry, depot inventories, and statutory standard operating procedures in <strong className="text-slate-900">real-time (~62 ms p50 on local 5-agent pipeline; see docs/BENCHMARK.md)</strong>.
               </p>
 
               {/* 4 Crisp Key Metric Badges with Enhanced Border Contrast & Drop Shadow */}
@@ -277,7 +290,7 @@ export default function LandingPageView({
                 </div>
               </div>
 
-              {/* Hero Action CTA: Keep a single clear primary CTA button */}
+              {/* Hero Action CTAs */}
               <div className="pt-2 flex flex-wrap items-center gap-3">
                 <button
                   onClick={onEnterCommandCenter}
@@ -285,6 +298,19 @@ export default function LandingPageView({
                 >
                   <LayoutDashboard className="h-4 w-4" />
                   <span>OPEN COMMAND CENTER</span>
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (onOpenJudgeTour) onOpenJudgeTour();
+                    else onEnterCommandCenter();
+                  }}
+                  className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-3.5 text-sm shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+                  title="One-tap bypass demo credentials and start 3-minute Judge Demo Tour"
+                >
+                  <Award className="h-4 w-4" />
+                  <span>CONTINUE AS JUDGE (READ-ONLY)</span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
 

@@ -89,4 +89,5 @@ def run_benchmark(iterations: int = 20) -> dict:
 
 
 if __name__ == "__main__":
-    run_benchmark(20)
+    count = int(sys.argv[1]) if len(sys.argv) > 1 else 100
+    run_benchmark(count)

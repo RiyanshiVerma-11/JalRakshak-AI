@@ -74,13 +74,33 @@ def get_backend_mode() -> str:
     return mode
 
 
+import re
+
+_AWS_ACCESS_KEY_REGEX = re.compile(r"^(AKIA|ASIA)[A-Z0-9]{16}$")
+_PLACEHOLDER_SUBSTRINGS = ("your_", "here", "changeme", "xxxx", "example", "placeholder")
+
+
 def has_aws_credentials() -> bool:
-    """Checks whether real AWS access credentials exist in the environment."""
-    key = os.environ.get("AWS_ACCESS_KEY_ID")
-    secret = os.environ.get("AWS_SECRET_ACCESS_KEY")
-    if key and secret and not key.startswith("test") and not key.startswith("fake"):
+    """
+    Checks whether real AWS access credentials exist in the environment.
+    Rejects placeholders containing 'your_', 'here', 'changeme', 'xxxx', 'example',
+    'placeholder', or equal to DEFAULT_AWS_ACCOUNT_ID.
+    Only treats keys as real if they match ^(AKIA|ASIA)[A-Z0-9]{16}$ or the LocalStack 'test' sentinel.
+    """
+    key = os.environ.get("AWS_ACCESS_KEY_ID", "").strip()
+    secret = os.environ.get("AWS_SECRET_ACCESS_KEY", "").strip()
+    if not key or not secret:
+        return False
+    key_lower = key.lower()
+    secret_lower = secret.lower()
+    for ph in _PLACEHOLDER_SUBSTRINGS:
+        if ph in key_lower or ph in secret_lower:
+            return False
+    if key == DEFAULT_AWS_ACCOUNT_ID or secret == DEFAULT_AWS_ACCOUNT_ID:
+        return False
+    if key == "test" and secret == "test":
         return True
-    return False
+    return bool(_AWS_ACCESS_KEY_REGEX.match(key))
 
 
 def get_build_it_tools_inventory() -> list[dict[str, Any]]:
@@ -99,11 +119,7 @@ def get_build_it_tools_inventory() -> list[dict[str, Any]]:
         strands_version = getattr(strands, "__version__", None) or importlib.metadata.version("strands-agents")
         strands_active = True
     except Exception:
-        try:
-            strands_version = importlib.metadata.version("strands-agents")
-            strands_active = True
-        except Exception:
-            strands_active = False
+        strands_active = False
 
     # 2. AWS Cedar
     cedar_version = "unknown"
@@ -139,8 +155,8 @@ def get_build_it_tools_inventory() -> list[dict[str, Any]]:
         pass
 
     # Use relative paths in evidence to avoid leaking absolute local filesystem paths
-    rel_policy = os.path.relpath(policy_path, base_dir) if os.path.exists(policy_path) else "policies/incident_policy.cedar"
-    rel_template = os.path.relpath(template_path, base_dir) if os.path.exists(template_path) else "aws_infra/template.yaml"
+    rel_policy = (os.path.relpath(policy_path, base_dir) if os.path.exists(policy_path) else "policies/incident_policy.cedar").replace("\\", "/")
+    rel_template = (os.path.relpath(template_path, base_dir) if os.path.exists(template_path) else "aws_infra/template.yaml").replace("\\", "/")
     sam_label = os.path.basename(sam_bin) if sam_bin else "not found"
 
     return [

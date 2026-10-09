@@ -43,10 +43,13 @@ _G = "\033[92m"; _Y = "\033[93m"; _C = "\033[96m"; _P = "\033[95m"
 _B = "\033[1m";  _R = "\033[0m"
 
 # ── Automatic .env loader (ensures local .env credentials are active if present)
+_CREDENTIAL_ENV_KEYS = frozenset({"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"})
+
 def _load_env_file():
+    existing_creds = {k: os.environ[k] for k in _CREDENTIAL_ENV_KEYS if k in os.environ}
     try:
         from dotenv import load_dotenv
-        load_dotenv(override=True)
+        load_dotenv(override=False)
     except Exception:
         pass
     try:
@@ -62,10 +65,12 @@ def _load_env_file():
                     k, v = line.split("=", 1)
                     k = k.strip()
                     v = v.strip().strip("'\"")
-                    if k:
+                    if k and k not in os.environ:
                         os.environ[k] = v
     except Exception:
         pass
+    for k, v in existing_creds.items():
+        os.environ[k] = v
 
 _load_env_file()
 

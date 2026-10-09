@@ -28,6 +28,7 @@ MANIFEST
 # Virtual Environments
 venv/
 .venv/
+.smoke_venv/
 env/
 ENV/
 env.bak/

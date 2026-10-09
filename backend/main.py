@@ -2,6 +2,12 @@
 JalRakshak AI - FastAPI Backend Server
 Empowering municipal emergency response with AWS Strands Multi-Agent orchestration,
 SOP RAG retrieval, multimodal citizen vision, and Human-in-the-Loop decision execution.
+
+Offline Model Note:
+In OFFLINE mode the AWS Strands Agents SDK event loop, @tool dispatch, HookProvider
+lifecycle and AWS Cedar decisions all execute for real; only the LLM inference is
+replaced by LocalDeterministicModel. Real inference runs via BedrockModel when
+AWS_EXECUTION_MODE=LIVE.
 """
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +18,26 @@ import uuid
 import copy
 import base64
 from datetime import datetime, timezone
+
+# Public judge-safe endpoints allowlist (Option ii / Task A5)
+PUBLIC_DEMO_ENDPOINTS = frozenset({
+    "/health",
+    "/api/health",
+    "/api/judge/overview",
+    "/api/demo/pipeline",
+    "/api/incidents/simulate",
+    "/api/resources",
+    "/api/aws/metrics",
+    "/api/citizen/reports",
+    "/api/telemetry/live",
+    "/api/rag/protocols",
+    "/api/wards",
+    "/api/auth/token",
+    "/api/citizen/report",
+    "/api/citizen/query",
+    "/api/copilot/chat",
+    "/api/v1/simulate/dynamic-telemetry",
+})
 
 from .data.state_store import state_store as db
 from .agents.strands_workflow import strands_orchestrator, get_strands_model_provider
@@ -60,6 +86,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Judge-safe public demonstration endpoints allowlist (Task A5)
+PUBLIC_DEMO_ENDPOINTS = frozenset({
+    "/health",
+    "/api/health",
+    "/api/judge/overview",
+    "/api/demo/pipeline",
+    "/api/incidents/simulate",
+    "/api/resources",
+    "/api/aws/metrics",
+    "/api/citizen/reports",
+    "/api/telemetry/live",
+    "/api/rag/protocols",
+    "/api/wards",
+    "/api/auth/token",
+    "/api/citizen/report",
+    "/api/citizen/query",
+    "/api/copilot/chat",
+    "/api/v1/simulate/dynamic-telemetry",
+})
 
 # Request Models
 class SimulateRequest(BaseModel):
@@ -214,6 +260,11 @@ def read_health():
         "rag_engine": "TF-IDF Lexical Retrieval (NDMA / CPHEEO SOP Knowledge Base)",
         "cloud_metrics": aws_bridge.get_cloud_metrics(),
         "build_it_tools": get_build_it_tools_inventory(),
+        "local_inference_note": (
+            "In OFFLINE mode the AWS Strands Agents SDK event loop, @tool dispatch, HookProvider lifecycle and "
+            "AWS Cedar decisions all execute for real; only the LLM inference is replaced by LocalDeterministicModel. "
+            "Real inference runs via BedrockModel when AWS_EXECUTION_MODE=LIVE."
+        ),
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
@@ -257,14 +308,6 @@ def get_incident_detail(
     token = authorization[7:].strip()
     claims = verify_jwt_token(token)
     role = claims.get("role", "citizen")
-
-    if not evaluate_cedar_policy(role, "read_incidents", incident_id):
-        raise HTTPException(status_code=403, detail=f"Authorization Denied: AWS Cedar policy denied 'read_incidents' for role '{role}'.")
-
-    inc = db.get_incident(incident_id)
-    if not inc:
-        raise HTTPException(status_code=404, detail="Incident not found")
-    return inc
 
     if not evaluate_cedar_policy(role, "read_incidents", incident_id):
         raise HTTPException(status_code=403, detail=f"Authorization Denied: AWS Cedar policy denied 'read_incidents' for role '{role}'.")

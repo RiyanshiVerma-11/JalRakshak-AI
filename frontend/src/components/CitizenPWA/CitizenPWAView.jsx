@@ -321,7 +321,7 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
   };
 
   return (
-    <div className="flex flex-col items-center justify-center py-4">
+    <div className="flex flex-col items-center justify-center py-4" lang={lang}>
       
       {/* PWA Phone Shell */}
       <div className="w-full max-w-md rounded-[38px] bg-slate-950 p-3 shadow-2xl border-4 border-slate-800 ring-1 ring-slate-700/60 relative">
@@ -506,8 +506,9 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                       <button
                         key={c.id}
                         type="button"
+                        aria-label={`Category: ${c.label}`}
                         onClick={() => setCategory(c.id)}
-                        className={`flex items-center gap-1.5 rounded-xl p-2 text-left text-xs font-bold transition-all border ${
+                        className={`flex items-center gap-1.5 rounded-xl p-2 text-left text-xs font-bold transition-all border focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-1 focus:ring-offset-slate-900 ${
                           category === c.id
                             ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300 shadow-sm'
                             : 'bg-slate-900/70 border-slate-800 text-slate-300 hover:bg-slate-800'
@@ -536,8 +537,9 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                     {previewImage && (
                       <button
                         type="button"
+                        aria-label="Remove photo evidence"
                         onClick={() => { setPreviewImage(null); setSelectedFile(null); }}
-                        className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1"
+                        className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 focus:outline-none focus:ring-1 focus:ring-rose-400"
                       >
                         <Trash2 className="h-3 w-3" />
                         <span>Remove Photo</span>
@@ -572,8 +574,9 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                         </span>
                         <button
                           type="button"
+                          aria-label="Close camera"
                           onClick={stopCamera}
-                          className="text-slate-400 hover:text-white"
+                          className="text-slate-400 hover:text-white focus:outline-none focus:ring-1 focus:ring-cyan-400"
                         >
                           ✕ Close
                         </button>
@@ -582,8 +585,9 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                       <div className="relative z-10 flex justify-center pb-1">
                         <button
                           type="button"
+                          aria-label="Snap photo with camera"
                           onClick={capturePhoto}
-                          className="flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/50 active:scale-95 transition-all"
+                          className="flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/50 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-white"
                         >
                           <Camera className="h-4 w-4" />
                           <span>Snap Photo</span>
@@ -605,8 +609,9 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                         </span>
                         <button
                           type="button"
+                          aria-label="Change uploaded photo"
                           onClick={() => fileInputRef.current?.click()}
-                          className="text-[10px] bg-cyan-600/90 hover:bg-cyan-500 text-slate-950 px-2 py-0.5 rounded font-bold transition-all"
+                          className="text-[10px] bg-cyan-600/90 hover:bg-cyan-500 text-slate-950 px-2 py-0.5 rounded font-bold transition-all focus:outline-none focus:ring-1 focus:ring-white"
                         >
                           Change
                         </button>
@@ -626,8 +631,9 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                       <div className="flex gap-2 justify-center">
                         <button
                           type="button"
+                          aria-label="Upload photo file from storage"
                           onClick={() => fileInputRef.current?.click()}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[11px] font-bold border border-slate-700 transition-all"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[11px] font-bold border border-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-cyan-400"
                         >
                           <Upload className="h-3.5 w-3.5" />
                           <span>Upload File</span>
@@ -635,8 +641,9 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
 
                         <button
                           type="button"
+                          aria-label="Open device camera"
                           onClick={startCamera}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-[11px] font-bold border border-cyan-500/40 transition-all"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-[11px] font-bold border border-cyan-500/40 transition-all focus:outline-none focus:ring-2 focus:ring-cyan-400"
                         >
                           <Camera className="h-3.5 w-3.5" />
                           <span>Open Camera</span>
@@ -649,36 +656,41 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                     </div>
                   )}
 
-                  {/* AI Vision Analysis Preview Pill */}
-                  <div className="mt-2 rounded-xl bg-slate-900/90 p-2.5 border border-cyan-500/30 text-[11px]">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-cyan-300 flex items-center gap-1">
-                        <Sparkles className="h-3 w-3 text-cyan-400" />
-                        AI Vision Diagnostic
-                      </span>
-                      <span className="font-mono text-emerald-400 text-[10px] font-bold">
-                        {vision.confidence}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-400">
-                      <div>Depth: <strong className="text-white">{vision.estimated_depth}</strong></div>
-                      <div>Debris: <strong className="text-amber-400">{vision.debris}</strong></div>
-                    </div>
-                    <div className="text-[10px] text-red-400 font-semibold mt-0.5 truncate">
-                      ⚠️ {vision.road_passability}
-                    </div>
+                  {/* AI Vision Analysis Preview Pill - Only active once photo is attached */}
+                  {previewImage ? (
+                    <div className="mt-2 rounded-xl bg-slate-900/90 p-2.5 border border-cyan-500/30 text-[11px] transition-all">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-cyan-300 flex items-center gap-1">
+                          <Sparkles className="h-3 w-3 text-cyan-400" />
+                          AI Vision Diagnostic
+                        </span>
+                        <span className="font-mono text-emerald-400 text-[10px] font-bold">
+                          {vision.confidence}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-400">
+                        <div>Depth: <strong className="text-white">{vision.estimated_depth}</strong></div>
+                        <div>Debris: <strong className="text-amber-400">{vision.debris}</strong></div>
+                      </div>
+                      <div className="text-[10px] text-red-400 font-semibold mt-0.5 truncate">
+                        ⚠️ {vision.road_passability}
+                      </div>
 
-                    {previewImage && (
                       <button
                         type="button"
                         onClick={() => setShowCVModal(true)}
-                        className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 font-bold border border-cyan-500/40 text-[10px] transition-all"
+                        className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 font-bold border border-cyan-500/40 text-[10px] transition-all focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer"
                       >
                         <Scan className="h-3 w-3" />
                         <span>Inspect Bounding Boxes & Ruler on Your Photo</span>
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/40 border border-slate-800 text-[10px] text-slate-400">
+                      <Sparkles className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                      <span>Attach or capture a photo above to run AI Vision diagnostics (depth estimation & debris analysis).</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Location Input with Auto-GPS */}
@@ -689,15 +701,16 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                     </label>
                     <button
                       type="button"
+                      aria-label="Auto-detect current GPS location"
                       onClick={detectGPSLocation}
                       disabled={isDetectingLocation}
-                      className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-bold"
+                      className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-bold focus:outline-none focus:ring-1 focus:ring-cyan-400"
                     >
                       <Navigation className="h-3 w-3" />
                       <span>{isDetectingLocation ? 'Locating...' : 'Auto-Detect GPS'}</span>
                     </button>
                   </div>
-                  <div className="flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 border border-slate-800">
+                  <div className="flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 border border-slate-800 focus-within:border-cyan-500/60 focus-within:ring-1 focus-within:ring-cyan-500/50">
                     <MapPin className="h-4 w-4 text-cyan-400 shrink-0" />
                     <input
                       type="text"
@@ -719,7 +732,7 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                     rows={2}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full rounded-xl bg-slate-900 p-2.5 text-xs text-white border border-slate-800 focus:outline-none focus:border-cyan-500/60 transition-all resize-none"
+                    className="w-full rounded-xl bg-slate-900 p-2.5 text-xs text-white border border-slate-800 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/50 transition-all resize-none"
                     placeholder="Describe water depth, traffic condition, pipeline leak or people in danger..."
                     required
                   />
@@ -733,7 +746,7 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                       type="text"
                       value={reporterName}
                       onChange={(e) => setReporterName(e.target.value)}
-                      className="w-full rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs text-slate-200 border border-slate-800"
+                      className="w-full rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs text-slate-200 border border-slate-800 focus:outline-none focus:border-cyan-500/60"
                     />
                   </div>
                   <div>
@@ -742,7 +755,7 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                       type="text"
                       value={reporterPhone}
                       onChange={(e) => setReporterPhone(e.target.value)}
-                      className="w-full rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs text-slate-200 border border-slate-800 font-mono"
+                      className="w-full rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs text-slate-200 border border-slate-800 font-mono focus:outline-none focus:border-cyan-500/60"
                     />
                   </div>
                 </div>
@@ -751,10 +764,15 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 py-3 text-xs font-black text-white shadow-lg shadow-cyan-950/50 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                  aria-label="Submit citizen emergency report"
+                  className="w-full rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 py-3 text-xs font-black text-white shadow-lg shadow-cyan-950/50 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-900"
                 >
                   <Send className="h-4 w-4" />
-                  <span>{isSubmitting ? 'Analyzing & Transmitting to AWS...' : 'Submit Citizen Emergency Report'}</span>
+                  <span>
+                    {isSubmitting 
+                      ? (lang === 'hi' ? 'विश्लेषण एवं प्रेषण जारी...' : (lang === 'mr' ? 'तपासणी व नोंदणी सुरू...' : 'Analyzing & Transmitting to AWS...'))
+                      : (lang === 'hi' ? 'आपातकालीन रिपोर्ट सबमिट करें' : (lang === 'mr' ? 'आपत्कालीन नोंदणी सबमिट करा' : 'Submit Citizen Emergency Report'))}
+                  </span>
                 </button>
 
               </form>

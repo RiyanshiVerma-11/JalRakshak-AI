@@ -1,25 +1,45 @@
-fastapi>=0.115.0
-uvicorn>=0.22.0
-pydantic>=2.9.0
+# ==============================================================================
+# JalRakshak AI — Production & Reproducible Dependency Manifest
+# ==============================================================================
+# NOTE ON VERSION CONSTRAINTS:
+# 1. Exact pins (==) are MANDATORY for all AWS tools, core runtime frameworks,
+#    cryptographic policy engines, and ML/RAG libraries to guarantee 100%
+#    reproducible offline execution for hackathon evaluation.
+# 2. Relaxed constraints (>=) are INTENTIONAL only for non-AWS developer tooling
+#    and test runners (e.g. pytest, watchdog) to allow platform-specific flexibility.
+# 3. For an exact, fully frozen dependency graph across all transitive packages,
+#    refer to requirements.lock.
+# ==============================================================================
+
+# Core Web Framework & Data Validation (Pinned)
+fastapi==0.142.2
+uvicorn==0.54.0
+pydantic==2.13.5
+
+# AWS Open-Source Multi-Agent Framework (Pinned)
+strands-agents==1.58.0
+
+# AWS Open-Source Policy & Statutory Cedar RBAC (Pinned)
+cedarpy==4.12.1
+PyJWT==2.13.0
+
+# AWS SDK & Serverless IaC CLI (Pinned)
+boto3==1.43.83
+botocore==1.43.108
+aws-sam-cli==1.166.2
+
+# Vector RAG & Numerical Computing (Pinned)
+scikit-learn==1.4.2
+numpy==1.26.4
+
+# Computer Vision & Multimodal Image Processing (Pinned)
+pillow==10.4.0
+
+# Non-AWS Development & Operational Tooling (>= intentional for platform flexibility)
 httpx>=0.28.0
 python-multipart>=0.0.6
-# AWS Multi-Agent Framework — AWS Strands Agents SDK
-strands-agents>=1.58.0
-watchdog>=6.0.0
-# AWS Open-Source Policy Engine — AWS Cedar Auth & Least Privilege RBAC
-cedarpy>=4.12.0
-PyJWT>=2.8.0
-# AWS SDK — Bedrock (Claude 3.5 Sonnet) + SNS live dispatch
-boto3>=1.34.0
-botocore>=1.34.0
-# Vector RAG — TF-IDF + cosine similarity for NDMA SOP retrieval
-scikit-learn>=1.4.0
-numpy>=1.26.0
 python-dotenv>=1.0.0
-# Computer Vision & Multi-modal image analysis
-pillow>=10.0.0
-# Test Suite & IaC Validation
+watchdog>=4.0.0
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
 pyyaml>=6.0.0
-

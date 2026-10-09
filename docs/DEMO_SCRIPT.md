@@ -42,7 +42,7 @@
   > 4. **Multilingual Comms Agent** generates localized emergency alerts in English, Hindi, and Marathi.
   > 5. **Coordinator Agent** retrieves statutory NDMA standard operating procedures via vector RAG.
   > 
-  > Our custom Strands Circuit Breaker monitors execution: local workflow latency benchmarked at just **3.4 ms p50**, backed by an embedded deterministic NDMA fallback if cloud APIs throttle."
+  > Our custom Strands Circuit Breaker monitors execution: local workflow latency benchmarked at **62.14 ms p50** (measured across 100 iterations in `docs/BENCHMARK.md`), backed by an embedded deterministic NDMA fallback if cloud APIs throttle."
 
 ---
 
