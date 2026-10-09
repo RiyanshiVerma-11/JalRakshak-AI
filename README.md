@@ -6,6 +6,7 @@
 
 [![Multi-Agent Orchestrator](https://img.shields.io/badge/AWS%20Open--Source-Strands%20Agents%20SDK-06B6D4?style=for-the-badge&logo=amazonaws)](backend/agents/strands_workflow.py)
 [![AWS Cedar](https://img.shields.io/badge/AWS%20Open--Source-Cedar%20(cedarpy)%20RBAC-E11D48?style=for-the-badge)](policies/incident_policy.cedar)
+[![AWS OpenSearch](https://img.shields.io/badge/AWS%20Open--Source-OpenSearch%202.x-005FD6?style=for-the-badge&logo=opensearch)](backend/data/opensearch_telemetry.py)
 [![AWS SAM IaC](https://img.shields.io/badge/AWS%20Open--Source-SAM%20CLI%20IaC-FF9900?style=for-the-badge&logo=amazon-aws)](aws_infra/template.yaml)
 [![LocalStack Ready](https://img.shields.io/badge/LocalStack-Endpoint%20Resolved-8B5CF6?style=for-the-badge)](backend/cloud/config.py)
 [![Integration Tests](https://img.shields.io/badge/Tests-36%2F36%20Passing%20(0%20Skipped)-10B981?style=for-the-badge&logo=pytest)](tests/)
@@ -70,12 +71,13 @@ JalRakshak AI adheres strictly to every requirement of the **Build It** route:
 1. **Zero AWS Account or Cloud Bill:** Runs 100% locally on standard developer hardware.
 2. **Zero Credentials or Secrets in Repo:** Repository contains zero `.pem`, `.key`, or active API tokens. Copying `.env.example` will reject dummy values and remain offline (verified by `tests/test_build_it_route.py::test_env_example_copy_has_no_credentials`).
 3. **Zero Outbound Calls in Offline Mode:** Network calls and external HTTP sockets are blocked during local offline execution (verified by `tests/test_build_it_route.py::test_offline_run_makes_no_network_calls`).
-4. **Authentic AWS Open-Source Tooling:** All 4 AWS open-source tools execute genuine code paths:
+4. **Authentic AWS Open-Source Tooling:** All 5 AWS open-source tools execute genuine code paths:
 
 | AWS Open-Source Tool | Architectural Role | Code Location |
 | :--- | :--- | :--- |
 | **AWS Strands Agents SDK** | Multi-agent DAG orchestration with 5 distinct `Agent` instances, `@tool` functions, and `StrandsCircuitBreakerHook` (`HookProvider`). Runs locally via `LocalDeterministicModel`. | [`backend/agents/strands_workflow.py`](backend/agents/strands_workflow.py) |
 | **AWS Cedar (`cedarpy`)** | Statutory Incident Commander authorization against formal `.cedar` policy specifications. | [`backend/auth/cedar_auth.py`](backend/auth/cedar_auth.py)<br/>[`policies/incident_policy.cedar`](policies/incident_policy.cedar) |
+| **AWS OpenSearch 2.x** | SCADA water telemetry ingestion, citizen emergency report search, and Query DSL anomaly detection. | [`backend/data/opensearch_telemetry.py`](backend/data/opensearch_telemetry.py)<br/>[`scripts/setup_opensearch.py`](scripts/setup_opensearch.py) |
 | **AWS SAM CLI** | Serverless IaC specification declaring EventBridge event bus, DynamoDB tables, S3 evidence lake, SNS topic, and Lambda handlers. | [`aws_infra/template.yaml`](aws_infra/template.yaml)<br/>[`aws_infra/lambda_handlers.py`](aws_infra/lambda_handlers.py) |
 | **LocalStack** | Central endpoint resolution for local AWS SDK emulation (`S3`, `DynamoDB`, `SNS`, `EventBridge`) through `AWS_ENDPOINT_URL`. | [`backend/cloud/config.py`](backend/cloud/config.py)<br/>[`backend/cloud/aws_bridge.py`](backend/cloud/aws_bridge.py) |
 
@@ -317,7 +319,13 @@ export AWS_EXECUTION_MODE=LOCALSTACK
 python run_app.py
 ```
 
-### 2. AWS Serverless Application Model (SAM) Build
+### 2. AWS OpenSearch 2.x Telemetry & Anomaly Cluster
+```bash
+docker compose up -d opensearch
+python scripts/setup_opensearch.py
+```
+
+### 3. AWS Serverless Application Model (SAM) Build
 ```bash
 sam validate --template aws_infra/template.yaml --region ap-south-1 --lint
 sam build --template aws_infra/template.yaml --region ap-south-1
