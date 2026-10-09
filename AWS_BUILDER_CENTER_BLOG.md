@@ -1,5 +1,9 @@
 # Building JalRakshak AI: How We Used AWS Strands Agents SDK & AWS Cedar to Mitigate Urban Floods and Heatwaves (and What Fought Back)
 
+*Built by Team SheBuilds for WeMakeDevs × AWS Environmental Hacks (Track 02: Heat and Water — Build It Route).*
+
+---
+
 Every year, Indian metropolises face a brutal dual climate cycle: in July, a 118 mm/hr cloudburst submerses low-lying municipal wards within 40 minutes, flooding hospital ICUs and turning arterial roads into canals. Nine months later, May brings lethal 48.6°C wet-bulb heatwaves, water pipeline ruptures, and parched municipal reservoirs.
 
 When examining municipal emergency control rooms, there is a striking paradox: **the bottleneck is never a lack of sensors**. Modern command centers receive gigabytes of IoT rain gauge feeds, Doppler radar telemetry, SCADA pipeline pressure waveforms, and ambient thermal sensors every second.
@@ -12,7 +16,7 @@ The breakdown occurs in **operational decision latency**:
 > **Our core design question:**  
 > *Most civic dashboards tell administrators what is happening. Can we build an autonomous, protocol-grounded system that determines what statutory action to authorize next within 18 minutes — for both flash floods and extreme heatwaves?*
 
-This led us to engineer **JalRakshak AI** (Water & Climate Guardian) for the WeMakeDevs x AWS Environmental Hacks (**Track: Heat and Water**).
+This led **Team SheBuilds** to engineer **JalRakshak AI** (Water & Climate Guardian) for the WeMakeDevs × AWS Environmental Hacks (**Track 02: Heat and Water — Build It Route**).
 
 ---
 
@@ -22,7 +26,7 @@ To qualify for the hackathon's **Build It** route, our architectural mandate was
 
 We leveraged four AWS open-source technologies to establish a zero-config, production-grade foundation:
 
-```
+```text
                   ┌──────────────────────────────────────────────┐
                   │        Real-Time Environmental Stream        │
                   │   (SCADA Hydrology, Thermal Grids, PWA)      │
@@ -44,6 +48,9 @@ We leveraged four AWS open-source technologies to establish a zero-config, produ
        └──────────────────────────────────┘   └──────────────────────────────────┘
 ```
 
+![AWS Strands 5-Agent Collaborative DAG](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/strands_dag.jpg)
+*Figure 1: AWS Strands Agents SDK Architecture — Visualizing the 5-Agent DAG sequence and sub-4ms circuit-breaker lifecycle.*
+
 ### The Tooling Matrix
 * **Multi-Agent Orchestration:** **AWS Strands Agents SDK** (`strands-agents` v1.58.0)
 * **Authorization & Statutory Policy:** **AWS Cedar** (`cedarpy` v4.12.1)
@@ -63,10 +70,15 @@ from strands import Agent, tool
 from strands.hooks import HookProvider, HookRegistry, events
 
 @tool
-def evaluate_risk_tool(category: str, ward_info: dict, telemetry: dict) -> dict:
+def evaluate_risk_tool(
+    category: str,
+    ward_info: dict,
+    telemetry: dict
+) -> dict:
     """Evaluates hazard deltas against drainage capacity or wet-bulb thermal limits."""
     return risk_agent.evaluate(category, ward_info, telemetry)
 
+# Instantiating the Strands Risk Agent with genuine SDK contracts
 risk_detection_agent = Agent(
     agent_id="strands-agent-risk-01",
     name="Risk Detection Agent",
@@ -77,6 +89,8 @@ risk_detection_agent = Agent(
     model=get_strands_model("Risk Detection Agent")
 )
 ```
+
+The pipeline executes as a deterministic directed acyclic graph (DAG) covering all key Track 02 operational challenges:
 
 * **In Flood & Monsoon Waterlogging Scenarios (`URBAN_FLOOD`):**
   1. **Risk Agent:** Computes rainfall intensity (118 mm/hr) against stormwater drain saturation (92%).
@@ -135,7 +149,10 @@ When an incident commander clicks **"Approve & Execute"**, the backend verifies 
 ```python
 result = cedarpy.is_authorized(request, _CACHED_POLICY, entities)
 if result.decision != cedarpy.Decision.Allow:
-    raise HTTPException(status_code=403, detail="Statutory Cedar policy denied approval.")
+    raise HTTPException(
+        status_code=403,
+        detail="Statutory Cedar policy denied approval."
+    )
 ```
 
 If a field operator or citizen attempts to tamper with request headers to authorize resource deployment, Cedar intercepts and halts execution at the kernel level.
@@ -166,6 +183,12 @@ Every serious build involves architectural friction. Here are the four biggest c
 
 ## 5. Operational Results and Impact
 
+![JalRakshak AI Live Municipal Command Center](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/command_center.jpg)
+*Figure 2: JalRakshak AI Live Command Center — Incident Triage, GIS Flood Contours, and Human-in-the-Loop Action Approval.*
+
+![SCADA Hydrology Telemetry Console](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/scada_telemetry.jpg)
+*Figure 3: SCADA Hydrology Console — Real-Time Pipeline Pressure Waveforms & Drainage Outfall Saturation.*
+
 * **Integration Suite:** **30 out of 30 tests passing (100%)** with zero skips across authentication, multi-agent orchestration, and SAM IaC.
 * **Workflow Latency:** **3.4 ms p50** for the complete local 5-agent decision loop.
 * **Quantified ROI:** Traditional municipal escalation takes 4 hours (averaging ₹1.4 Crore in flood and thermal damage for a dense urban ward). JalRakshak AI enables pre-emptive intervention (pump dispatch or cooling shelter activation) in **18 minutes**, saving over ₹80 Lakhs in civic assets.
@@ -180,5 +203,17 @@ Every serious build involves architectural friction. Here are the four biggest c
 
 ---
 
-*Repository and Documentation:*  
-GitHub: [https://github.com/RiyanshiVerma-11/JalRakshak-AI](https://github.com/RiyanshiVerma-11/JalRakshak-AI)
+## Try It Locally (Zero-Config)
+
+You can clone and run JalRakshak AI on your laptop in under 60 seconds with zero AWS accounts or billing required:
+
+```bash
+git clone https://github.com/RiyanshiVerma-11/JalRakshak-AI.git
+cd JalRakshak-AI
+pip install -r requirements.txt && python run_app.py
+```
+
+Once running, navigate to `http://localhost:8004` to explore the live multi-agent command center and disaster simulations.
+
+*Explore the codebase, test suite, and IaC templates on GitHub:*  
+👉 **[GitHub Repository: JalRakshak-AI](https://github.com/RiyanshiVerma-11/JalRakshak-AI)**
