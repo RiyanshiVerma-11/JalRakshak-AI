@@ -1,4 +1,4 @@
-# Building JalRakshak AI: How We Used AWS Strands Agents SDK & AWS Cedar to Mitigate Urban Floods and Heatwaves (and What Fought Back)
+# Building JalRakshak AI: AWS Strands & Cedar for Floods and Heat (and What Fought Back)
 
 *Built by Team SheBuilds for WeMakeDevs × AWS Environmental Hacks (Track 02: Heat and Water — Build It Route).*
 
