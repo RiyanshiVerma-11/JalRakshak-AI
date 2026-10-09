@@ -177,19 +177,19 @@ export default function Header({
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Bedrock LLM:</span>
-                  <span className="text-cyan-300">Claude 3.5 Sonnet</span>
+                  <span className="text-cyan-300">{isLive ? 'Claude 3.5 Sonnet' : 'LocalDeterministicModel (Default)'}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>EventBridge Bus:</span>
-                  <span className="text-slate-200">jalrakshak-emergency-eventbus</span>
+                  <span>EventBridge:</span>
+                  <span className="text-slate-200">{isLive ? 'Live EventBus (ap-south-1)' : (isLocalStack ? 'LocalStack EventBus' : 'Standby (In-Memory Bus)')}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>State Store:</span>
-                  <span className="text-slate-200">DynamoDB (PITR Enabled)</span>
+                  <span className="text-slate-200">{isLive ? 'DynamoDB (PITR Enabled)' : (isLocalStack ? 'LocalStack DynamoDB' : 'Standby (Local Cache)')}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>Emergency Fallback:</span>
-                  <span className="text-emerald-400">&lt;50ms Statutory NDMA Matrix</span>
+                  <span>Auth Engine:</span>
+                  <span className="text-emerald-400">AWS Cedar (cedarpy)</span>
                 </div>
               </div>
             </div>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="shortageGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="50%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#78716c"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#shortageGrad)"/>
+  <!-- Empty dry water tap/canister -->
+  <path d="M 280,110 L 320,110 L 320,150 L 340,150 L 340,170 L 260,170 L 260,150 L 280,150 Z" fill="#94a3b8"/>
+  <circle cx="300" cy="205" r="8" fill="#cbd5e1" stroke="#94a3b8" stroke-width="2"/>
+  <!-- Cracked dry soil pattern -->
+  <path d="M 150,260 L 220,290 L 300,270 L 380,300 L 450,270" fill="none" stroke="#a8a29e" stroke-width="2"/>
+  <path d="M 220,290 L 260,330" fill="none" stroke="#a8a29e" stroke-width="2"/>
+  <path d="M 380,300 L 350,335" fill="none" stroke="#a8a29e" stroke-width="2"/>
+  <text x="300" y="340" font-family="system-ui, sans-serif" font-size="20" font-weight="bold" fill="#f8fafc" text-anchor="middle">POTABLE WATER DEFICIT</text>
+  <text x="300" y="368" font-family="system-ui, sans-serif" font-size="13" fill="#e2e8f0" text-anchor="middle">Offline Build It Placeholder • Dry Supply Tap / Ration Queue</text>
+</svg>

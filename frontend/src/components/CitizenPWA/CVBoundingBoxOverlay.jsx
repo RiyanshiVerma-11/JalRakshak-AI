@@ -24,7 +24,9 @@ export default function CVBoundingBoxOverlay({
   depthEstimate = "38 cm",
   passability = "IMPASSABLE FOR LIGHT VEHICLES",
   reporterName = "Field Citizen",
-  timestamp = "10 mins ago"
+  timestamp = "10 mins ago",
+  illustrativeDemoOverlay = true,
+  provider = "Local PIL Heuristic Engine"
 }) {
   const [showBoxes, setShowBoxes] = useState(true);
   const [showRuler, setShowRuler] = useState(true);
@@ -37,7 +39,6 @@ export default function CVBoundingBoxOverlay({
       id: 'leak-pt',
       label: 'Mainline Rupture Point',
       sublabel: '600mm Ductile Iron Pipe Fissure',
-      confidence: '96.4%',
       box: { top: '35%', left: '30%', width: '42%', height: '35%' },
       color: '#06b6d4',
       type: 'critical'
@@ -46,7 +47,6 @@ export default function CVBoundingBoxOverlay({
       id: 'scour-zone',
       label: 'Asphalt Cavitation Scour',
       sublabel: 'Sub-base erosion hazard',
-      confidence: '92.1%',
       box: { top: '65%', left: '18%', width: '64%', height: '28%' },
       color: '#f59e0b',
       type: 'warning'
@@ -56,7 +56,6 @@ export default function CVBoundingBoxOverlay({
       id: 'veh-1',
       label: 'Submerged Light Motor Vehicle',
       sublabel: 'Exhaust & air intake flooded',
-      confidence: '94.8%',
       box: { top: '42%', left: '18%', width: '40%', height: '34%' },
       color: '#ef4444',
       type: 'danger'
@@ -65,7 +64,6 @@ export default function CVBoundingBoxOverlay({
       id: 'drain-clog',
       label: 'Clogged Stormwater Outfall Grate',
       sublabel: 'Plastic debris choke detected',
-      confidence: '91.2%',
       box: { top: '68%', left: '68%', width: '26%', height: '24%' },
       color: '#f59e0b',
       type: 'warning'
@@ -74,7 +72,6 @@ export default function CVBoundingBoxOverlay({
       id: 'curb-sub',
       label: 'Submerged Pedestrian Walkway Curb',
       sublabel: 'Calibrated depth reference mark',
-      confidence: '97.5%',
       box: { top: '56%', left: '2%', width: '32%', height: '20%' },
       color: '#3b82f6',
       type: 'info'
@@ -91,10 +88,18 @@ export default function CVBoundingBoxOverlay({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-white">AWS Rekognition Multimodal Vision Engine</span>
-              <span className="rounded-full bg-cyan-500/20 px-2 py-0.2 text-[10px] font-bold text-cyan-300 border border-cyan-500/40">
-                Claude 3.5 Sonnet Vision
+              <span className="text-xs font-black text-white">
+                {illustrativeDemoOverlay ? 'Local PIL Statistical Vision' : 'AWS Rekognition Multimodal Vision'}
               </span>
+              {illustrativeDemoOverlay ? (
+                <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300 border border-amber-500/40">
+                  demo overlay — not a real detection
+                </span>
+              ) : (
+                <span className="rounded-full bg-cyan-500/20 px-2 py-0.2 text-[10px] font-bold text-cyan-300 border border-cyan-500/40">
+                  Amazon Rekognition Active
+                </span>
+              )}
             </div>
             <p className="text-[11px] text-slate-400">
               Photogrammetric Waterline Depth Calibration & Hazard Object Localization
@@ -221,7 +226,9 @@ export default function CVBoundingBoxOverlay({
               style={{ backgroundColor: det.color }}
             >
               <span>{det.label}</span>
-              <span className="bg-black/40 px-1 rounded text-[9px] font-black">{det.confidence}</span>
+              {det.confidence && (
+                <span className="bg-black/40 px-1 rounded text-[9px] font-black">{det.confidence}</span>
+              )}
             </div>
 
             {/* Hover Tooltip */}

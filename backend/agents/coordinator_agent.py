@@ -230,6 +230,12 @@ class CoordinatorAgent:
 
         # Synthesize Human-in-the-Loop decision contract
         statutory_ref = matched_sop.get("citation") or matched_sop.get("statutory_reference", "NDMA Guidelines 2024")
+        vector_score = matched_sop.get("vector_score")
+        if vector_score is None:
+            vector_score = 0.0
+
+        low_similarity_note = " (below high-confidence threshold)" if vector_score < 0.20 else ""
+
         return {
             "recommended_actions": recommended_actions,
             "rag_reference": {
@@ -237,11 +243,11 @@ class CoordinatorAgent:
                 "title": matched_sop.get("title", "Statutory Emergency Protocol"),
                 "statutory_reference": statutory_ref,
                 "citation": statutory_ref,
-                "vector_score": matched_sop.get("vector_score", 0.42),
+                "vector_score": round(float(vector_score), 4),
                 "mandatory_actions": matched_sop.get("mandatory_actions", []),
                 "rationale": (
-                    f"Protocol {matched_sop['id']} semantically matched "
-                    f"(cosine similarity: {matched_sop.get('vector_score', 0.42):.4f}) "
+                    f"Protocol {matched_sop['id']} lexically matched "
+                    f"(TF-IDF cosine similarity: {round(float(vector_score), 4):.4f}{low_similarity_note}) "
                     f"grounded in {statutory_ref}."
                 )
             }

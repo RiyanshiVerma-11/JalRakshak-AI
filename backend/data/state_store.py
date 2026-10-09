@@ -625,11 +625,17 @@ class InMemoryStateStore:
         with self._lock:
             for inc in self.incidents:
                 if inc["id"] == incident_id:
-                    return inc
+                    return copy.deepcopy(inc)
             return None
 
     def add_incident(self, incident: Dict[str, Any]):
+        """Upsert incident keyed on incident id to prevent duplicate entries (TASK 4)."""
         with self._lock:
+            inc_id = incident.get("id")
+            for i, existing in enumerate(self.incidents):
+                if existing.get("id") == inc_id:
+                    self.incidents[i].update(incident)
+                    return
             # Add to head of list so it appears first in priority queue
             self.incidents.insert(0, incident)
 
@@ -638,16 +644,16 @@ class InMemoryStateStore:
             for i, inc in enumerate(self.incidents):
                 if inc["id"] == incident_id:
                     self.incidents[i].update(updates)
-                    return self.incidents[i]
+                    return copy.deepcopy(self.incidents[i])
             return None
 
     def get_resources(self) -> List[Dict[str, Any]]:
         with self._lock:
-            return self.resources
+            return copy.deepcopy(self.resources)
 
     def get_citizen_reports(self) -> List[Dict[str, Any]]:
         with self._lock:
-            return self.citizen_reports
+            return copy.deepcopy(self.citizen_reports)
 
     def add_citizen_report(self, report: Dict[str, Any]):
         with self._lock:

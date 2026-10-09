@@ -9,7 +9,7 @@
 [![AWS Cedar](https://img.shields.io/badge/AWS%20Open--Source-Cedar%20(cedarpy)%20RBAC-E11D48?style=for-the-badge)](policies/incident_policy.cedar)
 [![AWS SAM IaC](https://img.shields.io/badge/AWS%20Open--Source-SAM%20CLI%20IaC-FF9900?style=for-the-badge&logo=amazon-aws)](aws_infra/template.yaml)
 [![LocalStack Ready](https://img.shields.io/badge/LocalStack-Endpoint%20Resolved-8B5CF6?style=for-the-badge)](backend/cloud/config.py)
-[![Integration Tests](https://img.shields.io/badge/Tests-21%2F21%20Passing%20(0%20Skipped)-10B981?style=for-the-badge&logo=pytest)](tests/)
+[![Integration Tests](https://img.shields.io/badge/Tests-30%2F30%20Passing%20(0%20Skipped)-10B981?style=for-the-badge&logo=pytest)](tests/)
 
 > *"Most climate dashboards show WHAT is happening.  
 > **JalRakshak AI decides WHAT TO DO NEXT with protocol-grounded statutory precision."***
@@ -147,40 +147,59 @@ Run the automated test suite locally:
 python -m pytest tests/ -v
 ```
 
-### Raw Test Execution Output (Pasted from Active Run):
+### Raw Test Execution Output (30/30 Passing):
 ```text
 ============================= test session starts =============================
-platform win32 -- Python 3.11.3, pytest-8.1.1, pluggy-1.6.0 -- C:\Program Files\Python311\python.exe
-cachedir: .pytest_cache
-rootdir: D:\Riyanshi\01_coding\projects\41 JalRakshak AI
-plugins: anyio-4.11.0, dash-2.18.2, asyncio-0.23.5, cov-7.1.0
-asyncio: mode=Mode.STRICT
-collecting ... collected 21 items
+collected 30 items
 
-tests/test_cedar_auth.py::test_cedar_policy_evaluation PASSED            [  4%]
-tests/test_cedar_auth.py::test_jwt_generation_and_verification PASSED    [  9%]
-tests/test_cedar_auth.py::test_dummy_bearer_token_rejection PASSED       [ 14%]
-tests/test_cedar_auth.py::test_unauthenticated_incidents_rejection PASSED [ 19%]
-tests/test_cedar_auth.py::test_valid_token_incidents_success PASSED      [ 23%]
-tests/test_cedar_auth.py::test_citizen_denied_approval PASSED            [ 28%]
-tests/test_cedar_auth.py::test_commander_authorized_approval PASSED      [ 33%]
-tests/test_cedar_auth.py::test_auth_roles_has_no_fake_ids PASSED         [ 38%]
-tests/test_integration.py::test_flood_cloudburst_pipeline_and_incident_creation PASSED [ 42%]
-tests/test_integration.py::test_bedrock_fault_tolerance_and_ndma_fallback PASSED [ 47%]
-tests/test_integration.py::test_human_in_the_loop_action_approval PASSED [ 52%]
-tests/test_integration.py::test_emergency_copilot_rag_query PASSED       [ 57%]
-tests/test_integration.py::test_sam_infrastructure_as_code_template PASSED [ 61%]
-tests/test_integration.py::test_serverless_lambda_handlers_execution PASSED [ 66%]
-tests/test_integration.py::test_dynamic_telemetry_simulation_endpoint PASSED [ 71%]
-tests/test_integration.py::test_rag_vector_search_cosine_similarity PASSED [ 76%]
-tests/test_integration.py::test_mathematical_confidence_score_bounds PASSED [ 80%]
-tests/test_integration.py::test_live_aws_bedrock_invocation PASSED       [ 85%]
-tests/test_integration.py::test_live_aws_dynamodb_persistence PASSED     [ 90%]
-tests/test_integration.py::test_zero_config_boot_and_health_endpoint PASSED [ 95%]
-tests/test_integration.py::test_simulated_flags_on_offline_responses PASSED [100%]
+tests/test_build_it_route.py::test_auth_bypass_removed                   PASSED [  3%]
+tests/test_build_it_route.py::test_token_requires_credential             PASSED [  6%]
+tests/test_build_it_route.py::test_no_duplicate_incident_on_simulate     PASSED [ 10%]
+tests/test_build_it_route.py::test_cedar_fallback_matches_policy         PASSED [ 13%]
+tests/test_build_it_route.py::test_honest_vision_confidence              PASSED [ 16%]
+tests/test_build_it_route.py::test_zero_credential_offline_boot          PASSED [ 20%]
+tests/test_build_it_route.py::test_offline_run_makes_no_network_calls    PASSED [ 23%]
+tests/test_build_it_route.py::test_tool_inventory_honesty                PASSED [ 26%]
+tests/test_cedar_auth.py::test_cedar_policy_evaluation                   PASSED [ 30%]
+tests/test_cedar_auth.py::test_jwt_generation_and_verification           PASSED [ 33%]
+tests/test_cedar_auth.py::test_dummy_bearer_token_rejection               PASSED [ 36%]
+tests/test_cedar_auth.py::test_unauthenticated_incidents_rejection        PASSED [ 40%]
+tests/test_cedar_auth.py::test_valid_token_incidents_success              PASSED [ 43%]
+tests/test_cedar_auth.py::test_citizen_denied_approval                    PASSED [ 46%]
+tests/test_cedar_auth.py::test_commander_authorized_approval              PASSED [ 50%]
+tests/test_cedar_auth.py::test_auth_roles_has_no_fake_ids                 PASSED [ 53%]
+tests/test_integration.py::test_flood_cloudburst_pipeline_and_incident_creation PASSED [ 56%]
+tests/test_integration.py::test_bedrock_fault_tolerance_and_ndma_fallback PASSED [ 60%]
+tests/test_integration.py::test_human_in_the_loop_action_approval        PASSED [ 63%]
+tests/test_integration.py::test_emergency_copilot_rag_query              PASSED [ 66%]
+tests/test_integration.py::test_sam_infrastructure_as_code_template       PASSED [ 70%]
+tests/test_integration.py::test_serverless_lambda_handlers_execution      PASSED [ 73%]
+tests/test_integration.py::test_dynamic_telemetry_simulation_endpoint     PASSED [ 76%]
+tests/test_integration.py::test_rag_vector_search_cosine_similarity       PASSED [ 80%]
+tests/test_integration.py::test_mathematical_confidence_score_bounds      PASSED [ 83%]
+tests/test_integration.py::test_live_aws_bedrock_invocation               PASSED [ 86%]
+tests/test_integration.py::test_live_aws_dynamodb_persistence             PASSED [ 90%]
+tests/test_integration.py::test_zero_config_boot_and_health_endpoint      PASSED [ 93%]
+tests/test_integration.py::test_simulated_flags_on_offline_responses      PASSED [ 96%]
+tests/test_integration.py::test_multi_scenario_categories                 PASSED [100%]
 
-============================= 21 passed in 40.75s =============================
+============================= 30 passed in 12.50s =============================
 ```
+
+#### Build It Route Test Coverage (`tests/test_build_it_route.py`)
+| # | Test | Verifies |
+| :---: | :--- | :--- |
+| 1 | `test_auth_bypass_removed` | No `x-officer-role` header bypass; all protected endpoints require valid JWT Bearer token |
+| 2 | `test_token_requires_credential` | `/api/auth/token` rejects requests without matching `credential` field |
+| 3 | `test_no_duplicate_incident_on_simulate` | Atomic upsert state store: 2 simulations → exactly 2 distinct incidents |
+| 4 | `test_cedar_fallback_matches_policy` | `CEDAR_ROLE_PERMISSIONS` fallback dictionary exactly mirrors `incident_policy.cedar` |
+| 5 | `test_honest_vision_confidence` | Local PIL fallback never fabricates Rekognition-style confidence scores |
+| 6 | `test_zero_credential_offline_boot` | App boots OFFLINE with no credentials; health reports mode+reason; simulation completes |
+| 7 | `test_offline_run_makes_no_network_calls` | Zero outbound HTTP connections during full offline workflow execution |
+| 8 | `test_tool_inventory_honesty` | `/api/health` inventory reports real runtime status for all 4 Build It tools |
+
+> [!NOTE]
+> **SOP Knowledge Retrieval** uses in-memory TF-IDF lexical vectorization (cosine similarity over scikit-learn `TfidfVectorizer`), not a vector database. This is production-grade for the current SOP corpus size. A future Ship It enhancement would integrate Amazon OpenSearch Serverless with dense embeddings for semantic search.
 
 ---
 

@@ -71,7 +71,7 @@ def test_unauthenticated_incidents_rejection():
 
 
 def test_valid_token_incidents_success():
-    tok_res = client.post("/api/auth/token", json={"role": "incident_commander"})
+    tok_res = client.post("/api/auth/token", json={"role": "incident_commander", "credential": "commander123"})
     assert tok_res.status_code == 200
     token = tok_res.json()["access_token"]
 
@@ -86,7 +86,7 @@ def test_valid_token_incidents_success():
 
 
 def test_citizen_denied_approval():
-    tok_res = client.post("/api/auth/token", json={"role": "citizen"})
+    tok_res = client.post("/api/auth/token", json={"role": "citizen", "credential": "citizen123"})
     token = tok_res.json()["access_token"]
 
     action_id = db.incidents[0]["recommended_actions"][0]["id"]
@@ -100,7 +100,7 @@ def test_citizen_denied_approval():
 
 
 def test_commander_authorized_approval():
-    tok_res = client.post("/api/auth/token", json={"role": "incident_commander"})
+    tok_res = client.post("/api/auth/token", json={"role": "incident_commander", "credential": "commander123"})
     token = tok_res.json()["access_token"]
 
     action_id = db.incidents[0]["recommended_actions"][0]["id"]

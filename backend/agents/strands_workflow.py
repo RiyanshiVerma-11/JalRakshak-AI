@@ -150,9 +150,13 @@ circuit_breaker_hook = StrandsCircuitBreakerHook()
 
 class LocalDeterministicModel(Model):
     """
-    Deterministic, protocol-grounded Model provider for AWS Strands Agents SDK.
+    Deterministic reference Model provider for AWS Strands Agents SDK.
     Fulfills strands.models.model.Model interface for the zero-config Build It route.
-    Executes tool calling cycles, fires hooks, and records token metrics without AWS credentials.
+    Executes tool calling cycles and protocol-grounded statutory reasoning without
+    AWS credentials or external cloud dependencies.
+
+    This deterministic model is the SHIPPED default for the hackathon Build It route.
+    Real inference runs via BedrockModel when the optional AWS path is enabled.
     """
     def __init__(self, agent_role: str = "Municipal Emergency Agent"):
         self.agent_role = agent_role
@@ -161,7 +165,16 @@ class LocalDeterministicModel(Model):
         pass
 
     def get_config(self) -> Dict[str, Any]:
-        return {"provider": "LocalDeterministicModel", "role": self.agent_role}
+        return {
+            "provider": "LocalDeterministicModel",
+            "role": self.agent_role,
+            "route": "Build It (Shipped Default)",
+            "description": (
+                "Deterministic reference model for AWS Strands Agents SDK. "
+                "Executes tool calling cycles without AWS credentials. "
+                "Real cloud inference runs via BedrockModel when optional AWS credentials are provided."
+            ),
+        }
 
     async def structured_output(self, *args, **kwargs):
         pass
@@ -172,7 +185,31 @@ class LocalDeterministicModel(Model):
             for m in messages
         )
         if not has_tool_res and tool_specs:
-            target_tool = tool_specs[0]['name']
+            # Match the tool from incoming prompt / messages / tool_specs instead of blindly taking index 0
+            prompt_text = ""
+            for m in messages:
+                content = m.get("content", [])
+                if isinstance(content, str):
+                    prompt_text += " " + content
+                elif isinstance(content, list):
+                    for item in content:
+                        if isinstance(item, dict) and "text" in item:
+                            prompt_text += " " + item["text"]
+                        elif isinstance(item, str):
+                            prompt_text += " " + item
+            prompt_lower = prompt_text.lower()
+
+            target_tool = None
+            for ts in tool_specs:
+                t_name = ts["name"]
+                clean_name = t_name.replace("_tool", "").replace("_", " ").lower()
+                if t_name.lower() in prompt_lower or any(word in prompt_lower for word in clean_name.split() if len(word) > 3):
+                    target_tool = t_name
+                    break
+
+            if not target_tool:
+                target_tool = tool_specs[0]['name']
+
             args = (invocation_state or {}).get('tool_args', {})
             yield {'messageStart': {'role': 'assistant'}}
             yield {'contentBlockStart': {'start': {'toolUse': {'toolUseId': f'call_{target_tool}', 'name': target_tool}}}}
@@ -184,7 +221,7 @@ class LocalDeterministicModel(Model):
             yield {'contentBlockDelta': {'delta': {'text': f"Reasoning verified by {self.agent_role}. Protocol grounded in NDMA / CPHEEO statutory matrix."}}}
             yield {'contentBlockStop': {}}
             yield {'messageStop': {'stopReason': 'end_turn'}}
-            yield {'metadata': {'usage': {'inputTokens': 24, 'outputTokens': 32, 'totalTokens': 56}}}
+            # Fabricated token usage removed per Task 19 specification
 
 
 def get_strands_model(role_name: str) -> Model:
@@ -334,12 +371,24 @@ class StrandsWorkflowSequence:
             # STEP 1: Strands Agent 1 — Risk Detection
             # -------------------------------------------------------------
             t_step = time.perf_counter()
-            risk_result = invoke_strands_agent(
-                risk_detection_agent,
-                prompt=f"Assess risk for {ward_info['name']} under {category} scenario.",
-                tool_args={"category": category, "ward_info": ward_info, "telemetry": telemetry}
-            )
-            if not isinstance(risk_result, dict):
+            risk_status = "SUCCESS"
+            risk_err = None
+            try:
+                risk_result = invoke_strands_agent(
+                    risk_detection_agent,
+                    prompt=f"Assess risk for {ward_info['name']} under {category} scenario.",
+                    tool_args={"category": category, "ward_info": ward_info, "telemetry": telemetry}
+                )
+                if not isinstance(risk_result, dict):
+                    risk_status = "FALLBACK"
+                    risk_result = evaluate_risk_tool(
+                        category=category,
+                        ward_info=ward_info,
+                        telemetry=telemetry
+                    )
+            except Exception as e:
+                risk_status = "FALLBACK"
+                risk_err = str(e)
                 risk_result = evaluate_risk_tool(
                     category=category,
                     ward_info=ward_info,
@@ -347,7 +396,7 @@ class StrandsWorkflowSequence:
                 )
             risk_latency = int((time.perf_counter() - t_step) * 1000)
             agent_trace["risk_agent"] = {
-                "status": "SUCCESS",
+                "status": risk_status,
                 "agent_role": risk_detection_agent.name,
                 "strands_agent_id": risk_detection_agent.agent_id,
                 "aws_strands_node": risk_detection_agent.agent_id,
@@ -356,17 +405,31 @@ class StrandsWorkflowSequence:
                 "latency_ms": risk_latency,
                 "execution_ms": risk_latency
             }
+            if risk_err:
+                agent_trace["risk_agent"]["error"] = risk_err
 
             # -------------------------------------------------------------
             # STEP 2: Strands Agent 2 — Impact Assessment
             # -------------------------------------------------------------
             t_step = time.perf_counter()
-            impact_result = invoke_strands_agent(
-                impact_assessment_agent,
-                prompt=f"Assess impact for {ward_info['name']} with severity {risk_result.get('severity')}.",
-                tool_args={"ward_info": ward_info, "risk_result": risk_result, "category": category}
-            )
-            if not isinstance(impact_result, dict):
+            impact_status = "SUCCESS"
+            impact_err = None
+            try:
+                impact_result = invoke_strands_agent(
+                    impact_assessment_agent,
+                    prompt=f"Assess impact for {ward_info['name']} with severity {risk_result.get('severity')}.",
+                    tool_args={"ward_info": ward_info, "risk_result": risk_result, "category": category}
+                )
+                if not isinstance(impact_result, dict):
+                    impact_status = "FALLBACK"
+                    impact_result = assess_impact_tool(
+                        ward_info=ward_info,
+                        risk_result=risk_result,
+                        category=category
+                    )
+            except Exception as e:
+                impact_status = "FALLBACK"
+                impact_err = str(e)
                 impact_result = assess_impact_tool(
                     ward_info=ward_info,
                     risk_result=risk_result,
@@ -374,7 +437,7 @@ class StrandsWorkflowSequence:
                 )
             impact_latency = int((time.perf_counter() - t_step) * 1000)
             agent_trace["impact_agent"] = {
-                "status": "SUCCESS",
+                "status": impact_status,
                 "agent_role": impact_assessment_agent.name,
                 "strands_agent_id": impact_assessment_agent.agent_id,
                 "aws_strands_node": impact_assessment_agent.agent_id,
@@ -383,17 +446,31 @@ class StrandsWorkflowSequence:
                 "latency_ms": impact_latency,
                 "execution_ms": impact_latency
             }
+            if impact_err:
+                agent_trace["impact_agent"]["error"] = impact_err
 
             # -------------------------------------------------------------
             # STEP 3: Strands Agent 3 — Resource & Response Matching
             # -------------------------------------------------------------
             t_step = time.perf_counter()
-            resource_matches = invoke_strands_agent(
-                resource_matching_agent,
-                prompt=f"Match emergency response resources for {ward_info['name']}.",
-                tool_args={"category": category, "ward_info": ward_info, "available_resources": available_resources}
-            )
-            if not isinstance(resource_matches, list):
+            resource_status = "SUCCESS"
+            resource_err = None
+            try:
+                resource_matches = invoke_strands_agent(
+                    resource_matching_agent,
+                    prompt=f"Match emergency response resources for {ward_info['name']}.",
+                    tool_args={"category": category, "ward_info": ward_info, "available_resources": available_resources}
+                )
+                if not isinstance(resource_matches, list):
+                    resource_status = "FALLBACK"
+                    resource_matches = match_resources_tool(
+                        category=category,
+                        ward_info=ward_info,
+                        available_resources=available_resources
+                    )
+            except Exception as e:
+                resource_status = "FALLBACK"
+                resource_err = str(e)
                 resource_matches = match_resources_tool(
                     category=category,
                     ward_info=ward_info,
@@ -401,7 +478,7 @@ class StrandsWorkflowSequence:
                 )
             resource_latency = int((time.perf_counter() - t_step) * 1000)
             agent_trace["resource_agent"] = {
-                "status": "SUCCESS",
+                "status": resource_status,
                 "agent_role": resource_matching_agent.name,
                 "strands_agent_id": resource_matching_agent.agent_id,
                 "aws_strands_node": resource_matching_agent.agent_id,
@@ -409,23 +486,39 @@ class StrandsWorkflowSequence:
                 "latency_ms": resource_latency,
                 "execution_ms": resource_latency
             }
+            if resource_err:
+                agent_trace["resource_agent"]["error"] = resource_err
 
             # -------------------------------------------------------------
-            # STEP 4: Strands Agent 4 — Communication Agent (Bedrock Claude 3.5)
+            # STEP 4: Strands Agent 4 — Communication Agent
             # -------------------------------------------------------------
             t_step = time.perf_counter()
-            alerts_data = invoke_strands_agent(
-                communication_agent_instance,
-                prompt=f"Generate multilingual emergency advisory for {ward_info['name']}.",
-                tool_args={
-                    "ward_name": ward_info["name"],
-                    "category": category,
-                    "severity": risk_result["severity"],
-                    "impact_result": impact_result,
-                    "telemetry": telemetry
-                }
-            )
-            if not isinstance(alerts_data, dict):
+            comm_status = "SUCCESS"
+            comm_err = None
+            try:
+                alerts_data = invoke_strands_agent(
+                    communication_agent_instance,
+                    prompt=f"Generate multilingual emergency advisory for {ward_info['name']}.",
+                    tool_args={
+                        "ward_name": ward_info["name"],
+                        "category": category,
+                        "severity": risk_result["severity"],
+                        "impact_result": impact_result,
+                        "telemetry": telemetry
+                    }
+                )
+                if not isinstance(alerts_data, dict):
+                    comm_status = "FALLBACK"
+                    alerts_data = generate_alerts_tool(
+                        ward_name=ward_info["name"],
+                        category=category,
+                        severity=risk_result["severity"],
+                        impact_result=impact_result,
+                        telemetry=telemetry
+                    )
+            except Exception as e:
+                comm_status = "FALLBACK"
+                comm_err = str(e)
                 alerts_data = generate_alerts_tool(
                     ward_name=ward_info["name"],
                     category=category,
@@ -435,35 +528,53 @@ class StrandsWorkflowSequence:
                 )
             comm_latency = int((time.perf_counter() - t_step) * 1000)
             agent_trace["communication_agent"] = {
-                "status": "SUCCESS",
+                "status": comm_status,
                 "agent_role": communication_agent_instance.name,
                 "strands_agent_id": communication_agent_instance.agent_id,
                 "aws_strands_node": communication_agent_instance.agent_id,
                 "languages_generated": ["en", "hi", "mr"],
                 "latency_ms": comm_latency,
                 "execution_ms": comm_latency,
-                "model": "anthropic.claude-3-5-sonnet"
+                "model": "anthropic.claude-3-5-sonnet" if is_live_cloud_active() else "LocalDeterministicModel (AWS Strands SDK)"
             }
+            if comm_err:
+                agent_trace["communication_agent"]["error"] = comm_err
             alerts = {k: v for k, v in alerts_data.items() if not k.startswith("_")}
 
             # -------------------------------------------------------------
             # STEP 5: Strands Agent 5 — Coordinator Agent (Incident Commander)
             # -------------------------------------------------------------
             t_step = time.perf_counter()
-            coordinator_result = invoke_strands_agent(
-                coordinator_agent_instance,
-                prompt=f"Synthesize comprehensive incident response plan for {ward_info['name']}.",
-                tool_args={
-                    "ward_info": ward_info,
-                    "category": category,
-                    "telemetry": telemetry,
-                    "risk_result": risk_result,
-                    "impact_result": impact_result,
-                    "resource_matches": resource_matches,
-                    "alerts": alerts
-                }
-            )
-            if not isinstance(coordinator_result, dict):
+            coord_status = "SUCCESS"
+            coord_err = None
+            try:
+                coordinator_result = invoke_strands_agent(
+                    coordinator_agent_instance,
+                    prompt=f"Synthesize comprehensive incident response plan for {ward_info['name']}.",
+                    tool_args={
+                        "ward_info": ward_info,
+                        "category": category,
+                        "telemetry": telemetry,
+                        "risk_result": risk_result,
+                        "impact_result": impact_result,
+                        "resource_matches": resource_matches,
+                        "alerts": alerts
+                    }
+                )
+                if not isinstance(coordinator_result, dict):
+                    coord_status = "FALLBACK"
+                    coordinator_result = synthesize_response_tool(
+                        ward_info=ward_info,
+                        category=category,
+                        telemetry=telemetry,
+                        risk_result=risk_result,
+                        impact_result=impact_result,
+                        resource_matches=resource_matches,
+                        alerts=alerts
+                    )
+            except Exception as e:
+                coord_status = "FALLBACK"
+                coord_err = str(e)
                 coordinator_result = synthesize_response_tool(
                     ward_info=ward_info,
                     category=category,
@@ -475,7 +586,7 @@ class StrandsWorkflowSequence:
                 )
             coord_latency = int((time.perf_counter() - t_step) * 1000)
             agent_trace["coordinator_agent"] = {
-                "status": "SUCCESS",
+                "status": coord_status,
                 "agent_role": coordinator_agent_instance.name,
                 "strands_agent_id": coordinator_agent_instance.agent_id,
                 "aws_strands_node": coordinator_agent_instance.agent_id,
@@ -484,6 +595,8 @@ class StrandsWorkflowSequence:
                 "latency_ms": coord_latency,
                 "execution_ms": coord_latency
             }
+            if coord_err:
+                agent_trace["coordinator_agent"]["error"] = coord_err
 
             total_latency_ms = risk_latency + impact_latency + resource_latency + comm_latency + coord_latency
             if is_live_cloud_active():
@@ -607,8 +720,8 @@ class StrandsWorkflowSequence:
             is_critical = rainfall >= 80 or flood_depth >= 25 or ratio >= 1.8
             severity = "CRITICAL" if is_critical else "HIGH"
             confidence = 0.96
-            sop_id = "NDMA-SOP-FLD-2024-SEC4.3"
-            sop_title = "NDMA Urban Flooding Guidelines 2024, Chapter 4 (Deterministic Fallback)"
+            sop_id = "SOP-FLD-101"
+            sop_title = "NDMA Urban Flood Response - Inundation Exceeding 30cm (SOP-FLD-101)"
 
             explainability = [
                 {
@@ -705,11 +818,39 @@ class StrandsWorkflowSequence:
                     "status": "PENDING"
                 }
             ]
+        elif category == "water_shortage":
+            severity = "HIGH"
+            confidence = 0.90
+            sop_id = "SOP-WTR-301"
+            sop_title = "Jal Jeevan Mission - Critical Reservoir Depletion & Urban Water Rationing (SOP-WTR-301)"
+            explainability = [
+                {
+                    "factor": "Reservoir Level Deficit",
+                    "detail": "Ward storage level below statutory critical threshold",
+                    "weight": "+50%"
+                },
+                {
+                    "factor": "Deterministic Rule Matrix",
+                    "detail": "Jal Jeevan Mission emergency water security protocol applied",
+                    "weight": "+50%"
+                }
+            ]
+            actions = [
+                {
+                    "id": "ACT-FALLBACK-01",
+                    "priority": 1,
+                    "action": "Initiate automated water supply scheduling: prioritise domestic morning supply",
+                    "resource_id": "RES-WATER-01",
+                    "authority": "Hydraulic Engineering Dept",
+                    "eta_minutes": 10,
+                    "status": "PENDING"
+                }
+            ]
         else:
             severity = "HIGH"
             confidence = 0.92
-            sop_id = "CPHEEO-WATER-2023-SEC6.4"
-            sop_title = "CPHEEO Municipal Water Supply Guidelines"
+            sop_id = "SOP-PIPE-82"
+            sop_title = "CPHEEO Water Supply & Pipeline Integrity Manual - Mainline Rupture (SOP-PIPE-82)"
             explainability = [
                 {
                     "factor": "Telemetry Pressure Deficit",
@@ -736,47 +877,52 @@ class StrandsWorkflowSequence:
 
         agent_trace = {
             "risk_agent": {
-                "status": "FALLBACK_SUCCESS",
+                "status": "FALLBACK",
                 "agent_role": "Risk Detection Agent (Deterministic NDMA Rule Matrix)",
                 "strands_agent_id": "strands-agent-risk-fallback",
                 "aws_strands_node": "strands-agent-risk-fallback",
                 "severity": severity,
                 "confidence": confidence,
-                "execution_ms": 8
+                "execution_ms": 8,
+                "error": degradation_reason
             },
             "impact_agent": {
-                "status": "FALLBACK_SUCCESS",
+                "status": "FALLBACK",
                 "agent_role": "Impact Assessment Agent (Static Demographic GIS Cache)",
                 "strands_agent_id": "strands-agent-impact-fallback",
                 "aws_strands_node": "strands-agent-impact-fallback",
                 "exposed_population": ward_info.get("population", 84200),
                 "critical_facilities": ward_info.get("hospitals_count", 1) + ward_info.get("schools_count", 3),
-                "execution_ms": 10
+                "execution_ms": 10,
+                "error": degradation_reason
             },
             "resource_agent": {
-                "status": "FALLBACK_SUCCESS",
+                "status": "FALLBACK",
                 "agent_role": "Resource & Response Agent (Deterministic Proximity Hash)",
                 "strands_agent_id": "strands-agent-resource-fallback",
                 "aws_strands_node": "strands-agent-resource-fallback",
                 "resources_matched": len(actions),
-                "execution_ms": 6
+                "execution_ms": 6,
+                "error": degradation_reason
             },
             "communication_agent": {
-                "status": "FALLBACK_SUCCESS",
+                "status": "FALLBACK",
                 "agent_role": "Communication Agent (Pre-compiled Statutory Templates)",
                 "strands_agent_id": "strands-agent-comm-fallback",
                 "aws_strands_node": "strands-agent-comm-fallback",
                 "languages_generated": ["en", "hi", "mr"],
-                "execution_ms": 8
+                "execution_ms": 8,
+                "error": degradation_reason
             },
             "coordinator_agent": {
-                "status": "FALLBACK_SUCCESS",
+                "status": "FALLBACK",
                 "agent_role": "Coordinator Agent (Statutory NDMA Fallback Contract)",
                 "strands_agent_id": "strands-agent-coord-fallback",
                 "aws_strands_node": "strands-agent-coord-fallback",
                 "actions_planned": len(actions),
                 "sop_referenced": sop_id,
-                "execution_ms": 10
+                "execution_ms": 10,
+                "error": degradation_reason
             }
         }
 

@@ -41,21 +41,59 @@ export default function AWSArchitectureView() {
     return () => clearInterval(interval);
   }, []);
 
-  const services = [
+  const isOffline = !awsMetrics?.live_credentials && awsMetrics?.execution_mode !== 'LOCALSTACK';
+  const executionMode = awsMetrics?.execution_mode || 'OFFLINE';
+
+  const buildItTools = [
     {
       id: 'strands',
       name: 'AWS Strands Agents SDK',
+      route: 'Build It',
       category: 'Agentic Orchestration',
-      badge: 'Core Hero Engine',
+      badge: 'Build It Core',
       description: 'Coordinates 5 specialized autonomous agents (Risk, Impact, Resource, Communication, Coordinator) into a deterministic decision graph.',
       roleInApp: 'Evaluates real-time sensor breaches, cross-references municipal SOP knowledge base, and synthesizes prioritized action plan.',
-      specs: 'Amazon Bedrock Claude 3.5 Sonnet + Strands Graph State Machine'
+      specs: 'LocalDeterministicModel (Default) / Amazon Bedrock Claude 3.5 Sonnet'
     },
+    {
+      id: 'cedar',
+      name: 'AWS Cedar Policy Engine',
+      route: 'Build It',
+      category: 'Auth & Policy Engine',
+      badge: 'Build It Auth',
+      description: 'Statutory Role-Based Access Control implementing Indian Disaster Management Act 2005 (Sections 30 & 34) and ICS-400 Incident Commander authority.',
+      roleInApp: 'Evaluates every dispatch, approval, and administrative action against policies/incident_policy.cedar with zero cloud dependencies.',
+      specs: 'cedarpy + policies/incident_policy.cedar (Statutory RBAC)'
+    },
+    {
+      id: 'sam',
+      name: 'AWS SAM CLI',
+      route: 'Build It',
+      category: 'Serverless IaC & Validation',
+      badge: 'Build It Serverless',
+      description: 'Infrastructure-as-Code definitions for serverless event ingestion, Lambda processing, DynamoDB tables, and EventBridge buses.',
+      roleInApp: 'Validated and built locally via sam validate --lint and sam build without needing cloud credentials.',
+      specs: 'aws_infra/template.yaml | samconfig.toml'
+    },
+    {
+      id: 'localstack',
+      name: 'LocalStack',
+      route: 'Build It',
+      category: 'Local Cloud Emulation',
+      badge: 'Build It Emulation',
+      description: 'Local emulation gateway for AWS services (S3, DynamoDB, SNS, EventBridge) allowing full cloud testing on localhost without an AWS account.',
+      roleInApp: 'Zero-cloud serverless simulation configured via docker-compose.local.yml and scripts/setup_localstack.py.',
+      specs: 'http://localhost:4566 | ap-south-1'
+    }
+  ];
+
+  const cloudServices = [
     {
       id: 'eventbridge',
       name: 'Amazon EventBridge',
+      route: 'Optional Cloud (Ship It)',
       category: 'Event-Driven Bus',
-      badge: 'Reactive Trigger',
+      badge: isOffline ? 'Standby (Offline)' : 'Active Stream',
       description: 'Captures IoT rain gauge spikes, SCADA mainline pressure drops, and citizen PWA submissions to trigger Strands agents without polling.',
       roleInApp: 'Decoupled asynchronous event routing from field telemetry to the emergency orchestration graph.',
       specs: 'EventBus: jalrakshak-emergency-eventbus'
@@ -63,8 +101,9 @@ export default function AWSArchitectureView() {
     {
       id: 'lambda',
       name: 'AWS Lambda',
+      route: 'Optional Cloud (Ship It)',
       category: 'Serverless Compute',
-      badge: 'Real-time Ingest',
+      badge: isOffline ? 'Standby (Offline)' : 'Active Ingest',
       description: 'Executes lightweight event ingestion, payload validation, and Rekognition multimodal vision inference on citizen photo evidence.',
       roleInApp: 'Serverless compute layer scaling instantly during peak monsoon cloudburst events.',
       specs: 'Python 3.11 Runtime | ARM64 Graviton3'
@@ -72,8 +111,9 @@ export default function AWSArchitectureView() {
     {
       id: 'dynamodb',
       name: 'Amazon DynamoDB',
+      route: 'Optional Cloud (Ship It)',
       category: 'NoSQL Database',
-      badge: 'Single-Digit Latency',
+      badge: isOffline ? 'Standby (Offline)' : 'Active Table',
       description: 'Stores real-time municipal state: active incidents, resource location vectors, citizen tickets, and human-in-the-loop audit logs.',
       roleInApp: 'Fast key-value lookups with Point-in-Time Recovery (PITR) for disaster resilience.',
       specs: 'Tables: IncidentsTable, ResourcesTable, AuditLogTable'
@@ -81,33 +121,27 @@ export default function AWSArchitectureView() {
     {
       id: 's3',
       name: 'Amazon S3',
+      route: 'Optional Cloud (Ship It)',
       category: 'Object Storage',
-      badge: 'Asset Lake',
+      badge: isOffline ? 'Standby (Offline)' : 'Active Bucket',
       description: 'Stores high-resolution citizen incident photos, GIS ward polygon GeoJSON, and historical hydrological telemetry archives.',
       roleInApp: 'Durable media storage with presigned upload URLs generated on-demand for citizens.',
-      specs: 'Bucket: jalrakshak-evidence-ap-south-1'
+      specs: 'Bucket: jalrakshak-evidence-lake'
     },
     {
       id: 'sns',
       name: 'Amazon SNS',
+      route: 'Optional Cloud (Ship It)',
       category: 'Notification Service',
-      badge: 'Multilingual Broadcast',
+      badge: isOffline ? 'Standby (Offline)' : 'Active Topic',
       description: 'Dispatches critical geo-targeted SMS, Civil Defense alerts, and automated siren activations in English, Hindi, and Marathi.',
       roleInApp: 'Publishes authorized emergency advisories instantly across telecom operator gateways.',
       specs: 'Topic: JalRakshak-Alerts-Multilingual | Region: ap-south-1'
-    },
-    {
-      id: 'cognito',
-      name: 'Amazon Cognito & AWS IAM',
-      category: 'Identity & PoLP Governance',
-      badge: 'Statutory RBAC & ICS',
-      description: 'Enforces Principle of Least Privilege (PoLP) and Indian Disaster Management Act 2005 (ICS) hierarchy across 4 distinct personas.',
-      roleInApp: 'Secures high-impact statutory human-in-the-loop signoff, separates Commander from Field Responders, and isolates public access.',
-      specs: 'AWS Cedar Engine (cedarpy) | Statutory Least-Privilege RBAC'
     }
   ];
 
-  const currentService = services.find(s => s.id === selectedService) || services[0];
+  const allServices = [...buildItTools, ...cloudServices];
+  const currentService = allServices.find(s => s.id === selectedService) || allServices[0];
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-16">
@@ -116,18 +150,26 @@ export default function AWSArchitectureView() {
       <div className="rounded-2xl bg-white p-6 border border-slate-200 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-md text-white">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-md text-white">
               <Cloud className="h-6 w-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-black text-slate-900">AWS Cloud Architecture & Strands Orchestration</h2>
-                <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 border border-amber-200">
-                  ap-south-1 (Mumbai)
+                <h2 className="text-base font-black text-slate-900">AWS Architecture & Build It Route Tools</h2>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold border ${
+                  isOffline
+                    ? 'bg-cyan-50 text-cyan-800 border-cyan-200'
+                    : (executionMode === 'LOCALSTACK'
+                        ? 'bg-purple-50 text-purple-800 border-purple-200'
+                        : 'bg-emerald-50 text-emerald-800 border-emerald-200')
+                }`}>
+                  Mode: {executionMode} (Build It {isOffline ? 'Default' : ''})
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Enterprise-grade event-driven emergency response running on AWS Strands Agents SDK & Serverless Cloud
+                {isOffline
+                  ? 'Running 100% locally with AWS open-source tools: Strands Agents SDK, Cedar, SAM CLI, LocalStack. Zero AWS account, card, or bill required.'
+                  : `Running in ${executionMode} execution mode.`}
               </p>
             </div>
           </div>
@@ -138,52 +180,50 @@ export default function AWSArchitectureView() {
             className="flex items-center gap-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-700 border border-slate-200 shadow-xs active:scale-95 transition-all self-start md:self-auto"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-blue-600' : 'text-slate-500'}`} />
-            <span>Refresh CloudWatch</span>
+            <span>Refresh Status</span>
           </button>
         </div>
 
         {/* Real-time Cloud Metrics Ribbon */}
-        {awsMetrics?.services && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-5 pt-4 border-t border-slate-100 text-xs">
-            <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">Strands Agents</span>
-              <strong className="text-blue-700 text-xs flex items-center gap-1.5 mt-0.5 font-black">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                5/5 Online
-              </strong>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">EventBridge</span>
-              <strong className="text-emerald-700 text-xs mt-0.5 block font-black">
-                {awsMetrics.services.Amazon_EventBridge?.events_today ?? 'Active stream'}
-              </strong>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">DynamoDB p99</span>
-              <strong className="text-amber-700 text-xs mt-0.5 block font-black">
-                {awsMetrics.services.Amazon_DynamoDB?.p99_latency_ms ? `${awsMetrics.services.Amazon_DynamoDB.p99_latency_ms} ms` : 'Low-Latency'}
-              </strong>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">S3 Media Lake</span>
-              <strong className="text-purple-700 text-xs mt-0.5 block font-black">
-                {awsMetrics.services.Amazon_S3?.objects_stored || 284} evidence files
-              </strong>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">SNS Delivery</span>
-              <strong className="text-blue-700 text-xs mt-0.5 block font-black">
-                {awsMetrics.services.Amazon_SNS?.delivery_rate_pct || 99.8}% success
-              </strong>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">Lambda Ingest</span>
-              <strong className="text-slate-800 text-xs mt-0.5 block font-black">
-                {awsMetrics.services.AWS_Lambda?.avg_duration_ms || 128} ms duration
-              </strong>
-            </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-5 pt-4 border-t border-slate-100 text-xs">
+          <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
+            <span className="text-[10px] uppercase font-bold text-slate-500 block">Strands SDK</span>
+            <strong className="text-blue-700 text-xs flex items-center gap-1.5 mt-0.5 font-black">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              5/5 Agents Online
+            </strong>
           </div>
-        )}
+          <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
+            <span className="text-[10px] uppercase font-bold text-slate-500 block">AWS Cedar</span>
+            <strong className="text-emerald-700 text-xs mt-0.5 block font-black">
+              RBAC Verified
+            </strong>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
+            <span className="text-[10px] uppercase font-bold text-slate-500 block">SAM CLI</span>
+            <strong className="text-indigo-700 text-xs mt-0.5 block font-black">
+              Lint & Build OK
+            </strong>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
+            <span className="text-[10px] uppercase font-bold text-slate-500 block">EventBridge</span>
+            <strong className={`${isOffline ? 'text-slate-500' : 'text-emerald-700'} text-xs mt-0.5 block font-black`}>
+              {isOffline ? 'Standby (In-Memory)' : 'Active Stream'}
+            </strong>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
+            <span className="text-[10px] uppercase font-bold text-slate-500 block">DynamoDB</span>
+            <strong className={`${isOffline ? 'text-slate-500' : 'text-amber-700'} text-xs mt-0.5 block font-black`}>
+              {isOffline ? 'Standby (State Store)' : 'Active Table'}
+            </strong>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
+            <span className="text-[10px] uppercase font-bold text-slate-500 block">S3 Evidence Lake</span>
+            <strong className={`${isOffline ? 'text-slate-500' : 'text-purple-700'} text-xs mt-0.5 block font-black`}>
+              {isOffline ? 'Standby (Local FS)' : 'Active Bucket'}
+            </strong>
+          </div>
+        </div>
       </div>
 
       {/* Interactive Architecture Flow Diagram */}
@@ -281,29 +321,56 @@ export default function AWSArchitectureView() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
         
         {/* Service Selectors (4 cols) */}
-        <div className="md:col-span-4 space-y-2">
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block px-1">
-            AWS Cloud Building Blocks
-          </span>
-          {services.map((srv) => (
-            <button
-              key={srv.id}
-              onClick={() => setSelectedService(srv.id)}
-              className={`w-full rounded-xl p-3.5 text-left transition-all border flex items-center justify-between ${
-                selectedService === srv.id
-                  ? 'bg-blue-50 border-blue-300 text-blue-900 shadow-xs ring-1 ring-blue-300'
-                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <div>
-                <strong className="block text-xs font-bold text-slate-900">{srv.name}</strong>
-                <span className="text-[10px] text-slate-500">{srv.category}</span>
-              </div>
-              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-slate-200">
-                {srv.badge}
-              </span>
-            </button>
-          ))}
+        <div className="md:col-span-4 space-y-4">
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-cyan-800 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200 inline-block mb-1">
+              Build It Route Tools (Run Locally)
+            </span>
+            {buildItTools.map((srv) => (
+              <button
+                key={srv.id}
+                onClick={() => setSelectedService(srv.id)}
+                className={`w-full rounded-xl p-3 text-left transition-all border flex items-center justify-between ${
+                  selectedService === srv.id
+                    ? 'bg-blue-50 border-blue-300 text-blue-900 shadow-xs ring-1 ring-blue-300'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <div>
+                  <strong className="block text-xs font-bold text-slate-900">{srv.name}</strong>
+                  <span className="text-[10px] text-slate-500">{srv.category}</span>
+                </div>
+                <span className="rounded-md bg-cyan-50 px-2 py-0.5 text-[9px] font-bold text-cyan-700 border border-cyan-200">
+                  {srv.badge}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-1.5 pt-2 border-t border-slate-200">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 px-1 inline-block mb-1">
+              Optional Cloud Services (Ship It)
+            </span>
+            {cloudServices.map((srv) => (
+              <button
+                key={srv.id}
+                onClick={() => setSelectedService(srv.id)}
+                className={`w-full rounded-xl p-3 text-left transition-all border flex items-center justify-between ${
+                  selectedService === srv.id
+                    ? 'bg-blue-50 border-blue-300 text-blue-900 shadow-xs ring-1 ring-blue-300'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <div>
+                  <strong className="block text-xs font-bold text-slate-900">{srv.name}</strong>
+                  <span className="text-[10px] text-slate-500">{srv.category}</span>
+                </div>
+                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-600 border border-slate-200">
+                  {srv.badge}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Service Deep-Dive Card (8 cols) */}

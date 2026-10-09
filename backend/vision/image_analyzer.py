@@ -91,6 +91,7 @@ class CitizenImageAnalyzer:
         # Category-specific inference
         is_sim = image_metadata.get("simulated", True)
         active_prov = image_metadata.get("provider", "Local PIL Heuristic Engine")
+        is_real_rekognition = (active_prov == "Amazon Rekognition" and not is_sim)
 
         if category == "waterlogging" or "water" in desc_lower or "flood" in desc_lower:
             has_deep_keywords = any(w in desc_lower for w in ["waist", "knee", "submerged", "stuck", "heavy", "deep", "drown"])
@@ -103,79 +104,115 @@ class CitizenImageAnalyzer:
             depth_cm = f"{depth_val - 10} - {depth_val + 10} cm"
             passability = "IMPASSABLE FOR LIGHT VEHICLES" if depth_val >= 35 else "PARTIAL TRAFFIC SLOWDOWN"
             debris = has_debris_keywords or depth_val >= 40
-            confidence = 0.96 if image_metadata.get("has_image") else 0.91
 
-            return {
+            boxes = [
+                {"label": "Submerged Road Surface", "box": [0.15, 0.40, 0.85, 0.90]},
+                {"label": "Waterline Curb Datum", "box": [0.30, 0.55, 0.70, 0.75]},
+                {"label": "Clogged Drainage Ingress", "box": [0.60, 0.65, 0.90, 0.85]}
+            ]
+            if is_real_rekognition:
+                for b in boxes:
+                    b["confidence"] = 0.92
+
+            result = {
                 "detected_category": "Severe Urban Waterlogging",
                 "estimated_water_depth_cm": depth_cm,
                 "road_passability": passability,
                 "debris_detected": debris,
                 "open_manhole_hazard": "High Risk - Submerged Vortex" if debris else "Low Risk",
                 "severity_score": round(min(0.98, 0.70 + (depth_val / 200)), 2),
-                "model_confidence": confidence,
-                "vision_tags": ["water_inundation", "roadway_obstruction", "curb_submerged", "traffic_standstill"],
+                "vision_tags": image_metadata.get("rekognition_labels", ["water_inundation", "roadway_obstruction", "curb_submerged", "traffic_standstill"]),
                 "image_metadata": image_metadata,
                 "provider": active_prov,
                 "simulated": is_sim,
-                "bounding_boxes": [
-                    {"label": "Submerged Road Surface", "confidence": 0.94, "box": [0.15, 0.40, 0.85, 0.90]},
-                    {"label": "Waterline Curb Datum", "confidence": 0.91, "box": [0.30, 0.55, 0.70, 0.75]},
-                    {"label": "Clogged Drainage Ingress", "confidence": 0.88, "box": [0.60, 0.65, 0.90, 0.85]}
-                ]
+                "bounding_boxes": boxes
             }
+            if not is_real_rekognition:
+                result["illustrative_demo_overlay"] = True
+            return result
 
         elif category == "leak" or "pipe" in desc_lower or "burst" in desc_lower or "potable" in desc_lower:
-            return {
+            boxes = [
+                {"label": "Pressurized Water Jet", "box": [0.25, 0.35, 0.75, 0.80]}
+            ]
+            if is_real_rekognition:
+                for b in boxes:
+                    b["confidence"] = 0.92
+
+            result = {
                 "detected_category": "High-Pressure Water Main Rupture",
                 "estimated_water_depth_cm": "10 - 20 cm continuous flow",
                 "road_passability": "SURFACE EROSION / LANE HAZARD",
                 "debris_detected": False,
                 "open_manhole_hazard": "Pavement Undermining Risk",
                 "severity_score": 0.88,
-                "model_confidence": 0.94 if image_metadata.get("has_image") else 0.90,
-                "vision_tags": ["potable_water_spurt", "asphalt_fissure", "utility_duct_leak"],
+                "vision_tags": image_metadata.get("rekognition_labels", ["potable_water_spurt", "asphalt_fissure", "utility_duct_leak"]),
                 "image_metadata": image_metadata,
                 "provider": active_prov,
                 "simulated": is_sim,
-                "bounding_boxes": [
-                    {"label": "Pressurized Water Jet", "confidence": 0.92, "box": [0.25, 0.35, 0.75, 0.80]}
-                ]
+                "bounding_boxes": boxes
             }
+            if not is_real_rekognition:
+                result["illustrative_demo_overlay"] = True
+            return result
 
         elif category == "heatwave" or "heat" in desc_lower or "sun" in desc_lower:
-            return {
+            boxes = [
+                {"label": "Unshaded Pedestrian Corridor", "box": [0.10, 0.20, 0.90, 0.85]}
+            ]
+            if is_real_rekognition:
+                for b in boxes:
+                    b["confidence"] = 0.89
+
+            result = {
                 "detected_category": "Urban Heat Island & Thermal Distress",
                 "estimated_water_depth_cm": "N/A (Thermal Hazard)",
                 "road_passability": "PASSABLE - EXTREME SURFACE HEAT",
                 "debris_detected": False,
                 "open_manhole_hazard": "None",
                 "severity_score": 0.84,
-                "model_confidence": 0.92 if image_metadata.get("has_image") else 0.88,
-                "vision_tags": ["sun_exposure", "asphalt_thermal_radiation", "pedestrian_vulnerability"],
+                "vision_tags": image_metadata.get("rekognition_labels", ["sun_exposure", "asphalt_thermal_radiation", "pedestrian_vulnerability"]),
                 "image_metadata": image_metadata,
                 "provider": active_prov,
                 "simulated": is_sim,
-                "bounding_boxes": [
-                    {"label": "Unshaded Pedestrian Corridor", "confidence": 0.89, "box": [0.10, 0.20, 0.90, 0.85]}
-                ]
+                "bounding_boxes": boxes
             }
+            if not is_real_rekognition:
+                result["illustrative_demo_overlay"] = True
+            return result
 
         else: # water_shortage
-            return {
+            boxes = [
+                {"label": "Depleted Water Point", "box": [0.20, 0.30, 0.80, 0.85]}
+            ]
+            if is_real_rekognition:
+                for b in boxes:
+                    b["confidence"] = 0.90
+
+            result = {
                 "detected_category": "Potable Water Deficit / Dry Supply Tap",
                 "estimated_water_depth_cm": "0 cm (Critical Shortage)",
                 "road_passability": "PASSABLE - CROWD ACCUMULATION",
                 "debris_detected": False,
                 "open_manhole_hazard": "None",
                 "severity_score": 0.86,
-                "model_confidence": 0.93 if image_metadata.get("has_image") else 0.89,
-                "vision_tags": ["empty_receptacles", "water_ration_queue", "dry_distribution_point"],
+                "vision_tags": image_metadata.get("rekognition_labels", ["empty_receptacles", "water_ration_queue", "dry_distribution_point"]),
                 "image_metadata": image_metadata,
                 "provider": active_prov,
                 "simulated": is_sim,
-                "bounding_boxes": [
-                    {"label": "Depleted Water Point", "confidence": 0.90, "box": [0.20, 0.30, 0.80, 0.85]}
-                ]
+                "bounding_boxes": boxes
             }
+            if not is_real_rekognition:
+                result["illustrative_demo_overlay"] = True
+            return result
 
 image_analyzer = CitizenImageAnalyzer()
+
+def analyze_incident_image(image_bytes: bytes, category: str = "flood", description: str = "") -> Dict[str, Any]:
+    """Convenience helper for analyzing incident image bytes directly."""
+    return image_analyzer.analyze_image(
+        category=category,
+        description=description,
+        image_bytes_len=len(image_bytes),
+        image_bytes=image_bytes
+    )

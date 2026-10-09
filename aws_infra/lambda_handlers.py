@@ -8,20 +8,10 @@ import os
 import json
 import uuid
 import logging
-from datetime import datetime as _dt, timezone
 try:
-    from datetime import UTC
+    from .compat import datetime, UTC
 except ImportError:
-    UTC = timezone.utc
-
-class _DateTimeMeta(type):
-    def __getattr__(cls, name):
-        if name == 'UTC':
-            return UTC
-        return getattr(_dt, name)
-
-class datetime(_dt, metaclass=_DateTimeMeta):
-    pass
+    from compat import datetime, UTC
 from typing import Dict, Any, Optional
 
 # Root-anchoring for AWS Lambda (/var/task) and local SAM execution

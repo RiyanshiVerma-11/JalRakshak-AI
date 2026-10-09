@@ -101,7 +101,7 @@ def test_bedrock_fault_tolerance_and_ndma_fallback():
     assert "NDMA" in fallback_incident["fault_tolerance"]["statutory_safety_net"]
     assert fallback_incident["severity"] == "CRITICAL"
     assert len(fallback_incident["recommended_actions"]) >= 3
-    assert fallback_incident["rag_reference"]["sop_id"] == "NDMA-SOP-FLD-2024-SEC4.3"
+    assert fallback_incident["rag_reference"]["sop_id"] == "SOP-FLD-101"
 
 def test_human_in_the_loop_action_approval():
     """

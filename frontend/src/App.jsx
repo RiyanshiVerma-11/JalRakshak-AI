@@ -118,12 +118,21 @@ export default function App() {
     const role = persona?.role || 'incident_commander';
     const storedRole = localStorage.getItem('jalrakshak_token_role');
     if (!token || storedRole !== role) {
+      const defaultCredentials = {
+        incident_commander: 'commander123',
+        field_responder: 'field123',
+        field_operator: 'field123',
+        scada_analyst: 'scada123',
+        citizen: 'citizen123',
+      };
+      const credential = persona?.credential || defaultCredentials[role] || 'commander123';
       try {
         const res = await fetch('/api/auth/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             role: role,
+            credential: credential,
             officer_name: persona?.name || 'IAS Shrikar Patil',
             officer_id: persona?.id || 'OFFICER_PATIL_EOC'
           })

@@ -12,20 +12,7 @@ import os
 import uuid
 import time
 import json
-from datetime import datetime as _dt, timezone
-try:
-    from datetime import UTC
-except ImportError:
-    UTC = timezone.utc
-
-class _DateTimeMeta(type):
-    def __getattr__(cls, name):
-        if name == 'UTC':
-            return UTC
-        return getattr(_dt, name)
-
-class datetime(_dt, metaclass=_DateTimeMeta):
-    pass
+from aws_infra.compat import datetime, UTC
 
 from decimal import Decimal
 from typing import Dict, Any, List, Optional
@@ -36,7 +23,8 @@ from .config import (
     get_aws_account_id,
     get_aws_region,
     get_aws_endpoint_url,
-    get_backend_mode
+    get_backend_mode,
+    has_aws_credentials
 )
 
 def _convert_floats_to_decimals(obj: Any) -> Any:
@@ -91,16 +79,21 @@ except ImportError:
 
 def create_boto_client(service_name: str, region_name: Optional[str] = None):
     """
-    Central Boto3 client factory supporting LocalStack & AWS Cloud (Phase 3).
-    All boto3 client construction in the codebase routes through this helper.
+    Central Boto3 client factory supporting LocalStack & AWS Cloud (Phase 3 & TASK 17d).
+    In OFFLINE mode (no LocalStack endpoint and no real AWS credentials), returns None
+    immediately to ensure zero outbound socket / network attempts.
     """
     if not BOTO3_AVAILABLE:
         return None
-    region = region_name or get_aws_region()
     endpoint = get_aws_endpoint_url()
+    if not endpoint and not has_aws_credentials():
+        return None
+    region = region_name or get_aws_region()
     kwargs: Dict[str, Any] = {"region_name": region}
     if endpoint:
         kwargs["endpoint_url"] = endpoint
+        kwargs["aws_access_key_id"] = "test"
+        kwargs["aws_secret_access_key"] = "test"
     try:
         return boto3.client(service_name, **kwargs)
     except Exception:
@@ -111,11 +104,15 @@ def create_boto_resource(service_name: str, region_name: Optional[str] = None):
     """Central Boto3 resource factory supporting LocalStack & AWS Cloud."""
     if not BOTO3_AVAILABLE:
         return None
-    region = region_name or get_aws_region()
     endpoint = get_aws_endpoint_url()
+    if not endpoint and not has_aws_credentials():
+        return None
+    region = region_name or get_aws_region()
     kwargs: Dict[str, Any] = {"region_name": region}
     if endpoint:
         kwargs["endpoint_url"] = endpoint
+        kwargs["aws_access_key_id"] = "test"
+        kwargs["aws_secret_access_key"] = "test"
     try:
         return boto3.resource(service_name, **kwargs)
     except Exception:
@@ -374,10 +371,10 @@ class AWSCloudBridge:
         db.log_aws_event(source, detail_type, cloudevent_envelope)
         return event_id
 
-    def upload_to_s3(self, filename: str, content_type: str = "image/jpeg") -> Dict[str, Any]:
+    def upload_to_s3(self, filename: str, content_type: str = "image/jpeg", image_bytes: bytes = b"") -> Dict[str, Any]:
         """
         Uploads citizen evidence photo.
-        Returns live S3 URI when LocalStack/AWS is available, or honest local URI when offline.
+        Returns live S3 URI when LocalStack/AWS is available, or honest local URI when offline (TASK 12).
         """
         key = f"citizen-reports/{datetime.now().strftime('%Y/%m/%d')}/{filename}"
         s3_client = create_boto_client("s3", region_name=get_aws_region())
@@ -386,7 +383,7 @@ class AWSCloudBridge:
                 s3_client.put_object(
                     Bucket=self.s3_bucket,
                     Key=key,
-                    Body=b"",
+                    Body=image_bytes,
                     ContentType=content_type
                 )
                 return {

@@ -11,13 +11,20 @@ import os
 import uuid
 import copy
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .data.state_store import state_store as db
 from .agents.strands_workflow import strands_orchestrator, get_strands_model_provider
 from .vision.image_analyzer import image_analyzer
 from .cloud.aws_bridge import aws_bridge
-from .cloud.config import get_backend_mode, has_aws_credentials, get_bedrock_model_id, get_aws_account_id
+from .cloud.config import (
+    get_backend_mode,
+    get_backend_mode_with_reason,
+    has_aws_credentials,
+    get_bedrock_model_id,
+    get_aws_account_id,
+    get_build_it_tools_inventory
+)
 from .rag.rag_engine import rag_engine
 from .copilot import copilot
 from .auth.cedar_auth import (
@@ -34,10 +41,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for local Vite frontend
+# Enable CORS with explicit allowlist (TASK 17c)
+_allowed_origins_env = os.environ.get("CORS_ALLOWED_ORIGINS")
+if _allowed_origins_env:
+    allowed_origins = [o.strip() for o in _allowed_origins_env.split(",") if o.strip()]
+else:
+    allowed_origins = [
+        "http://localhost:8004",
+        "http://127.0.0.1:8004",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,7 +63,8 @@ app.add_middleware(
 
 # Request Models
 class SimulateRequest(BaseModel):
-    scenario: str # "flood", "heatwave", "leak", "water_shortage"
+    scenario: Optional[str] = "flood" # "flood", "heatwave", "leak", "water_shortage"
+    category: Optional[str] = None
     ward_id: Optional[str] = "WARD-17"
     custom_rainfall: Optional[float] = None
     custom_temp: Optional[float] = None
@@ -74,12 +93,21 @@ class TokenRequest(BaseModel):
     role: str = "incident_commander"
     officer_name: Optional[str] = "IAS Shrikar Patil"
     officer_id: Optional[str] = "OFFICER_PATIL_EOC"
+    credential: Optional[str] = None
+    password: Optional[str] = None
+
+
+# Role-based demo credentials (TASK 2)
+ROLE_CREDENTIALS = {
+    "incident_commander": os.environ.get("DEMO_PASSWORD_COMMANDER", "commander123"),
+    "field_responder": os.environ.get("DEMO_PASSWORD_FIELD", "field123"),
+    "field_operator": os.environ.get("DEMO_PASSWORD_FIELD", "field123"),
+    "scada_analyst": os.environ.get("DEMO_PASSWORD_SCADA", "scada123"),
+    "citizen": os.environ.get("DEMO_PASSWORD_CITIZEN", "citizen123"),
+}
 
 
 def verify_incident_commander_role(
-    x_officer_role: Optional[str] = Header(None, alias="X-Officer-Role"),
-    x_officer_id: Optional[str] = Header(None, alias="X-Officer-ID"),
-    x_officer_name: Optional[str] = Header(None, alias="X-Officer-Name"),
     authorization: Optional[str] = Header(None, alias="Authorization"),
 ) -> Dict[str, Any]:
     """
@@ -87,30 +115,17 @@ def verify_incident_commander_role(
     Validates identity and authorization against Incident Commander statutory permissions using AWS Cedar.
     Extracts claims from cryptographically verified Bearer JWT. Rejects dummy string tokens with HTTP 401.
     """
-    role = None
-    officer_id = None
-    officer_name = None
-
-    if authorization:
-        if not authorization.startswith("Bearer "):
-            raise HTTPException(
-                status_code=401,
-                detail="Malformed Authorization header: must start with 'Bearer '."
-            )
-        token = authorization[7:].strip()
-        claims = verify_jwt_token(token)
-        role = claims.get("role")
-        officer_id = claims.get("sub", "OFFICER_PATIL_EOC")
-        officer_name = claims.get("name", "IAS Shrikar Patil")
-    elif x_officer_role:
-        role = x_officer_role
-        officer_id = x_officer_id or "OFFICER_PATIL_EOC"
-        officer_name = x_officer_name or "IAS Shrikar Patil"
-    else:
+    if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=401,
             detail="Authentication required: Provide a valid Bearer token from /api/auth/token."
         )
+
+    token = authorization[7:].strip()
+    claims = verify_jwt_token(token)
+    role = claims.get("role")
+    officer_id = claims.get("sub", "OFFICER_PATIL_EOC")
+    officer_name = claims.get("name", "IAS Shrikar Patil")
 
     # AWS Cedar Policy Evaluation (Fix D7: Audit engine transparency)
     cedar_eval = evaluate_cedar_policy_with_details(role, "approve_action")
@@ -139,8 +154,16 @@ def verify_incident_commander_role(
 def issue_auth_token(req: TokenRequest):
     """
     Issues a cryptographically signed HMAC-SHA256 JWT containing identity and role claims.
-    Compatible with Amazon Cognito tokens and verified against AWS Cedar statutory policies.
+    Requires role-based demo credential verification before issuing tokens (TASK 2).
     """
+    supplied_credential = req.credential or req.password
+    expected_credential = ROLE_CREDENTIALS.get(req.role)
+    if not supplied_credential or supplied_credential != expected_credential:
+        raise HTTPException(
+            status_code=401,
+            detail=f"Authentication failed: Invalid or missing demo credential for role '{req.role}'."
+        )
+
     token = create_access_token(
         officer_id=req.officer_id or "OFFICER_PATIL_EOC",
         officer_name=req.officer_name or "IAS Shrikar Patil",
@@ -152,6 +175,7 @@ def issue_auth_token(req: TokenRequest):
         "role": req.role,
         "officer_name": req.officer_name,
         "officer_id": req.officer_id,
+        "demo_credentials": True,
         "expires_in": 86400
     }
 
@@ -163,7 +187,7 @@ def read_health():
     Reports real execution mode, active Strands model provider, Cedar engine,
     and honest status of all subsystems for hackathon judging verification.
     """
-    backend_mode = get_backend_mode()
+    backend_mode, reason = get_backend_mode_with_reason()
     has_creds = has_aws_credentials()
     cedar_engine = get_cedar_engine_name()
     model_provider = get_strands_model_provider()
@@ -174,7 +198,9 @@ def read_health():
         "status": "HEALTHY",
         "track": "Heat and Water",
         "route": "Build It",
+        "mode": backend_mode,
         "backend_mode": backend_mode,
+        "reason": reason,
         "live_credentials": has_creds,
         "aws_region": aws_bridge.region,
         "aws_account_id": get_aws_account_id(),
@@ -187,31 +213,27 @@ def read_health():
         "state_store": "InMemoryStateStore",
         "rag_engine": "TF-IDF Lexical Retrieval (NDMA / CPHEEO SOP Knowledge Base)",
         "cloud_metrics": aws_bridge.get_cloud_metrics(),
-        "timestamp": datetime.utcnow().isoformat()
+        "build_it_tools": get_build_it_tools_inventory(),
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 @app.get("/api/incidents")
 def get_incidents(
     authorization: Optional[str] = Header(None, alias="Authorization"),
-    x_officer_role: Optional[str] = Header(None, alias="X-Officer-Role"),
 ):
     """
     Returns active incidents, protected by AWS Cedar statutory authorization.
     Rejects malformed tokens with HTTP 401 and unauthorized roles with HTTP 403.
     """
-    if authorization:
-        if not authorization.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Malformed Authorization header: must start with 'Bearer '.")
-        token = authorization[7:].strip()
-        claims = verify_jwt_token(token)
-        role = claims.get("role", "citizen")
-    elif x_officer_role:
-        role = x_officer_role
-    else:
+    if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=401,
             detail="Authentication required: Provide a valid Bearer token from /api/auth/token."
         )
+
+    token = authorization[7:].strip()
+    claims = verify_jwt_token(token)
+    role = claims.get("role", "citizen")
 
     if not evaluate_cedar_policy(role, "read_incidents"):
         raise HTTPException(
@@ -225,18 +247,24 @@ def get_incidents(
 def get_incident_detail(
     incident_id: str,
     authorization: Optional[str] = Header(None, alias="Authorization"),
-    x_officer_role: Optional[str] = Header(None, alias="X-Officer-Role"),
 ):
-    if authorization:
-        if not authorization.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Malformed Authorization header: must start with 'Bearer '.")
-        token = authorization[7:].strip()
-        claims = verify_jwt_token(token)
-        role = claims.get("role", "citizen")
-    elif x_officer_role:
-        role = x_officer_role
-    else:
-        raise HTTPException(status_code=401, detail="Authentication required: Provide a valid Bearer token from /api/auth/token.")
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required: Provide a valid Bearer token from /api/auth/token."
+        )
+
+    token = authorization[7:].strip()
+    claims = verify_jwt_token(token)
+    role = claims.get("role", "citizen")
+
+    if not evaluate_cedar_policy(role, "read_incidents", incident_id):
+        raise HTTPException(status_code=403, detail=f"Authorization Denied: AWS Cedar policy denied 'read_incidents' for role '{role}'.")
+
+    inc = db.get_incident(incident_id)
+    if not inc:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    return inc
 
     if not evaluate_cedar_policy(role, "read_incidents", incident_id):
         raise HTTPException(status_code=403, detail=f"Authorization Denied: AWS Cedar policy denied 'read_incidents' for role '{role}'.")
@@ -252,7 +280,7 @@ def simulate_scenario(req: SimulateRequest):
     Simulates a live climate emergency event (e.g. 118mm/hr cloudburst in Ward 17)
     and executes the complete 5-agent AWS Strands workflow.
     """
-    category = req.scenario
+    category = req.category or req.scenario or "flood"
     ward_id = req.ward_id or "WARD-17"
 
     telemetry = {}
@@ -497,6 +525,7 @@ def get_auth_roles():
         "cognito_user_pool_id": cognito_user_pool_id,
         "cognito_client_id": cognito_client_id,
         "not_configured": cognito_user_pool_id is None,
+        "demo_credentials": True,
         "authorization_engine": "AWS Cedar (cedarpy)",
         "policy_document": "policies/incident_policy.cedar",
         "statutory_act": "Disaster Management Act 2005 (Sections 30 & 34)",
@@ -577,6 +606,7 @@ def get_judge_pipeline_overview():
         ],
         "statutory_sop": "NDMA Urban Flood Guidelines (2024), Chapter 4, Sec 4.3",
         "authorization_engine": "AWS Cedar (cedarpy)",
+        "build_it_tools": get_build_it_tools_inventory(),
         "read_only": True,
         "note": "Judge read-only view. No token or configuration required."
     }
@@ -617,7 +647,7 @@ def get_live_telemetry(ward_id: str = "WARD-17"):
                     "drainage_saturation_pct": 24.0
                 },
                 "simulated": False,
-                "timestamp": current.get("time", datetime.utcnow().isoformat())
+                "timestamp": current.get("time", datetime.now(timezone.utc).isoformat())
             }
     except Exception as err:
         # Graceful offline fallback to calibrated seed data
@@ -635,8 +665,18 @@ def get_live_telemetry(ward_id: str = "WARD-17"):
             },
             "simulated": True,
             "fallback_reason": str(err),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
+
+@app.get("/api/evidence/local/{filename}")
+def get_local_evidence(filename: str):
+    """Local offline evidence access endpoint (TASK 12)."""
+    return {
+        "filename": filename,
+        "status": "AVAILABLE_OFFLINE",
+        "simulated": True,
+        "mode": "OFFLINE"
+    }
 
 @app.post("/api/citizen/report")
 async def submit_citizen_report(
@@ -656,6 +696,7 @@ async def submit_citizen_report(
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB strict allocation ceiling
     image_bytes = b""
     image_url = None
+    content_type = "image/jpeg"
 
     if image and hasattr(image, "read"):
         try:
@@ -690,14 +731,19 @@ async def submit_citizen_report(
         image_bytes=image_bytes
     )
 
+    # Optional S3 evidence persistence (TASK 12)
+    s3_result = None
+    if image_bytes:
+        s3_result = aws_bridge.upload_to_s3(
+            filename=f"{report_id}.jpg",
+            content_type=content_type,
+            image_bytes=image_bytes
+        )
+
+    no_image_supplied = False
     if not image_url:
-        sample_images = {
-            "waterlogging": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80",
-            "leak": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=600&q=80",
-            "heatwave": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
-            "water_shortage": "https://images.unsplash.com/photo-1541888946425-d0fbb186f5f7?auto=format&fit=crop&w=600&q=80"
-        }
-        image_url = sample_images.get(category, sample_images["waterlogging"])
+        no_image_supplied = True
+        image_url = f"/assets/placeholders/{category}.svg"
 
     report_record = {
         "id": report_id,
@@ -705,9 +751,11 @@ async def submit_citizen_report(
         "ward_id": ward_id,
         "address": address or "Sector Main Road",
         "reporter_name": reporter_name,
-        "created_at": datetime.now().strftime("%I:%M %p, %d %b"),
+        "created_at": datetime.now(timezone.utc).strftime("%I:%M %p, %d %b"),
         "status": "AI_VERIFIED",
         "image_url": image_url,
+        "no_image_supplied": no_image_supplied,
+        "s3_evidence": s3_result,
         "user_description": user_description,
         "ai_analysis": vision_result
     }
@@ -752,10 +800,6 @@ def chat_copilot(req: CopilotQuery):
     """
     return copilot.answer_query(req.query, role=req.role or "incident_commander", user_name=req.user_name)
 
-@app.get("/api/aws/metrics")
-def get_aws_metrics():
-    return aws_bridge.get_cloud_metrics()
-
 @app.get("/api/rag/protocols")
 def get_protocols():
     return rag_engine.get_all_protocols()
@@ -765,7 +809,7 @@ def get_wards():
     return db.wards
 
 @app.post("/api/reset")
-def reset_system():
+def reset_system(auth: Dict[str, Any] = Depends(verify_incident_commander_role)):
     db.reset_to_defaults()
     return {"success": True, "message": "JalRakshak AI baseline restored."}
 

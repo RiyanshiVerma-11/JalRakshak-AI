@@ -21,9 +21,39 @@ except ImportError:
 logger = logging.getLogger("jalrakshak.auth.cedar")
 
 # Cryptographic token configuration
-JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "jalrakshak-aws-cedar-production-key-2024")
+DEMO_MODE = os.environ.get("DEMO_MODE", "true").lower() in ("true", "1", "yes")
+_env_jwt_secret = os.environ.get("JWT_SECRET_KEY")
+if not _env_jwt_secret:
+    if DEMO_MODE:
+        JWT_SECRET_KEY = "jalrakshak-demo-jwt-secret-build-it-2024"
+    else:
+        raise RuntimeError(
+            "Security Error: JWT_SECRET_KEY environment variable is required in production (non-DEMO_MODE)."
+        )
+else:
+    JWT_SECRET_KEY = _env_jwt_secret
+
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
+
+# Canonical Statutory Role/Action Permission Matrix (mirrors policies/incident_policy.cedar exactly)
+CEDAR_ROLE_PERMISSIONS: Dict[str, set] = {
+    "incident_commander": {
+        "read_incidents", "approve_action", "dispatch_resource", "broadcast_sns", "simulate_scenario"
+    },
+    "scada_analyst": {
+        "read_incidents", "read_telemetry", "inspect_sensors"
+    },
+    "field_operator": {
+        "read_incidents", "update_status"
+    },
+    "field_responder": {
+        "read_incidents", "update_status"
+    },
+    "citizen": {
+        "submit_report", "read_advisories"
+    }
+}
 
 # Path to AWS Cedar policy file
 _POLICY_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "policies"))
@@ -121,11 +151,7 @@ def evaluate_cedar_policy_with_details(
     """
     if not CEDAR_AVAILABLE or not _CACHED_POLICY:
         engine = "fallback"
-        allowed = False
-        if principal_role == "incident_commander":
-            allowed = True
-        elif principal_role in ("scada_analyst", "field_operator") and action in ("read_incidents", "read_telemetry"):
-            allowed = True
+        allowed = action in CEDAR_ROLE_PERMISSIONS.get(principal_role, set())
         logger.info(f"[CEDAR AUTH] Engine: {engine} | Decision: {'ALLOW' if allowed else 'DENY'} | Role: {principal_role} | Action: {action}")
         return {
             "allowed": allowed,

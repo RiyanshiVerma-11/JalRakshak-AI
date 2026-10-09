@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="waterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#waterGrad)"/>
+  <path d="M 0,260 Q 150,230 300,260 T 600,260 L 600,400 L 0,400 Z" fill="#0369a1" opacity="0.7"/>
+  <path d="M 0,290 Q 150,270 300,290 T 600,290 L 600,400 L 0,400 Z" fill="#0284c7" opacity="0.9"/>
+  <circle cx="300" cy="140" r="45" fill="#38bdf8" opacity="0.2"/>
+  <path d="M 300,105 C 295,120 275,150 275,165 A 25,25 0 0,0 325,165 C 325,150 305,120 300,105 Z" fill="#38bdf8"/>
+  <text x="300" y="340" font-family="system-ui, sans-serif" font-size="20" font-weight="bold" fill="#f8fafc" text-anchor="middle">URBAN WATERLOGGING EVIDENCE</text>
+  <text x="300" y="368" font-family="system-ui, sans-serif" font-size="13" fill="#bae6fd" text-anchor="middle">Offline Build It Placeholder • Ward 17 Inundation Corridor</text>
+</svg>

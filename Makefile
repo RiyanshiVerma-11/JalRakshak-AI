@@ -36,6 +36,11 @@ localstack-up:
 localstack-setup:
 	python scripts/setup_localstack.py
 
+localstack-e2e:
+	@echo "Checking LocalStack container..."
+	-docker compose -f docker-compose.local.yml up -d localstack
+	python scripts/setup_localstack.py
+
 localstack-down:
 	docker compose -f docker-compose.local.yml down
 
