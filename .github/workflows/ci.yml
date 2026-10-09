@@ -24,13 +24,15 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install aws-sam-cli
+        pip install pytest pytest-asyncio aws-sam-cli
 
     - name: Validate AWS SAM Template
       run: |
         sam validate --template aws_infra/template.yaml --region ap-south-1 --lint
 
     - name: Run Test Suite (Integration & AWS Cedar RBAC)
+      env:
+        PYTHONPATH: .
       run: |
         python -m pytest tests/ -v
 
