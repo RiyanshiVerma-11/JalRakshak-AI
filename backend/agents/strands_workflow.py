@@ -695,8 +695,12 @@ class StrandsWorkflowSequence:
             total_latency_ms = int((time.perf_counter() - t0) * 1000)
             execution_mode = "DETERMINISTIC_NDMA_FALLBACK"
 
-        # Create incident payload adhering strictly to public contract
-        incident_id = f"INC-{uuid.uuid4().hex[:3].upper()}"
+        # Create incident payload adhering strictly to public contract with guaranteed collision-free ID
+        while True:
+            candidate_id = f"INC-{uuid.uuid4().hex[:6].upper()}"
+            if not db.get_incident(candidate_id):
+                incident_id = candidate_id
+                break
         default_titles = {
             "flood": f"Flash Flood Alert & Inundation in {ward_info['name']}",
             "heatwave": f"Extreme Heatwave & High Wet-Bulb Warning in {ward_info['name']}",
