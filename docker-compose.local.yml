@@ -1,0 +1,52 @@
+version: '3.8'
+
+# =============================================================================
+# JalRakshak AI — LocalStack Offline AWS Emulation Stack
+# Provides genuine AWS SDK connectivity (S3, DynamoDB, SNS, EventBridge)
+# completely free of cost with zero AWS cloud credentials.
+# =============================================================================
+
+services:
+  # ── LocalStack Gateway & AWS Cloud Emulation ───────────────────────────────
+  localstack:
+    image: localstack/localstack:3.8
+    container_name: jalrakshak-localstack
+    ports:
+      - "4566:4566"            # LocalStack unified edge gateway
+      - "4510-4559:4510-4559"  # Service port range
+    environment:
+      - SERVICES=s3,dynamodb,sns,events
+      - AWS_DEFAULT_REGION=ap-south-1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DEBUG=0
+    volumes:
+      - "./scripts/localstack-init.sh:/etc/localstack/init/ready.d/init-aws.sh:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── JalRakshak AI Full Application Container ──────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jalrakshak-app
+    depends_on:
+      localstack:
+        condition: service_healthy
+    ports:
+      - "8004:8004"
+    environment:
+      - AWS_EXECUTION_MODE=LOCALSTACK
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=ap-south-1
+      - EVENTBRIDGE_BUS=jalrakshak-emergency-eventbus
+      - SNS_TOPIC_ARN=arn:aws:sns:ap-south-1:000000000000:JalRakshak-Alerts-Multilingual
+      - EVIDENCE_BUCKET=jalrakshak-evidence-lake
+      - PORT=8004
+      - HOST=0.0.0.0

@@ -486,7 +486,10 @@ class StrandsWorkflowSequence:
             }
 
             total_latency_ms = risk_latency + impact_latency + resource_latency + comm_latency + coord_latency
-            execution_mode = "AWS_HYBRID_BEDROCK_STRANDS"
+            if is_live_cloud_active():
+                execution_mode = "AWS_HYBRID_BEDROCK_STRANDS"
+            else:
+                execution_mode = "OFFLINE_LOCAL_STRANDS"
 
         except Exception as exc:
             # Consult circuit breaker hook state

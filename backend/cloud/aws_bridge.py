@@ -492,11 +492,19 @@ class AWSCloudBridge:
             except Exception:
                 sns_subscribers = None
 
+        if creds_ok and (mode == "LIVE" or mode == "AWS"):
+            active_execution_mode = "AWS_HYBRID_BEDROCK_STRANDS"
+        elif mode == "LOCALSTACK" or (mode == "LOCAL" and os.environ.get("AWS_ENDPOINT_URL")):
+            active_execution_mode = "LOCALSTACK"
+        else:
+            active_execution_mode = "OFFLINE_LOCAL_STRANDS"
+
         return {
             "region":           region,
-            "execution_mode":   mode,
+            "execution_mode":   active_execution_mode,
+            "raw_execution_mode": mode,
             "live_credentials": creds_ok,
-            "backend":          "LocalStack" if mode == "LOCAL" else ("AWS Cloud" if mode == "AWS" else "InMemory / Local Open-Source"),
+            "backend":          "LocalStack" if (mode == "LOCALSTACK" or (mode == "LOCAL" and os.environ.get("AWS_ENDPOINT_URL"))) else ("AWS Cloud" if (mode == "AWS" or mode == "LIVE") else "InMemory / Local Open-Source"),
             "services": {
                 "AWS_Strands_Agents": {
                     "status": "HEALTHY",

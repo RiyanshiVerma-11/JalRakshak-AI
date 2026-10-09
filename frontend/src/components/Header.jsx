@@ -19,7 +19,7 @@ export default function Header({
 }) {
   const [timeStr, setTimeStr] = useState('');
   const [awsStatus, setAwsStatus] = useState({
-    execution_mode: 'HYBRID',
+    execution_mode: 'OFFLINE_LOCAL_STRANDS',
     live_credentials: false,
     region: 'ap-south-1'
   });
@@ -41,7 +41,7 @@ export default function Header({
       .then(data => {
         if (data) {
           setAwsStatus({
-            execution_mode: data.execution_mode || 'HYBRID',
+            execution_mode: data.execution_mode || 'OFFLINE_LOCAL_STRANDS',
             live_credentials: Boolean(data.live_credentials),
             region: data.region || 'ap-south-1'
           });
@@ -51,7 +51,8 @@ export default function Header({
   }, []);
 
   const isCitizen = currentUser?.role === 'citizen' || activeTab === 'citizen';
-  const isLive = awsStatus.execution_mode === 'LIVE';
+  const isLive = awsStatus.execution_mode === 'LIVE' || awsStatus.execution_mode === 'AWS_HYBRID_BEDROCK_STRANDS';
+  const isLocalStack = awsStatus.execution_mode === 'LOCALSTACK';
 
   const getTabLabel = () => {
     if (activeTab === 'citizen' || (isCitizen && activeTab !== 'copilot' && activeTab !== 'landing')) {
@@ -125,18 +126,20 @@ export default function Header({
             className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer shadow-xs ${
               isLive
                 ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300 hover:bg-emerald-900/80'
-                : 'bg-cyan-950/80 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/80'
+                : (isLocalStack
+                    ? 'bg-purple-950/80 border-purple-500/50 text-purple-300 hover:bg-purple-900/80'
+                    : 'bg-cyan-950/80 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/80')
             }`}
             title="Click to view AWS Cloud Engine details"
           >
-            <Cloud className={`h-3 w-3 ${isLive ? 'text-emerald-400' : 'text-cyan-400'}`} />
+            <Cloud className={`h-3 w-3 ${isLive ? 'text-emerald-400' : (isLocalStack ? 'text-purple-400' : 'text-cyan-400')}`} />
             <span className="hidden sm:inline">
-              {isLive ? 'AWS Engine: Live Cloud (ap-south-1)' : 'AWS Engine: Hybrid Sandbox (ap-south-1)'}
+              {isLive ? 'AWS Engine: Live Bedrock Strands (ap-south-1)' : (isLocalStack ? 'AWS Engine: LocalStack Emulated (ap-south-1)' : 'AWS Engine: Offline Local Strands (ap-south-1)')}
             </span>
             <span className="sm:hidden">
-              {isLive ? 'AWS: Live' : 'AWS: Hybrid'}
+              {isLive ? 'AWS: Bedrock' : (isLocalStack ? 'AWS: LocalStack' : 'AWS: Offline')}
             </span>
-            <span className={`h-1.5 w-1.5 rounded-full ${isLive ? 'bg-emerald-400 animate-pulse' : 'bg-cyan-400 animate-pulse'}`} />
+            <span className={`h-1.5 w-1.5 rounded-full ${isLive ? 'bg-emerald-400 animate-pulse' : (isLocalStack ? 'bg-purple-400 animate-pulse' : 'bg-cyan-400 animate-pulse')}`} />
           </button>
 
           {/* Interactive Cloud Architecture Popover Tooltip */}
@@ -152,14 +155,19 @@ export default function Header({
                   AWS Cloud Engine Status
                 </span>
                 <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${
-                  isLive ? 'bg-emerald-900 text-emerald-300 border border-emerald-700' : 'bg-cyan-900 text-cyan-300 border border-cyan-700'
+                  isLive ? 'bg-emerald-900 text-emerald-300 border border-emerald-700' : (isLocalStack ? 'bg-purple-900 text-purple-300 border border-purple-700' : 'bg-cyan-900 text-cyan-300 border border-cyan-700')
                 }`}>
                   {awsStatus.execution_mode}
                 </span>
               </div>
 
               <p className="text-[11px] leading-relaxed text-slate-300 mb-2.5">
-                <strong className="text-white">Dual-mode architecture:</strong> Runs offline zero-cost simulation locally or switches to real Amazon Bedrock, DynamoDB, &amp; EventBridge via <code className="text-cyan-300 bg-slate-800 px-1 py-0.5 rounded text-[10px]">AWS_EXECUTION_MODE=LIVE</code>.
+                <strong className="text-white">Execution Mode:</strong>{' '}
+                {isLive
+                  ? 'Connected live to AWS Bedrock, DynamoDB & EventBridge in ap-south-1.'
+                  : (isLocalStack
+                      ? 'LocalStack active on localhost:4566. Real AWS SDK boto3 calls executing against local container.'
+                      : 'Build It Zero-Config Mode. Running offline LocalDeterministicModel via AWS Strands SDK.')}
               </p>
 
               <div className="space-y-1 text-[10px] text-slate-400 bg-slate-950/70 p-2 rounded-lg border border-slate-800 font-mono">

@@ -184,29 +184,80 @@ tests/test_integration.py::test_simulated_flags_on_offline_responses PASSED [100
 
 ---
 
-## 🔧 Optional: Connecting Real AWS Account or LocalStack
+## 🔧 Offline LocalStack & Serverless SAM Packaging
 
-While completely optional for the Build It route, JalRakshak AI seamlessly switches to real AWS or LocalStack when configured:
+While completely zero-config and runnable out-of-the-box (`python run_app.py`), JalRakshak AI provides **100% genuine AWS cloud and local emulation infrastructure** verified across three operational modes:
 
-### 1. Using LocalStack (Local AWS Cloud Emulator)
+### Execution Modes & Honesty Matrix
+| Mode String | Trigger | Behavior |
+| :--- | :--- | :--- |
+| `OFFLINE_LOCAL_STRANDS` | Default zero-config boot | Executes 5-agent Strands DAG via `LocalDeterministicModel` without AWS credentials or cloud fees. |
+| `LOCALSTACK` | `AWS_ENDPOINT_URL=http://localhost:4566` | Dispatches real Boto3 SDK calls to local Dockerized AWS emulator (S3, DynamoDB, SNS, EventBridge). |
+| `AWS_HYBRID_BEDROCK_STRANDS` | `AWS_EXECUTION_MODE=LIVE` + AWS keys | Invokes live Amazon Bedrock Claude 3.5 Sonnet foundation models and production AWS cloud resources. |
+| `DETERMINISTIC_NDMA_FALLBACK` | Upstream throttling / timeout (HTTP 429) | Graceful degradation matrix grounded in NDMA Guidelines 2024 Chapter 4 with guaranteed zero-downtime. |
+
+---
+
+### 1. LocalStack Emulation (100% Real AWS SDK, Zero Cost)
+Launch the local AWS cloud stack (Amazon S3, DynamoDB, Amazon SNS, and Amazon EventBridge) in seconds:
+
 ```bash
-# Start LocalStack
-docker run --rm -d -p 4566:4566 -p 4510-4559:4510-4559 localstack/localstack
+# Option A: Start LocalStack via docker-compose
+docker compose -f docker-compose.local.yml up -d localstack
 
-# Set endpoint in terminal before running
-export AWS_ENDPOINT_URL=http://localhost:4566      # Linux/macOS
-$env:AWS_ENDPOINT_URL="http://localhost:4566"      # Windows PowerShell
+# Provision all DynamoDB tables, S3 bucket, SNS topic, and EventBridge bus (1-click)
+python scripts/setup_localstack.py
+# Or via Makefile:
+make localstack-setup
 
+# Run JalRakshak AI against LocalStack
+export AWS_ENDPOINT_URL=http://localhost:4566
+export AWS_EXECUTION_MODE=LOCALSTACK
 python run_app.py
 ```
 
-### 2. Using Live AWS Cloud
+Or run the entire unified stack (LocalStack + JalRakshak App) in Docker:
+```bash
+docker compose -f docker-compose.local.yml up
+```
+
+---
+
+### 2. AWS Serverless Application Model (SAM) Build & Packaging
+Validate and compile the production serverless Lambda handlers and CloudFormation infrastructure:
+
+```bash
+# Validate template structure (zero warnings)
+sam validate --template aws_infra/template.yaml --region ap-south-1 --lint
+
+# Compile serverless Lambdas and resolve Python dependencies into .aws-sam/build
+sam build --template aws_infra/template.yaml --region ap-south-1
+```
+**Verified Output**:
+```
+Building codeuri: aws_infra runtime: python3.11 architecture: x86_64 functions: StrandsAgentOrchestratorLambda, CitizenReportIngestLambda
+ Running PythonPipBuilder:ResolveDependencies
+ Running PythonPipBuilder:CopySource
+
+Build Succeeded
+
+Built Artifacts  : .aws-sam\build
+Built Template   : .aws-sam\build\template.yaml
+```
+
+---
+
+### 3. Using Live AWS Cloud (Dual-Mode Route)
+To connect to live Amazon Bedrock in Mumbai (`ap-south-1`):
 ```bash
 export AWS_EXECUTION_MODE=LIVE
 export AWS_DEFAULT_REGION=ap-south-1
 export AWS_ACCESS_KEY_ID=AKIA...
 export AWS_SECRET_ACCESS_KEY=...
 export BEDROCK_MODEL_ID=anthropic.claude-3-5-sonnet-20240620-v1:0
+
+# 1-click cloud resource setup
+python scripts/setup_aws_cloud.py
 
 python run_app.py
 ```

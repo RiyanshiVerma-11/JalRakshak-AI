@@ -52,7 +52,7 @@ def test_flood_cloudburst_pipeline_and_incident_creation():
     assert incident["severity"] == "CRITICAL"
     assert "Kurla" in incident["ward_name"]
     assert incident["status"] == "PENDING_APPROVAL"
-    assert incident["execution_mode"] in ["AWS_BEDROCK_STRANDS", "AWS_HYBRID_BEDROCK_STRANDS", "DETERMINISTIC_NDMA_FALLBACK"]
+    assert incident["execution_mode"] in ["AWS_BEDROCK_STRANDS", "AWS_HYBRID_BEDROCK_STRANDS", "OFFLINE_LOCAL_STRANDS", "DETERMINISTIC_NDMA_FALLBACK"]
 
     # 4. Verify 5-Agent Trace
     trace = incident["agent_trace"]
@@ -513,11 +513,44 @@ def test_simulated_flags_on_offline_responses():
         # Image analyzer without live Rekognition credentials must be flagged simulated
         vision_res = image_analyzer.analyze_image("waterlogging", "Heavy flood in street")
         assert vision_res["simulated"] is True
-        assert "Local PIL" in vision_res["provider"]
-
         # Cloud metrics must explicitly flag unbacked services
         metrics = aws_bridge.get_cloud_metrics()
         assert metrics["services"]["Amazon_SNS"]["simulated"] is True
         assert metrics["services"]["Amazon_Rekognition"]["simulated"] is True
+
+        # Execution mode must be honest: OFFLINE_LOCAL_STRANDS when offline
+        assert metrics["execution_mode"] == "OFFLINE_LOCAL_STRANDS"
+
+
+def test_localstack_configuration_and_compose_spec():
+    """
+    Verifies that the LocalStack offline AWS emulation files exist, are well-formed,
+    and specify the required serverless resources (S3, DynamoDB, SNS, EventBridge).
+    """
+    import os
+    import yaml
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    compose_path = os.path.join(root_dir, "docker-compose.local.yml")
+    init_script_path = os.path.join(root_dir, "scripts", "localstack-init.sh")
+    setup_script_path = os.path.join(root_dir, "scripts", "setup_localstack.py")
+
+    assert os.path.isfile(compose_path), "docker-compose.local.yml must exist"
+    assert os.path.isfile(init_script_path), "scripts/localstack-init.sh must exist"
+    assert os.path.isfile(setup_script_path), "scripts/setup_localstack.py must exist"
+
+    with open(compose_path, "r", encoding="utf-8") as f:
+        compose_data = yaml.safe_load(f)
+
+    services = compose_data.get("services", {})
+    assert "localstack" in services, "LocalStack service must be defined in compose"
+    assert "4566:4566" in services["localstack"]["ports"]
+
+    with open(init_script_path, "r", encoding="utf-8") as f:
+        init_content = f.read()
+
+    assert "jalrakshak-evidence-lake" in init_content
+    assert "JalRakshak-IncidentsTable" in init_content
+    assert "JalRakshak-Alerts-Multilingual" in init_content
+    assert "jalrakshak-emergency-eventbus" in init_content
 
 

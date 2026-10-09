@@ -8,7 +8,6 @@ region = "ap-south-1"
 
 [default.build.parameters]
 template_file = "aws_infra/template.yaml"
-base_dir = "."
 cached = false
 
 [default.validate.parameters]
