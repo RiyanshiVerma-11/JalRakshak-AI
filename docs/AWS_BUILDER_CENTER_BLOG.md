@@ -335,7 +335,7 @@ bash scripts/judge_smoke.sh
 ★ SMOKE TEST PASSED: ALL 5 STRANDS AGENTS VERIFIED LIVE & OPERATIONAL ★
 ======================================================================
 ```
-For step-by-step evaluator instructions, see the **[Judge Quickstart Guide](https://github.com/RiyanshiVerma-11/JalRakshak-AI/blob/main/docs/JUDGE_QUICKSTART.md)** and the **[3-Minute Demo Video Script](https://github.com/RiyanshiVerma-11/JalRakshak-AI/blob/main/docs/DEMO_SCRIPT.md)**.
+For step-by-step evaluator instructions, see the **[Judge Quickstart Guide](https://github.com/RiyanshiVerma-11/JalRakshak-AI/blob/main/docs/JUDGE_QUICKSTART.md)**.
 
 ---
 
