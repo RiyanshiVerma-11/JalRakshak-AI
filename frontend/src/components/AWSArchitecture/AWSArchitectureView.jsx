@@ -94,7 +94,7 @@ export default function AWSArchitectureView() {
       badge: 'Multilingual Broadcast',
       description: 'Dispatches critical geo-targeted SMS, Civil Defense alerts, and automated siren activations in English, Hindi, and Marathi.',
       roleInApp: 'Publishes authorized emergency advisories instantly across telecom operator gateways.',
-      specs: 'Topic: JalRakshak-Alerts-Multilingual (18,450 Subscribers)'
+      specs: 'Topic: JalRakshak-Alerts-Multilingual | Region: ap-south-1'
     },
     {
       id: 'cognito',
@@ -103,7 +103,7 @@ export default function AWSArchitectureView() {
       badge: 'Statutory RBAC & ICS',
       description: 'Enforces Principle of Least Privilege (PoLP) and Indian Disaster Management Act 2005 (ICS) hierarchy across 4 distinct personas.',
       roleInApp: 'Secures high-impact statutory human-in-the-loop signoff, separates Commander from Field Responders, and isolates public access.',
-      specs: 'User Pool: ap-south-1_JalRakshakPool | 4 Scoped IAM Claims'
+      specs: 'AWS Cedar Engine (cedarpy) | Statutory Least-Privilege RBAC'
     }
   ];
 
@@ -155,13 +155,13 @@ export default function AWSArchitectureView() {
             <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
               <span className="text-[10px] uppercase font-bold text-slate-500 block">EventBridge</span>
               <strong className="text-emerald-700 text-xs mt-0.5 block font-black">
-                {awsMetrics.services.Amazon_EventBridge?.events_today || 1420} events/day
+                {awsMetrics.services.Amazon_EventBridge?.events_today ?? 'Active stream'}
               </strong>
             </div>
             <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">
               <span className="text-[10px] uppercase font-bold text-slate-500 block">DynamoDB p99</span>
               <strong className="text-amber-700 text-xs mt-0.5 block font-black">
-                {awsMetrics.services.Amazon_DynamoDB?.p99_latency_ms || 4.2} ms
+                {awsMetrics.services.Amazon_DynamoDB?.p99_latency_ms ? `${awsMetrics.services.Amazon_DynamoDB.p99_latency_ms} ms` : 'Low-Latency'}
               </strong>
             </div>
             <div className="rounded-xl bg-slate-50 p-3 border border-slate-200">

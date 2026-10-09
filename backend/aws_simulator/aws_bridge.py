@@ -90,9 +90,7 @@ def invoke_bedrock_agent(prompt: str, ward_name: str = "Ward 17 (Kurla L-Ward)")
     """
     Synthesises a situation narrative via Amazon Bedrock Claude 3.5 Sonnet.
     LIVE  → real boto3 bedrock-runtime.invoke_model when AWS_EXECUTION_MODE=LIVE and creds exist.
-    HYBRID→ deterministic context-aware synthesis + realistic 1200-1700ms latency simulation.
-    Always emits ANSI-coloured log:
-      [AMAZON BEDROCK ⚡ LIVE]  Model: claude-3-5-sonnet | Latency: 1420ms | Input Tokens: 184 | Output: 128
+    HYBRID→ deterministic statutory rule-based emergency synthesis reporting real measured execution latency.
     """
     use_live = (AWS_EXECUTION_MODE == "LIVE") and _credentials_available() and BOTO3_AVAILABLE
     return _bedrock_live(prompt, ward_name) if use_live else _bedrock_hybrid(prompt, ward_name)
@@ -169,14 +167,18 @@ def _bedrock_hybrid(prompt: str, ward_name: str) -> Dict[str, Any]:
                f"Enforce non-essential water bans per Jal Jeevan Mission Urban Water Security Framework.")
         inp, out = 158, 102
     lat = int((time.time() - t0) * 1000)
-    _log_bedrock(False, lat, inp, out)
-    return {"narrative": txt, "model_id": _BEDROCK_MODEL_ID,
-            "latency_ms": lat, "input_tokens": inp, "output_tokens": out, "live": False}
+    _log_bedrock(False, lat, 0, 0)
+    return {"narrative": txt, "model_id": "statutory-ndma-deterministic",
+            "latency_ms": lat, "input_tokens": None, "output_tokens": None, "live": False}
 
 
 def _log_bedrock(live: bool, ms: int, inp: int, out: int):
-    tag = f"{_G}{_B}[AMAZON BEDROCK \u26a1 LIVE]{_R}" if live else f"{_C}{_B}[AMAZON BEDROCK \u26a1 HYBRID]{_R}"
-    print(f"{tag} Model: {_MODEL_SHORT} | Latency: {_Y}{ms}ms{_R} | Input Tokens: {_P}{inp}{_R} | Output: {_P}{out}{_R}")
+    if live:
+        tag = f"{_G}{_B}[AMAZON BEDROCK LIVE]{_R}"
+        print(f"{tag} Model: {_MODEL_SHORT} | Latency: {_Y}{ms}ms{_R} | Input Tokens: {_P}{inp}{_R} | Output: {_P}{out}{_R}")
+    else:
+        tag = f"{_C}{_B}[NDMA STATUTORY MATRIX]{_R}"
+        print(f"{tag} Mode: deterministic-ndma | Real Latency: {_Y}{ms}ms{_R}")
 
 
 # ── SNS ───────────────────────────────────────────────────────────────────

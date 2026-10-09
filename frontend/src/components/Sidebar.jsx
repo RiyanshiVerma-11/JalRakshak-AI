@@ -143,7 +143,7 @@ export default function Sidebar({
               icon: <Activity className="h-4 w-4 shrink-0" />,
               badge: '★ PRIMARY',
               badgeColor: 'bg-cyan-600 text-white font-black shadow-xs',
-              desc: '248 IoT Sensor Grid & Telemetry'
+              desc: 'Synthetic Sensor Grid (4 Wards) & Telemetry'
             },
             {
               id: 'aws',
@@ -295,7 +295,7 @@ export default function Sidebar({
               targetTab: 'scada',
               label: 'Sensor Grid & Outfalls',
               icon: <Activity className="h-4 w-4 shrink-0" />,
-              badge: '248 IoT',
+              badge: '4 Wards',
               badgeColor: 'bg-cyan-950/90 text-cyan-300 border-cyan-800',
               desc: 'Telemetry & Sluice Outfalls'
             },
@@ -598,7 +598,7 @@ export default function Sidebar({
 
                     <div className="grid grid-cols-2 gap-1.5 text-center text-xs">
                       <div className="rounded-lg bg-cyan-950/80 border border-cyan-800 p-1.5">
-                        <span className="text-xs font-black text-white block">248 IoT</span>
+                        <span className="text-xs font-black text-white block">4 Wards</span>
                         <span className="text-[9px] text-cyan-300 font-mono">Online</span>
                       </div>
                       <div className="rounded-lg bg-cyan-950/80 border border-cyan-800 p-1.5">

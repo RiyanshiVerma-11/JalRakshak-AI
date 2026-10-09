@@ -112,9 +112,39 @@ export default function App() {
   const selectedIncidentRef = useRef(selectedIncident);
   selectedIncidentRef.current = selectedIncident;
 
+  const getAuthToken = useCallback(async (persona = currentUser) => {
+    let token = localStorage.getItem('jalrakshak_token');
+    const role = persona?.role || 'incident_commander';
+    const storedRole = localStorage.getItem('jalrakshak_token_role');
+    if (!token || storedRole !== role) {
+      try {
+        const res = await fetch('/api/auth/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            role: role,
+            officer_name: persona?.name || 'IAS Shrikar Patil',
+            officer_id: persona?.id || 'OFFICER_PATIL_EOC'
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          token = data.access_token;
+          localStorage.setItem('jalrakshak_token', token);
+          localStorage.setItem('jalrakshak_token_role', role);
+        }
+      } catch (err) {
+        console.warn('Failed to obtain Cedar auth token:', err);
+      }
+    }
+    return token;
+  }, [currentUser]);
+
   const fetchIncidents = useCallback(async () => {
     try {
-      const res = await fetch('/api/incidents');
+      const token = await getAuthToken();
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const res = await fetch('/api/incidents', { headers });
       if (!res.ok) return;
       const data = await res.json();
       setIncidents(data);
@@ -131,7 +161,7 @@ export default function App() {
     } catch (err) {
       console.error('Failed to fetch incidents:', err);
     }
-  }, []);
+  }, [getAuthToken]);
 
   const fetchResources = useCallback(async () => {
     try {
@@ -294,11 +324,13 @@ export default function App() {
     setCurrentUser(null);
     try {
       localStorage.removeItem(SESSION_STORAGE_KEY);
+      localStorage.removeItem('jalrakshak_token');
+      localStorage.removeItem('jalrakshak_token_role');
       sessionStorage.removeItem('jalrakshak_intended_target');
     } catch (e) {
       console.error('Failed to remove session:', e);
     }
-    showNotification('AWS Cognito session invalidated. Signed out safely.', 'info');
+    showNotification('AWS Cedar session invalidated. Signed out safely.', 'info');
     setActiveTab('login');
     if (window.location.pathname !== '/login') {
       window.history.pushState({ tab: 'login' }, '', '/login');
@@ -348,9 +380,13 @@ export default function App() {
     }
 
     try {
+      const token = await getAuthToken();
       const res = await fetch(`/api/actions/${actionId}/approve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           officer_id: currentUser?.id || "OFFICER_PATIL_EOC",
           officer_name: currentUser?.name || "Municipal Disaster Controller",

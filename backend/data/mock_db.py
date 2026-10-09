@@ -388,7 +388,7 @@ INITIAL_INCIDENTS = [
             "marathi": "उष्णतेची लाट: प्रभाग ४ मध्ये तीव्र तापमान. दादर स्पोर्ट्स कॉम्प्लेक्स येथे मोफत थंड पाणी व ओआरएस सुविधा उपलब्ध आहे. दुपारच्या उन्हात बाहेर पडणे टाळा."
         },
         "rag_reference": {
-            "sop_id": "SOP-HEAT-201",
+            "sop_id": "SOP-HEAT-04",
             "statutory_reference": "National Heat Action Plan (NHAP) 2024 Guidelines, Tier-2 Severe Heatwave Standard",
             "rationale": "Heat Index exceeded 46°C threshold with elevated humidity creating physiological distress."
         },

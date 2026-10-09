@@ -104,13 +104,13 @@ class EmergencyCopilot:
                     "query": query,
                     "situation_summary": (
                         "**JalRakshak AI** is Mumbai's autonomous, 5-agent climate disaster orchestration platform built on AWS. "
-                        "It continuously ingests telemetry from 248 IoT sensors, weather radars, and citizen photo reports. "
-                        "When climate anomalies (e.g. 118 mm/hr cloudbursts, pipe bursts, heatwaves) are detected, autonomous Bedrock Claude 3.5 agents "
-                        "orchestrate multi-agency tactical action plans under NDMA & Disaster Management Act 2005 protocols in under 60 seconds with human-in-the-loop sign-off."
+                        "It continuously ingests telemetry from synthetic sensor grids, weather radars, and citizen photo reports across 4 wards. "
+                        "When climate anomalies (e.g. 118 mm/hr cloudbursts, pipe bursts, heatwaves) are detected, autonomous Strands agents "
+                        "orchestrate multi-agency tactical action plans under NDMA & Disaster Management Act 2005 protocols with human-in-the-loop sign-off."
                     ),
                     "key_metrics": {
                         "Autonomous Agents": "5 Active (DAG)",
-                        "IoT Sensor Grid": "248 Sensors",
+                        "IoT Sensor Grid": "Active (4 Wards)",
                         "Active Sectors": len(incidents),
                         "Pending Directives": len([i for i in incidents if i["status"] == "PENDING_APPROVAL"])
                     },

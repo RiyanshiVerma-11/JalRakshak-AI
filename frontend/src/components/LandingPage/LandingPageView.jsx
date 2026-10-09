@@ -247,7 +247,7 @@ export default function LandingPageView({
               {/* Punchy Narrative Copy */}
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
                 Most platforms tell municipal authorities <span className="text-rose-600 font-bold underline decoration-rose-300">what is happening</span>. 
-                <strong className="text-blue-700 font-bold"> JalRakshak AI</strong> tells them <span className="text-emerald-700 font-bold underline decoration-emerald-300">what statutory action to authorize next</span> — synthesizing raw IoT telemetry, depot inventories, and statutory standard operating procedures in <strong className="text-slate-900">under 600ms</strong>.
+                <strong className="text-blue-700 font-bold"> JalRakshak AI</strong> tells them <span className="text-emerald-700 font-bold underline decoration-emerald-300">what statutory action to authorize next</span> — synthesizing raw IoT telemetry, depot inventories, and statutory standard operating procedures in <strong className="text-slate-900">real-time (p50: 3.4ms local pipeline)</strong>.
               </p>
 
               {/* 4 Crisp Key Metric Badges with Enhanced Border Contrast & Drop Shadow */}
@@ -502,7 +502,7 @@ export default function LandingPageView({
                   </div>
                   <div>
                     <h3 className="text-base font-black text-slate-900">The JalRakshak AI Solution</h3>
-                    <p className="text-xs text-emerald-800 font-medium">Sub-600ms AWS Strands Multi-Agent Engine</p>
+                    <p className="text-xs text-emerald-800 font-medium">Deterministic AWS Strands Multi-Agent Engine</p>
                   </div>
                 </div>
                 <span className="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded border border-emerald-300">
@@ -519,7 +519,7 @@ export default function LandingPageView({
                     1. Sub-Second Strands 5-Agent Directed Acyclic Graph (DAG)
                   </strong>
                   <p className="text-slate-600 text-[11px] leading-relaxed">
-                    Five specialized autonomous agents ingest 248 IoT telemetry points, correlate GIS flood risk polygons, scan municipal inventory, and synthesize action plans deterministically without hallucinations.
+                    Five specialized autonomous agents ingest synthetic sensor grid telemetry points across 4 wards, correlate GIS flood risk polygons, scan municipal inventory, and synthesize action plans deterministically without hallucinations.
                   </p>
                 </div>
 
@@ -747,7 +747,7 @@ export default function LandingPageView({
                 Under The Hood
               </span>
               <h3 className="text-lg sm:text-xl font-black text-slate-900">
-                The 5 AWS Strands Agents Workflow (Sub-600ms Response)
+                The 5 AWS Strands Agents Workflow (Autonomous Multi-Agent DAG)
               </h3>
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
@@ -824,7 +824,7 @@ export default function LandingPageView({
           <div className="space-y-1 max-w-xl">
             <h4 className="text-base sm:text-lg font-black text-white">Ready to inspect the live incident command room?</h4>
             <p className="text-xs sm:text-sm text-blue-100">
-              Experience sub-600ms AI triage, GIS map telemetry layers, and 1-click statutory action plan execution.
+              Experience real-time AI triage, GIS map telemetry layers, and 1-click statutory action plan execution.
             </p>
           </div>
 

@@ -1,0 +1,31 @@
+.PHONY: help install test build demo sam-validate clean
+
+help:
+	@echo "JalRakshak AI - Automation Targets:"
+	@echo "  make install       Install Python and Frontend dependencies"
+	@echo "  make test          Run pytest suite (Integration + AWS Cedar RBAC)"
+	@echo "  make build         Compile React frontend and build SAM artifacts"
+	@echo "  make demo          Launch unified FastAPI server on http://localhost:8004"
+	@echo "  make sam-validate  Validate AWS SAM Infrastructure Template"
+	@echo "  make clean         Remove build artifacts and pytest caches"
+
+install:
+	pip install -r requirements.txt
+	cd frontend && npm install
+
+test:
+	python -m pytest tests/ -v
+
+build:
+	cd frontend && npm run build
+	sam validate --template aws_infra/template.yaml --region ap-south-1 --lint
+	sam build --template aws_infra/template.yaml --region ap-south-1
+
+demo:
+	python run_app.py
+
+sam-validate:
+	sam validate --template aws_infra/template.yaml --region ap-south-1 --lint
+
+clean:
+	rm -rf .pytest_cache __pycache__ backend/**/__pycache__ .aws-sam/build

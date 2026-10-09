@@ -3,17 +3,17 @@
 # 🌊 JalRakshak AI
 ### Autonomous Urban Climate & Water Emergency Decision Command Platform
 
-[![Multi-Agent Orchestrator](https://img.shields.io/badge/Orchestrator-Autonomous%205--Agent%20Pipeline-06B6D4?style=for-the-badge&logo=amazonaws)](backend/agents/strands_workflow.py)
+[![Multi-Agent Orchestrator](https://img.shields.io/badge/Orchestrator-AWS%20Strands%20Agents%20SDK-06B6D4?style=for-the-badge&logo=amazonaws)](backend/agents/strands_workflow.py)
 [![Bedrock Claude 3.5](https://img.shields.io/badge/Bedrock%20LLM-Claude%203.5%20Sonnet-6366F1?style=for-the-badge)](https://aws.amazon.com/bedrock/)
 [![NDMA Compliant](https://img.shields.io/badge/Statutory%20SOP-NDMA%20Urban%20Flooding%202024-10B981?style=for-the-badge)](https://ndma.gov.in)
-[![RBAC Enforced](https://img.shields.io/badge/Security-PoLP%20%26%20ICS--400%20RBAC-E11D48?style=for-the-badge)](https://aws.amazon.com/cognito/)
-[![Integration Tests](https://img.shields.io/badge/Integration%20Tests-9%2F9%20Passing-10B981?style=for-the-badge&logo=pytest)](tests/test_integration.py)
-[![Hybrid Architecture](https://img.shields.io/badge/Hybrid%20Architecture-Sub--50ms%20GIS%20%2B%20Bedrock%20RAG-8B5CF6?style=for-the-badge&logo=amazonaws)](backend/aws_simulator/aws_bridge.py)
+[![RBAC Enforced](https://img.shields.io/badge/Security-AWS%20Cedar%20(cedarpy)%20RBAC-E11D48?style=for-the-badge)](policies/incident_policy.cedar)
+[![Integration Tests](https://img.shields.io/badge/Tests-17%2F17%20Passing-10B981?style=for-the-badge&logo=pytest)](tests/)
+[![Hybrid Architecture](https://img.shields.io/badge/Hybrid%20Architecture-Real--Time%20GIS%20%2B%20Bedrock%20RAG-8B5CF6?style=for-the-badge&logo=amazonaws)](backend/aws_simulator/aws_bridge.py)
 [![Fault Tolerance](https://img.shields.io/badge/Fault%20Tolerance-NDMA%20Fallback%20Active-06B6D4?style=for-the-badge&logo=shield)](backend/agents/strands_workflow.py)
 [![AWS SAM IaC](https://img.shields.io/badge/AWS%20SAM-Template%20Validated-FF9900?style=for-the-badge&logo=amazon-aws)](aws_infra/template.yaml)
 
 > *"Most climate platforms tell authorities **WHAT** is happening.  
-> **JalRakshak AI tells them WHAT TO DO NEXT in under 600ms."***
+> **JalRakshak AI tells them WHAT TO DO NEXT with real-time statutory precision."***
 
 [ 🔴 Live Command Center ](http://localhost:8004) • [ 🎬 3-Min Video Tour ](#-the-3-minute-judge-demo-tour) • [ 🏗️ Architecture ](#-end-to-end-system-architecture) • [ 📜 Statutory NDMA ](#-statutory-sop-rag-integration) • [ 👥 Multi-Role RBAC ](#-role-based-access-control-rbac--polp)
 
@@ -30,7 +30,7 @@ TRADITIONAL STATUS QUO:
 🌧️ Red Alert: "Heavy rain in Kurla" ──(4 hours of phone tag)──> 🚜 Pump arrives too late (Hospital flooded)
 
 JALRAKSHAK AI AUTONOMOUS COMMAND:
-⚡ 118mm Rain Spike ──(528ms 5-Agent Collaborative Pipeline)──> 📋 Prioritized Action Plan ──(HITL Sign-Off)──> 🚜 Pre-emptive Dispatch
+⚡ 118mm Rain Spike ──(AWS Strands 5-Agent Collaborative Pipeline)──> 📋 Prioritized Action Plan ──(HITL Sign-Off)──> 🚜 Pre-emptive Dispatch
 ```
 
 > [!IMPORTANT]
@@ -43,7 +43,7 @@ JALRAKSHAK AI AUTONOMOUS COMMAND:
 ```mermaid
 flowchart TD
     subgraph INGESTION["1. INGESTION & EVENT STREAM"]
-        IoT["📡 248 IoT Sensors<br/>(Rain Gauges, Mithi River Level, SCADA)"]
+        IoT["📡 Synthetic Sensor Grid<br/>(Rain Gauges, Mithi River Level, SCADA)"]
         CitizenApp["📱 Citizen Mobile PWA<br/>(Live Geo-Camera + 1-Tap SOS)"]
         CV["👁️ Computer Vision Engine<br/>(Flood Depth & Obstacle Analysis)"]
         EventBridge["⚡ Amazon EventBridge<br/>(SensorThresholdExceeded Event Bus)"]
@@ -53,13 +53,13 @@ flowchart TD
         CV --> EventBridge
     end
 
-    subgraph STRANDS["2. AUTONOMOUS 5-AGENT COLLABORATIVE PIPELINE (Total Latency: ~528ms)"]
+    subgraph STRANDS["2. AUTONOMOUS 5-AGENT COLLABORATIVE PIPELINE (AWS Strands SDK)"]
         direction TB
-        A1["🤖 Agent 1: Risk Detection Agent<br/>Evaluates Sensor Deltas vs. Drainage Capacity (120ms)"]
-        A2["🤖 Agent 2: Impact Assessment Agent<br/>GIS Spatial Intersect (8,420 Pop, Bhabha Hospital) (145ms)"]
-        A3["🤖 Agent 3: Resource Allocation Agent<br/>Depot Proximity Match (Pump P-04, 18 min ETA) (95ms)"]
-        A4["🤖 Agent 4: Multilingual Comms Agent<br/>Synthesizes Localized Alerts (EN / HI / MR) (110ms)"]
-        A5["🤖 Agent 5: Coordinator Commander Agent<br/>Binds NDMA SOPs & Builds Tactical Directive Contract (58ms)"]
+        A1["🤖 Agent 1: Risk Detection Agent<br/>Evaluates Sensor Deltas vs. Drainage Capacity"]
+        A2["🤖 Agent 2: Impact Assessment Agent<br/>GIS Spatial Intersect (Exposed Population, Hospitals)"]
+        A3["🤖 Agent 3: Resource Allocation Agent<br/>Depot Proximity Match (Pumps, Teams, ETAs)"]
+        A4["🤖 Agent 4: Multilingual Comms Agent<br/>Synthesizes Localized Alerts (EN / HI / MR)"]
+        A5["🤖 Agent 5: Coordinator Commander Agent<br/>Binds NDMA SOPs & Builds Tactical Directive Contract"]
         
         EventBridge --> A1
         A1 -->|Risk Confirmed| A2
@@ -156,7 +156,7 @@ graph TD
     end
 
     subgraph PermsC["Hydrological Telemetry Console"]
-        RoleC --> PC1["✅ 248 IoT Live Sensor Stream Grid"]
+        RoleC --> PC1["✅ Synthetic Live Sensor Stream Grid (4 Wards)"]
         RoleC --> PC2["✅ Interactive Inundation Sliders & Tuning"]
         RoleC --> PC3["✅ SCADA -2.4 Bar Cavitation Alerts"]
         RoleC -.->|🔒 Restricted| RC1["❌ Read-Only Advisory Access to EOC"]
@@ -190,12 +190,23 @@ timeline
         Result : Bhabha Hospital basement flooded; ₹1.4 Crore direct economic loss
     section JalRakshak AI (Autonomous Closed-Loop Response)
         t = 0 min : 118 mm/hr Rain gauge spike detected
-        t = 528 ms : AWS Strands 5-Agent DAG executes Action Plan
+        t = Real-Time : AWS Strands 5-Agent DAG executes Action Plan
         t = 3 min : Incident Commander reviews Explainability Scorecard & Authorizes
         t = 18 min : High-Capacity Pump P-04 arrives on site (Pre-emptive Route)
         t = 60 min : Outfall D-17 cleared; flood waters recede completely
         Result : Hospital protected; ₹80+ Lakh municipal damage saved; Zero lives lost
 ```
+
+---
+
+## ⚡ Measured Multi-Agent Execution Benchmark
+
+Measured locally across 20 consecutive runs of the complete 5-agent AWS Strands workflow (`tests/benchmark_strands.py`):
+* **p50 Latency:** $3.38\text{ ms}$
+* **p95 Latency:** $7.60\text{ ms}$
+* **Min / Max:** $2.75\text{ ms}$ / $7.60\text{ ms}$
+* **Platform:** Windows 11 AMD64, Python 3.11, `ap-south-1` local runtime
+* **Fault Tolerance Fallback:** $<1\text{ ms}$ deterministic NDMA matrix
 
 ---
 
@@ -218,8 +229,18 @@ Civic disaster boards cannot trust an unexplained "black-box" AI score. JalRaksh
 | :--- | :--- | :--- | :--- |
 | **IAS Shrikar Patil** | **Incident Commander** | **Executive Command Center** | • 1-Click statutory action authorization<br/>• Live GIS City Map with asset geofences<br/>• 5-Agent Decision Trace drawer<br/>• Amazon SNS mass emergency alert queuing |
 | **Insp. Rajesh Yadav** | **Field Operations Lead** | **Tactical Field Terminal** | • Dispatched task manifest with ETAs<br/>• Geotagged ground photo proof verification<br/>• "Mark Arrived on Scene" state machine<br/>• Depot 17 inventory (Pumps, Boats, Sandbags) |
-| **Dr. Ananya Verma** | **Chief Hydrologist** | **SCADA Telemetry Console** | • **⚡ Custom Telemetry Injector** ($0\text{--}220\text{ mm/hr}$ dynamic simulation & tidal lock penalty)<br/>• 248 IoT live sensor telemetry grid<br/>• $-2.4\text{ Bar}$ pipe pressure cavitation alerts<br/>• Dynamic pump requirement scaling & live EventBridge dispatch<br/>• Sub-second pipeline execution latency metrics |
+| **Dr. Ananya Verma** | **Chief Hydrologist** | **SCADA Telemetry Console** | • **⚡ Custom Telemetry Injector** ($0\text{--}220\text{ mm/hr}$ dynamic simulation & tidal lock penalty)<br/>• Synthetic live sensor telemetry grid (4 wards)<br/>• $-2.4\text{ Bar}$ pipe pressure cavitation alerts<br/>• Dynamic pump requirement scaling & live EventBridge dispatch<br/>• Real-time pipeline execution latency metrics |
 | **Aarav Sharma** | **Citizen Resident** | **Citizen Emergency PWA** | • Mobile smartphone frame experience<br/>• 1-Tap 1077 SOS helpline calling<br/>• Photo flood reporting with AI depth ruler ($35\text{--}50\text{ cm}$)<br/>• Localized emergency advisories in English, Hindi & Marathi |
+
+---
+
+## 📸 Production UI Screenshots
+
+| Executive Incident Command Center | Hydrology & SCADA Telemetry Console |
+| :---: | :---: |
+| ![Incident Command Center](docs/screenshots/command_center.jpg) | ![SCADA Telemetry Console](docs/screenshots/scada_telemetry.jpg) |
+| **AWS Strands 5-Agent Collaborative Execution DAG** |
+| ![AWS Strands DAG](docs/screenshots/strands_dag.jpg) |
 
 ---
 
@@ -232,7 +253,7 @@ JalRakshak AI features a built-in, automated interactive tour for reviewers and 
 2. **Step 2 (0:30 - 1:00): The Explainability Moment**  
    Inspect the Explainability Scorecard to view the mathematical weights and statutory NDMA citations.
 3. **Step 3 (1:00 - 1:40): The Autonomous 5-Agent Pipeline**  
-   Open the bottom execution drawer to see all 5 agents collaborate with sub-600ms latency.
+   Open the bottom execution drawer to see all 5 agents collaborate with AWS Strands orchestration.
 4. **Step 4 (1:40 - 2:15): Human-in-the-Loop Sign-off**  
    Click `Approve & Execute All`. Confetti fires, assets are dispatched, and Amazon SNS broadcasts are queued.
 5. **Step 5 (2:15 - 2:45): Field Ops & SCADA Hand-off**  
@@ -288,10 +309,10 @@ In mission-critical civic disaster management, **external AI API outages cannot 
 4. **Audit & Trace Notification:** The Incident Record flags `fault_tolerance.graceful_degradation_active = true` and alerts the commander that deterministic statutory fallback rules are actively governing the response.
 
 ```
-Amazon Bedrock Online ──(528ms)──> Bedrock Claude 3.5 Multi-Agent Synthesis
+Amazon Bedrock Online ──(AWS Strands DAG)──> Bedrock Claude 3.5 Multi-Agent Synthesis
         │ (Throttling / Timeout)
         ▼
-Statutory NDMA Matrix ──(<50ms)──> Zero-Downtime Deterministic Action Directives
+Statutory NDMA Matrix ──(Instant Fallback)──> Zero-Downtime Deterministic Action Directives
 ```
 
 ---
@@ -366,7 +387,7 @@ Open **[http://localhost:6173](http://localhost:6173)**.
 ## 🏆 Enterprise Platform Capabilities Checklist
 
 - [x] **Predictive → Context-Aware → Actionable → Explainable → Human-Controlled**
-- [x] **Autonomous 5-Agent Orchestrator:** Collaborative state graph pipeline (<600ms total latency)
+- [x] **Autonomous 5-Agent Orchestrator:** Collaborative state graph pipeline (AWS Strands Agents SDK)
 - [x] **Statutory SOP RAG:** Grounded in NDMA 2024 Guidelines, NHAP, and CPHEEO manuals
 - [x] **Multimodal Computer Vision:** Automated flood depth ruler and road passability estimation
 - [x] **Multilingual Citizen Alerts:** Localized SMS broadcasts in English, Hindi, and Marathi

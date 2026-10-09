@@ -67,3 +67,8 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# SAM build artifacts & testing caches
+.aws-sam/
+scratch/
+.pytest_cache/

@@ -81,7 +81,7 @@ EMERGENCY_PROTOCOLS = [
         "statutory_reference": "National Disaster Management Framework, Cloudburst Standard Operating Procedure, Art. 12"
     },
     {
-        "id": "SOP-HEAT-201",
+        "id": "SOP-HEAT-04",
         "category": "heatwave",
         "title": "Severe Heatwave & High Wet-Bulb Emergency Response Protocol",
         "trigger_conditions": {

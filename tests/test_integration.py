@@ -387,3 +387,36 @@ def test_mathematical_confidence_score_bounds():
     assert 68.5 <= c_extreme <= 98.8
     assert c_extreme > c_low
 
+
+def test_live_aws_bedrock_invocation():
+    """
+    Test 10 (Live Cloud Gate): Gated on AWS_EXECUTION_MODE=LIVE.
+    Invokes Amazon Bedrock Runtime in ap-south-1 when real credentials are present.
+    """
+    import os
+    import boto3
+    if os.environ.get("AWS_EXECUTION_MODE") != "LIVE":
+        pytest.skip("Skipping live Bedrock test: AWS_EXECUTION_MODE != LIVE (skips safely when offline)")
+
+    client = boto3.client("bedrock-runtime", region_name=os.environ.get("AWS_REGION", "ap-south-1"))
+    response = client.converse(
+        modelId="anthropic.claude-3-5-sonnet-20241022-v2:0",
+        messages=[{"role": "user", "content": [{"text": "JalRakshak ping"}]}]
+    )
+    assert response["ResponseMetadata"]["HTTPStatusCode"] == 200
+
+
+def test_live_aws_dynamodb_persistence():
+    """
+    Test 11 (Live Cloud Gate): Gated on AWS_EXECUTION_MODE=LIVE.
+    Verifies live DynamoDB table connectivity in ap-south-1 when real credentials are present.
+    """
+    import os
+    import boto3
+    if os.environ.get("AWS_EXECUTION_MODE") != "LIVE":
+        pytest.skip("Skipping live DynamoDB test: AWS_EXECUTION_MODE != LIVE (skips safely when offline)")
+
+    client = boto3.client("dynamodb", region_name=os.environ.get("AWS_REGION", "ap-south-1"))
+    response = client.describe_table(TableName="JalRakshak-IncidentsTable")
+    assert response["Table"]["TableStatus"] in ["ACTIVE", "UPDATING"]
+

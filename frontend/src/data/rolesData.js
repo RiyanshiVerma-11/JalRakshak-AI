@@ -25,8 +25,9 @@ export const PERSONAS = [
     badgeColor: 'bg-rose-950/80 text-rose-300 border-rose-700',
     accentColor: 'from-rose-600 to-amber-600',
     statutoryAuthority: 'Section 4.3, NDMA Urban Flooding Protocols 2024 & DMA 2005 Sec 30',
-    iamRoleArn: 'arn:aws:iam::123456789012:role/JalRakshak-IncidentCommanderRole',
-    cognitoGroup: 'ap-south-1_JalRakshak_Commanders',
+    iamRoleArn: null,
+    cedarPrincipal: 'JalRakshak::Role::"incident_commander"',
+    cognitoGroup: 'Commanders',
     description: 'Supreme human-in-the-loop executive with full statutory sign-off authority for multi-crore asset dispatch and citywide emergency alerts.',
     permissions: {
       canApproveActions: true,
@@ -60,8 +61,9 @@ export const PERSONAS = [
     badgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-700',
     accentColor: 'from-emerald-600 to-teal-600',
     statutoryAuthority: 'NDMA Standard Operating Procedure for Ground First Responders',
-    iamRoleArn: 'arn:aws:iam::123456789012:role/JalRakshak-FieldResponderRole',
-    cognitoGroup: 'ap-south-1_JalRakshak_FieldResponders',
+    iamRoleArn: null,
+    cedarPrincipal: 'JalRakshak::Role::"field_responder"',
+    cognitoGroup: 'FieldResponders',
     description: 'Ground tactical operative responsible for physical execution of dispatched directives, pump deployment, and geotagged evidence reporting.',
     permissions: {
       canApproveActions: false, // PoLP: Ground troops execute, commander authorizes
@@ -99,8 +101,9 @@ export const PERSONAS = [
     badgeColor: 'bg-cyan-950/80 text-cyan-300 border-cyan-700',
     accentColor: 'from-cyan-600 to-blue-600',
     statutoryAuthority: 'Central Water Commission (CWC) Technical Advisory Protocol',
-    iamRoleArn: 'arn:aws:iam::123456789012:role/JalRakshak-SCADAAnalystRole',
-    cognitoGroup: 'ap-south-1_JalRakshak_TechnicalAnalysts',
+    iamRoleArn: null,
+    cedarPrincipal: 'JalRakshak::Role::"scada_analyst"',
+    cognitoGroup: 'TechnicalAnalysts',
     description: 'Data scientist and telemetry specialist monitoring sensor grids, pipeline SCADA pressure drops, and Strands 5-Agent execution DAGs.',
     permissions: {
       canApproveActions: false, // Technical advisor, not executive commander
@@ -138,8 +141,9 @@ export const PERSONAS = [
     badgeColor: 'bg-blue-950/80 text-blue-300 border-blue-700',
     accentColor: 'from-blue-600 to-indigo-600',
     statutoryAuthority: 'Public Grievance Redressal & Right to Safety',
-    iamRoleArn: 'arn:aws:iam::123456789012:role/JalRakshak-PublicCitizenRole',
-    cognitoGroup: 'ap-south-1_JalRakshak_PublicUsers',
+    iamRoleArn: null,
+    cedarPrincipal: 'JalRakshak::Role::"citizen"',
+    cognitoGroup: 'PublicUsers',
     description: 'Community resident in vulnerable ward with access to multimodal photo emergency reporting, live localized advisories, and drinking water tankers.',
     permissions: {
       canApproveActions: false,

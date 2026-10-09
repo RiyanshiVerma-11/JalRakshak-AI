@@ -1,11 +1,9 @@
-"""
-Multimodal Computer Vision Analysis for Citizen Field Photos.
-Simulates Amazon Rekognition / Bedrock Claude Vision inference
-to classify waterlogging depth, pipeline bursts, debris, and accessibility hazards.
-Supports real image pixel analysis via Pillow (PIL).
-"""
+import os
 import io
+import logging
 from typing import Dict, Any, Optional
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
 
 try:
     from PIL import Image, ImageStat
@@ -13,42 +11,68 @@ except ImportError:
     Image = None
     ImageStat = None
 
+logger = logging.getLogger("jalrakshak.vision")
+
 class CitizenImageAnalyzer:
     def __init__(self):
-        self.model_id = "arn:aws:bedrock:ap-south-1:foundation-model/anthropic.claude-3-5-sonnet"
+        self.region = os.environ.get("AWS_REGION", "ap-south-1")
+        self.rekognition_client = None
+        try:
+            self.rekognition_client = boto3.client("rekognition", region_name=self.region)
+        except Exception:
+            self.rekognition_client = None
 
     def analyze_image(self, category: str, description: str, image_bytes_len: int = 0, image_bytes: bytes = b"") -> Dict[str, Any]:
         """
         Extracts structured environmental hazard indicators from real uploaded image bytes and user notes.
+        Integrates Amazon Rekognition detect_labels with graceful fallback to PIL pixel statistics.
         """
         desc_lower = description.lower()
         image_metadata = {"has_image": False}
 
         # Analyze real image pixels if image_bytes are present
-        if image_bytes and Image:
-            try:
-                img = Image.open(io.BytesIO(image_bytes))
-                width, height = img.size
-                image_metadata = {
-                    "has_image": True,
-                    "width": width,
-                    "height": height,
-                    "format": img.format or "JPEG",
-                    "aspect_ratio": round(width / max(1, height), 2)
-                }
+        if image_bytes:
+            # 1. Attempt Amazon Rekognition detect_labels
+            if self.rekognition_client:
+                try:
+                    rek_resp = self.rekognition_client.detect_labels(
+                        Image={"Bytes": image_bytes},
+                        MaxLabels=8,
+                        MinConfidence=60.0
+                    )
+                    detected_labels = [lbl.get("Name") for lbl in rek_resp.get("Labels", [])]
+                    if detected_labels:
+                        image_metadata["rekognition_labels"] = detected_labels
+                        image_metadata["provider"] = "Amazon Rekognition"
+                except (BotoCoreError, ClientError, Exception) as err:
+                    logger.debug(f"Amazon Rekognition offline, using PIL: {err}")
+                    image_metadata["rekognition_note"] = "Local PIL engine active"
 
-                # Quick pixel statistical analysis
-                rgb_img = img.convert("RGB")
-                stat = ImageStat.Stat(rgb_img)
-                avg_r, avg_g, avg_b = stat.mean[:3]
-                image_metadata["avg_rgb"] = [round(avg_r, 1), round(avg_g, 1), round(avg_b, 1)]
-                image_metadata["brightness"] = round((avg_r + avg_g + avg_b) / 3, 1)
+            # 2. Local PIL statistical validation
+            if Image:
+                try:
+                    img = Image.open(io.BytesIO(image_bytes))
+                    width, height = img.size
+                    image_metadata.update({
+                        "has_image": True,
+                        "width": width,
+                        "height": height,
+                        "format": img.format or "JPEG",
+                        "aspect_ratio": round(width / max(1, height), 2)
+                    })
 
-                # Heuristic for water / dark puddle presence (gray-brown-blue tint)
-                is_dark_or_turbid = image_metadata["brightness"] < 130
-                image_metadata["turbidity_detected"] = is_dark_or_turbid
-            except Exception as e:
-                image_metadata["error"] = str(e)
+                    # Quick pixel statistical analysis
+                    rgb_img = img.convert("RGB")
+                    stat = ImageStat.Stat(rgb_img)
+                    avg_r, avg_g, avg_b = stat.mean[:3]
+                    image_metadata["avg_rgb"] = [round(avg_r, 1), round(avg_g, 1), round(avg_b, 1)]
+                    image_metadata["brightness"] = round((avg_r + avg_g + avg_b) / 3, 1)
+
+                    # Heuristic for water / dark puddle presence
+                    is_dark_or_turbid = image_metadata["brightness"] < 130
+                    image_metadata["turbidity_detected"] = is_dark_or_turbid
+                except Exception as e:
+                    image_metadata["error"] = str(e)
 
         # Category-specific inference
         if category == "waterlogging" or "water" in desc_lower or "flood" in desc_lower:

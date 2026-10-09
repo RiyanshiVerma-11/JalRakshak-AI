@@ -94,7 +94,7 @@ export default function SCADAAnalystDashboard({
               </span>
               <span className="flex items-center gap-1 rounded-full bg-cyan-500/20 px-2 py-0.5 text-[9px] font-bold text-cyan-300 border border-cyan-500/40">
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-                248 IoT Sensors Stream Live
+                Synthetic Sensor Grid (4 Wards) Stream Live
               </span>
             </div>
             <h1 className="text-lg sm:text-xl font-black text-white">

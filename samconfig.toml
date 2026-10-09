@@ -1,0 +1,19 @@
+# AWS SAM Configuration File for JalRakshak AI Serverless Infrastructure
+version = 0.1
+
+[default]
+[default.global.parameters]
+stack_name = "jalrakshak-ai-serverless"
+region = "ap-south-1"
+
+[default.build.parameters]
+template_file = "aws_infra/template.yaml"
+base_dir = "."
+cached = false
+
+[default.validate.parameters]
+template_file = "aws_infra/template.yaml"
+lint = true
+
+[default.local_invoke.parameters]
+template_file = "aws_infra/template.yaml"

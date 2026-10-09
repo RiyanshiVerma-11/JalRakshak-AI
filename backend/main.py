@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Header, Depe
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+import os
 import uuid
 import copy
 import base64
@@ -18,6 +19,11 @@ from .vision.image_analyzer import image_analyzer
 from .aws_simulator.aws_bridge import aws_bridge
 from .rag.rag_engine import rag_engine
 from .copilot import copilot
+from .auth.cedar_auth import (
+    create_access_token,
+    verify_jwt_token,
+    evaluate_cedar_policy
+)
 
 app = FastAPI(
     title="JalRakshak AI - Climate Emergency Response Platform",
@@ -61,6 +67,11 @@ class CopilotQuery(BaseModel):
     role: Optional[str] = "incident_commander"
     user_name: Optional[str] = None
 
+class TokenRequest(BaseModel):
+    role: str = "incident_commander"
+    officer_name: Optional[str] = "IAS Shrikar Patil"
+    officer_id: Optional[str] = "OFFICER_PATIL_EOC"
+
 
 def verify_incident_commander_role(
     x_officer_role: Optional[str] = Header(None, alias="X-Officer-Role"),
@@ -70,32 +81,75 @@ def verify_incident_commander_role(
 ) -> Dict[str, Any]:
     """
     Statutory RBAC & Authentication Gate (NDMA Section 4.3 & ICS-400 Authority).
-    Validates identity and authorization against Incident Commander statutory permissions.
-    Extracts claims from Amazon Cognito JWT Bearer token or explicit X-Officer headers.
+    Validates identity and authorization against Incident Commander statutory permissions using AWS Cedar.
+    Extracts claims from cryptographically verified Bearer JWT. Rejects dummy string tokens with HTTP 401.
     """
-    role = x_officer_role
-    officer_id = x_officer_id
-    officer_name = x_officer_name
+    role = None
+    officer_id = None
+    officer_name = None
 
-    # Check Authorization Bearer Token if present (Cognito token / claims validation)
-    if authorization and authorization.startswith("Bearer "):
+    if authorization:
+        if not authorization.startswith("Bearer "):
+            raise HTTPException(
+                status_code=401,
+                detail="Malformed Authorization header: must start with 'Bearer '."
+            )
         token = authorization[7:].strip()
-        if "incident_commander" in token:
-            role = role or "incident_commander"
-            officer_id = officer_id or "OFFICER_PATIL_EOC"
-            officer_name = officer_name or "IAS Shrikar Patil"
-        elif "citizen" in token or "unauthorized" in token:
-            role = "citizen"
+        claims = verify_jwt_token(token)
+        role = claims.get("role")
+        officer_id = claims.get("sub", "OFFICER_PATIL_EOC")
+        officer_name = claims.get("name", "IAS Shrikar Patil")
+    elif x_officer_role:
+        role = x_officer_role
+        officer_id = x_officer_id or "OFFICER_PATIL_EOC"
+        officer_name = x_officer_name or "IAS Shrikar Patil"
+    else:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required: Provide a valid Bearer token from /api/auth/token."
+        )
+
+    # AWS Cedar Policy Evaluation
+    if not evaluate_cedar_policy(role, "approve_action"):
+        db.log_audit(
+            officer=f"{officer_name} ({role})",
+            event="ACCESS_DENIED_CEDAR_POLICY_VIOLATION",
+            details=f"Statutory RBAC Violation: AWS Cedar policy denied 'approve_action' for role '{role}' under NDMA Sec 4.3."
+        )
+        raise HTTPException(
+            status_code=403,
+            detail=f"Authorization Denied: AWS Cedar policy rejected role '{role}' for 'approve_action'. Only Incident Commander can authorize tactical actions under NDMA Section 4.3 & DMA 2005."
+        )
 
     return {
         "officer_role": role,
         "officer_id": officer_id,
         "officer_name": officer_name,
-        "authenticated": bool(role)
+        "authenticated": True
     }
 
 
 # API Endpoints
+@app.post("/api/auth/token")
+def issue_auth_token(req: TokenRequest):
+    """
+    Issues a cryptographically signed HMAC-SHA256 JWT containing identity and role claims.
+    Compatible with Amazon Cognito tokens and verified against AWS Cedar statutory policies.
+    """
+    token = create_access_token(
+        officer_id=req.officer_id or "OFFICER_PATIL_EOC",
+        officer_name=req.officer_name or "IAS Shrikar Patil",
+        role=req.role
+    )
+    return {
+        "access_token": token,
+        "token_type": "Bearer",
+        "role": req.role,
+        "officer_name": req.officer_name,
+        "officer_id": req.officer_id,
+        "expires_in": 86400
+    }
+
 @app.get("/api/health")
 def read_health():
     return {
@@ -104,15 +158,61 @@ def read_health():
         "status": "OPERATIONAL",
         "aws_region": aws_bridge.region,
         "agents_online": 5,
-        "orchestrator": "AWS Strands Agents SDK"
+        "orchestrator": "AWS Strands Agents SDK",
+        "authorization_engine": "AWS Cedar (cedarpy)"
     }
 
 @app.get("/api/incidents")
-def get_incidents():
+def get_incidents(
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+    x_officer_role: Optional[str] = Header(None, alias="X-Officer-Role"),
+):
+    """
+    Returns active incidents, protected by AWS Cedar statutory authorization.
+    Rejects malformed tokens with HTTP 401 and unauthorized roles with HTTP 403.
+    """
+    if authorization:
+        if not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Malformed Authorization header: must start with 'Bearer '.")
+        token = authorization[7:].strip()
+        claims = verify_jwt_token(token)
+        role = claims.get("role", "citizen")
+    elif x_officer_role:
+        role = x_officer_role
+    else:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required: Provide a valid Bearer token from /api/auth/token."
+        )
+
+    if not evaluate_cedar_policy(role, "read_incidents"):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Authorization Denied: AWS Cedar policy denied 'read_incidents' for role '{role}'."
+        )
+
     return db.get_incidents()
 
 @app.get("/api/incidents/{incident_id}")
-def get_incident_detail(incident_id: str):
+def get_incident_detail(
+    incident_id: str,
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+    x_officer_role: Optional[str] = Header(None, alias="X-Officer-Role"),
+):
+    if authorization:
+        if not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Malformed Authorization header: must start with 'Bearer '.")
+        token = authorization[7:].strip()
+        claims = verify_jwt_token(token)
+        role = claims.get("role", "citizen")
+    elif x_officer_role:
+        role = x_officer_role
+    else:
+        raise HTTPException(status_code=401, detail="Authentication required: Provide a valid Bearer token from /api/auth/token.")
+
+    if not evaluate_cedar_policy(role, "read_incidents", incident_id):
+        raise HTTPException(status_code=403, detail=f"Authorization Denied: AWS Cedar policy denied 'read_incidents' for role '{role}'.")
+
     inc = db.get_incident(incident_id)
     if not inc:
         raise HTTPException(status_code=404, detail="Incident not found")
@@ -358,39 +458,58 @@ def modify_action(
 @app.get("/api/auth/roles")
 def get_auth_roles():
     """
-    Returns Amazon Cognito User Pool configuration and IAM Principle of Least Privilege role mappings.
+    Returns AWS authentication configuration and statutory Cedar RBAC role mappings.
+    Returns real environment variables or null when not configured.
     """
+    cognito_user_pool_id = os.environ.get("COGNITO_USER_POOL_ID")
+    cognito_client_id = os.environ.get("COGNITO_CLIENT_ID")
     return {
-        "cognito_user_pool_id": "ap-south-1_JalRakshakPool",
-        "cognito_client_id": "6a992bc4439f01e7",
+        "cognito_user_pool_id": cognito_user_pool_id,
+        "cognito_client_id": cognito_client_id,
+        "not_configured": cognito_user_pool_id is None,
+        "authorization_engine": "AWS Cedar (cedarpy)",
+        "policy_document": "policies/incident_policy.cedar",
         "statutory_act": "Disaster Management Act 2005 (Sections 30 & 34)",
         "roles": [
             {
                 "role": "incident_commander",
                 "title": "Municipal Incident Commander",
                 "ics_tier": "Tier 1 (Apex Command)",
-                "iam_role_arn": "arn:aws:iam::123456789012:role/JalRakshak-IncidentCommanderRole",
+                "iam_role_arn": os.environ.get("IAM_ROLE_INCIDENT_COMMANDER"),
+                "not_configured": os.environ.get("IAM_ROLE_INCIDENT_COMMANDER") is None,
+                "cedar_principal": 'JalRakshak::Role::"incident_commander"',
+                "cedar_permitted_actions": ["read_incidents", "approve_action", "dispatch_resource", "broadcast_sns", "simulate_scenario"],
                 "permissions": ["DISPATCH_AUTHORITY", "BROADCAST_SNS", "OVERRIDE_SIMULATION"]
             },
             {
                 "role": "field_responder",
                 "title": "Tactical Field Operations Lead",
                 "ics_tier": "Tier 3 (Tactical Response)",
-                "iam_role_arn": "arn:aws:iam::123456789012:role/JalRakshak-FieldResponderRole",
+                "iam_role_arn": os.environ.get("IAM_ROLE_FIELD_RESPONDER"),
+                "not_configured": os.environ.get("IAM_ROLE_FIELD_RESPONDER") is None,
+                "cedar_principal": 'JalRakshak::Role::"field_responder"',
+                "cedar_permitted_actions": ["read_incidents", "update_status"],
                 "permissions": ["UPDATE_ASSET_STATUS", "UPLOAD_FIELD_PROOF", "READ_TACTICAL_MANIFEST"]
             },
             {
                 "role": "scada_analyst",
                 "title": "Chief Hydrologist & SCADA Analyst",
                 "ics_tier": "Tier 2 (Intelligence & Planning)",
-                "iam_role_arn": "arn:aws:iam::123456789012:role/JalRakshak-SCADAAnalystRole",
+                "iam_role_arn": os.environ.get("IAM_ROLE_SCADA_ANALYST"),
+                "not_configured": os.environ.get("IAM_ROLE_SCADA_ANALYST") is None,
+                "cedar_principal": 'JalRakshak::Role::"scada_analyst"',
+                "cedar_permitted_actions": ["read_incidents", "read_telemetry", "inspect_sensors"],
                 "permissions": ["READ_SCADA_TELEMETRY", "TUNE_SIMULATION", "INSPECT_STRANDS_DAG"]
             },
             {
                 "role": "citizen",
                 "title": "Public Resident",
                 "ics_tier": "Public Stakeholder",
-                "iam_role_arn": "arn:aws:iam::123456789012:role/JalRakshak-PublicCitizenRole",
+                "iam_role_arn": os.environ.get("IAM_ROLE_PUBLIC_CITIZEN"),
+                "not_configured": os.environ.get("IAM_ROLE_PUBLIC_CITIZEN") is None,
+                "cedar_principal": 'JalRakshak::Role::"citizen"',
+                "cedar_permitted_actions": ["submit_report", "read_advisories"],
+                "cedar_forbidden_actions": ["approve_action", "dispatch_resource", "broadcast_sns"],
                 "permissions": ["SUBMIT_VISION_REPORT", "VIEW_BROADCASTS", "TRACK_WATER_TANKERS"]
             }
         ]

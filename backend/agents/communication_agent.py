@@ -102,7 +102,7 @@ class CommunicationAgent:
                 output_tokens = resp_body.get("usage", {}).get("output_tokens", 168)
                 
                 print(f"\033[92m[AMAZON BEDROCK LIVE]\033[0m Region: {self.region} | Model: {self.model_id}")
-                print(f"  └── Latency: {latency_ms}ms | Input Tokens: {input_tokens} | Output Tokens: {output_tokens}")
+                print(f"  |-- Latency: {latency_ms}ms | Input Tokens: {input_tokens} | Output Tokens: {output_tokens}")
                 
                 return {
                     "english": parsed.get("english"),
@@ -158,20 +158,16 @@ class CommunicationAgent:
             mr = f"पाणी टंचाई निवारण: {ward_name} मध्ये महापालिकेचे पाण्याचे टँकर पाठवण्यात आले आहेत. टँकर माहितीसाठी १९१६ वर संपर्क साधा."
 
         latency_ms = int((time.time() - t_start) * 1000)
-        tokens_est = 278
-
-        print(f"\033[96m[AMAZON BEDROCK ENGINE]\033[0m Region: {self.region} | Model: {self.model_id}")
-        print(f"  └── Status: 200 OK | Round-Trip Latency: {latency_ms}ms | Synthesized Tokens: {tokens_est} | Target: [en, hi, mr]")
+        logger.info(f"[NDMA ADVISORY SYNTHESIS] Region: {self.region} | Mode: DETERMINISTIC_TEMPLATE | Latency: {latency_ms}ms")
 
         return {
             "english": en,
             "hindi": hi,
             "marathi": mr,
             "_telemetry": {
-                "mode": "BEDROCK_MANAGED_SYNTHESIS",
-                "model": "anthropic.claude-3-5-sonnet",
-                "latency_ms": latency_ms,
-                "tokens": tokens_est
+                "mode": "DETERMINISTIC_STATUTORY_SYNTHESIS",
+                "model": "deterministic-ndma-templates",
+                "latency_ms": latency_ms
             }
         }
 

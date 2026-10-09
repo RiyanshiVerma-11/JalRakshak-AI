@@ -44,9 +44,14 @@ export default function JudgeDemoTour({
       description: 'When intense rain starts, municipal dashboards flood controllers with raw numbers. JalRakshak converts live IoT rainfall spikes and citizen reports into an automated, prioritized operational response.',
       badgeColor: 'border-rose-200 bg-rose-50 text-rose-700',
       actionLabel: 'Trigger Live Cloudburst (118mm/hr)',
+      secondaryActionLabel: '🔥 48.6°C Wet-Bulb Heatwave (SOP-HEAT-04)',
       onAction: async () => {
         setActiveTab('command');
         await onSimulateScenario('flood');
+      },
+      onSecondaryAction: async () => {
+        setActiveTab('command');
+        await onSimulateScenario('heatwave');
       }
     },
     {
@@ -66,7 +71,7 @@ export default function JudgeDemoTour({
       step: 3,
       time: '1:00 - 1:40',
       tag: 'AWS STRANDS AGENTS SDK',
-      title: '5-Agent Collaborative Execution DAG (532ms)',
+      title: '5-Agent Collaborative Execution DAG (AWS Strands SDK)',
       quote: '"Autonomous Bedrock Claude 3.5 agents connected in a deterministic state graph."',
       description: '1. Risk Agent evaluates sensor deltas -> 2. Impact Agent intersects GIS demographics (8,420 exposed) -> 3. Resource Agent matches nearest high-capacity pump (P-04, 18 min ETA) -> 4. Communication Agent drafts alerts in Hindi/Marathi -> 5. Coordinator Agent binds NDMA SOP.',
       badgeColor: 'border-indigo-200 bg-indigo-50 text-indigo-700',
@@ -110,7 +115,7 @@ export default function JudgeDemoTour({
       tag: 'THE GRAND FINALE',
       title: 'One-Click HITL Dispatch & Multilingual SMS Broadcast',
       quote: '"Democratizing climate emergency response for 1.4 Billion citizens."',
-      description: 'The Municipal Commissioner clicks [AUTHORIZE EMERGENCY PLAN]. Instantly: P-04 Dewatering Pump is routed, Dadar power substation is isolated, and 18,450 geo-targeted SMS advisories fire in English, Hindi, and Marathi.',
+      description: 'The Municipal Commissioner clicks [AUTHORIZE EMERGENCY PLAN]. Instantly: P-04 Dewatering Pump is routed, Dadar power substation is isolated, and geo-targeted SMS advisories fire in English, Hindi, and Marathi.',
       badgeColor: 'border-amber-200 bg-amber-50 text-amber-800',
       actionLabel: 'Trigger Commissioner Authorization',
       onAction: () => {
@@ -253,6 +258,14 @@ export default function JudgeDemoTour({
             >
               Run Action
             </button>
+            {current.secondaryActionLabel && (
+              <button
+                onClick={current.onSecondaryAction}
+                className="px-2.5 py-1 rounded-lg bg-amber-600 text-white text-xs font-bold shadow-xs hover:bg-amber-700"
+              >
+                Heatwave
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -365,7 +378,7 @@ export default function JudgeDemoTour({
 
           {/* Interactive Trigger Button for This Step */}
           {current.actionLabel && (
-            <div className="pt-2 flex items-center gap-3">
+            <div className="pt-2 flex flex-wrap items-center gap-3">
               <button
                 onClick={current.onAction}
                 className="flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-xs font-black text-white shadow-md active:scale-95 transition-all"
@@ -373,6 +386,15 @@ export default function JudgeDemoTour({
                 <Sparkles className="h-4 w-4 text-white" />
                 <span>{current.actionLabel}</span>
               </button>
+              {current.secondaryActionLabel && (
+                <button
+                  onClick={current.onSecondaryAction}
+                  className="flex items-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-2.5 text-xs font-black text-white shadow-md active:scale-95 transition-all"
+                >
+                  <Sparkles className="h-4 w-4 text-white" />
+                  <span>{current.secondaryActionLabel}</span>
+                </button>
+              )}
               <button
                 onClick={() => {
                   current.onAction();

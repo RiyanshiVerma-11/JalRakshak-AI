@@ -101,8 +101,9 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
       badgeColor: isOfficer ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700' : 'bg-blue-950/80 text-blue-300 border-blue-700',
       accentColor: isOfficer ? 'from-emerald-600 to-teal-600' : 'from-blue-600 to-indigo-600',
       statutoryAuthority: isOfficer ? 'Municipal Ground Response Clearance' : 'Public Safety & Emergency Grievance',
-      iamRoleArn: isOfficer ? 'arn:aws:iam::123456789012:role/JalRakshak-FieldResponderRole' : 'arn:aws:iam::123456789012:role/JalRakshak-PublicCitizenRole',
-      cognitoGroup: isOfficer ? 'ap-south-1_JalRakshak_FieldResponders' : 'ap-south-1_JalRakshak_PublicUsers',
+      iamRoleArn: null,
+      cedarPrincipal: isOfficer ? 'JalRakshak::Role::"field_responder"' : 'JalRakshak::Role::"citizen"',
+      cognitoGroup: isOfficer ? 'FieldResponders' : 'PublicUsers',
       description: isOfficer 
         ? `Newly provisioned field responder for ${regDepartment}.`
         : `Verified registered resident of ${regWard}.`,
@@ -274,7 +275,7 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
             </div>
 
             <div className="text-[11px] font-mono text-slate-500 hidden md:block">
-              Pool: <strong className="text-slate-700">ap-south-1_JalRakshakPool</strong>
+              Auth: <strong className="text-slate-700">AWS Cedar Engine (cedarpy)</strong>
             </div>
           </div>
 
@@ -402,8 +403,8 @@ export default function LoginPage({ onLogin, activeUser, onBackToLanding }) {
                   <div className="inline-flex p-3 rounded-2xl bg-blue-100 text-blue-700 mb-2 border border-blue-200 shadow-xs">
                     <Lock className="h-6 w-6" />
                   </div>
-                  <h3 className="text-base font-extrabold text-slate-900">Amazon Cognito User Pool SSO</h3>
-                  <p className="text-xs text-slate-500 font-mono">Pool ID: ap-south-1_JalRakshakPool</p>
+                  <h3 className="text-base font-extrabold text-slate-900">AWS Cedar Statutory RBAC & SSO</h3>
+                  <p className="text-xs text-slate-500 font-mono">Policy: policies/incident_policy.cedar</p>
 
                   {/* 1-Click Fast Fill Preset Chips */}
                   <div className="mt-3 pt-3 border-t border-slate-200">
