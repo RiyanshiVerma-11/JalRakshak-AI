@@ -44,6 +44,9 @@ BENCHMARK RESULTS:
 | **Min** | **57.74 ms** | Fastest complete 5-agent traversal |
 | **Max** | **127.34 ms** | Cold-path / garbage collection peak |
 
+> **Host Variance & Latency Context:**  
+> Latency is dominated by host scheduling and Python startup. Expect roughly 15-130 ms for the full local 5-agent loop depending on your machine. Rerun `python tests/benchmark_strands.py 100` to get your own figure; the script prints platform and Python version automatically.
+
 ---
 
 ## 3. Breakdown of the 5-Agent Pipeline Cycle

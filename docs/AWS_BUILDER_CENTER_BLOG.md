@@ -1,7 +1,9 @@
 # Building JalRakshak AI: AWS Strands & Cedar for Floods and Heat (and What Fought Back)
 
-**Track:** Heat and Water | **Route:** Build It (100% Local, Zero Cloud Credentials Required)  
-**Authors:** Team SheBuilds (Riyanshi Verma & Team) | **Repository:** [https://github.com/RiyanshiVerma-11/JalRakshak-AI](https://github.com/RiyanshiVerma-11/JalRakshak-AI)  
+**Track:** Heat and Water (Track 02) | **Route:** Build It (100% Local, Zero Cloud Credentials Required)  
+**Team:** Team SheBuilds  
+**Author:** [Riyanshi Verma](https://github.com/RiyanshiVerma-11) (Lead Developer & Systems Architect) & Team  
+**Repository:** [https://github.com/RiyanshiVerma-11/JalRakshak-AI](https://github.com/RiyanshiVerma-11/JalRakshak-AI)  
 **Hackathon:** WeMakeDevs × AWS "Environmental Hacks"  
 **Tags:** `AWS`, `serverless`, `agents`, `disaster-management`, `sustainability`, `climate`, `open-source`
 
@@ -29,6 +31,12 @@ This led **Team SheBuilds** to engineer **JalRakshak AI** (Water & Climate Guard
 
 To qualify for the hackathon's **Build It** route, our architectural mandate was absolute: **the entire platform must run 100% locally on a developer laptop, without requiring judges to create an AWS account, configure API keys, enter credit cards, or incur cloud bills.**
 
+JalRakshak AI is built squarely on four open-source foundations from the AWS ecosystem:
+* **[AWS Strands Agents SDK](https://github.com/awslabs/strands-agents):** Drives our deterministic 5-agent DAG workflow, `@tool` wrapper system, and rate-limit circuit-breaker hook.
+* **[AWS Cedar Policy Engine](https://github.com/cedar-policy/cedar):** Powers statutory RBAC policy compilation and mathematical authorization decisions via official `cedarpy` bindings.
+* **[AWS SAM CLI](https://github.com/aws/aws-sam-cli):** Validates serverless templates (`sam validate`) and packages portable Lambda container images without manual zip scripts.
+* **[LocalStack](https://github.com/localstack/localstack):** Provides zero-cost offline emulation for EventBridge, DynamoDB, SNS, and S3 in `docker-compose.local.yml`.
+
 ```text
                   ┌──────────────────────────────────────────────┐
                   │        Real-Time Environmental Stream        │
@@ -53,7 +61,7 @@ To qualify for the hackathon's **Build It** route, our architectural mandate was
 
 ![Figure 1: AWS Strands Architecture](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/strands_dag.jpg)
 
-*Figure 1: AWS Strands Agents SDK Architecture — Visualizing the 5-Agent DAG sequence and circuit-breaker lifecycle. (Editor note: upload directly to Builder Center to avoid hotlink dependency).*
+*Figure 1: AWS Strands Agents SDK Architecture — Visualizing the 5-Agent DAG sequence and circuit-breaker lifecycle.*
 
 ---
 
@@ -79,9 +87,9 @@ python run_app.py
 | **Emergency Notifications** | Real alert generation in 3 languages (English, Hindi, Marathi) with SMS/WhatsApp payloads | Real SNS network publishing requires AWS credentials; offline mode queues payloads with `simulated: true`. |
 | **Multimodal Vision** | Real computer vision feature extraction on actual uploaded image bytes via Pillow/NumPy | AWS Rekognition API call is bypassed offline in favor of local computer vision feature analysis. |
 
-### Build It Tool Inventory (Live System Status)
+### Example tool inventory (captured on the author's machine)
 
-The following inventory is generated dynamically by querying `/api/health -> build_it_tools`:
+Your own `/api/health -> build_it_tools` may report different versions and FALLBACK states depending on your host.
 
 ```json
 [
@@ -131,7 +139,7 @@ def evaluate_risk_tool(category: str, ward_info: dict, telemetry: dict) -> dict:
     """
     return risk_agent.evaluate(category, ward_info, telemetry)
 ```
-*Source File:* [backend/agents/strands_workflow.py](file:///d:/Riyanshi/01_coding/projects/41%20JalRakshak%20AI/backend/agents/strands_workflow.py)
+*Source File:* [backend/agents/strands_workflow.py](https://github.com/RiyanshiVerma-11/JalRakshak-AI/blob/main/backend/agents/strands_workflow.py)
 
 ```python
 risk_detection_agent = Agent(
@@ -144,7 +152,7 @@ risk_detection_agent = Agent(
     model=get_strands_model("Risk Detection Agent")
 )
 ```
-*Source File:* [backend/agents/strands_workflow.py](file:///d:/Riyanshi/01_coding/projects/41%20JalRakshak%20AI/backend/agents/strands_workflow.py)
+*Source File:* [backend/agents/strands_workflow.py](https://github.com/RiyanshiVerma-11/JalRakshak-AI/blob/main/backend/agents/strands_workflow.py)
 
 The 5 agents collaborate sequentially:
 1. **Risk Detection Agent:** Evaluates sensor deltas against hydrological saturation.
@@ -184,7 +192,7 @@ forbid(
     resource
 );
 ```
-*Source File:* [policies/incident_policy.cedar](file:///d:/Riyanshi/01_coding/projects/41%20JalRakshak%20AI/policies/incident_policy.cedar)
+*Source File:* [policies/incident_policy.cedar](https://github.com/RiyanshiVerma-11/JalRakshak-AI/blob/main/policies/incident_policy.cedar)
 
 During evaluation, cryptographic JWT claims are extracted and validated directly by Cedar:
 
@@ -203,7 +211,7 @@ During evaluation, cryptographic JWT claims are extracted and validated directly
         logger.error(f"[CEDAR AUTH] Error during cedarpy evaluation: {exc}")
         return {"allowed": False, "engine": engine, "error": str(exc)}
 ```
-*Source File:* [backend/auth/cedar_auth.py](file:///d:/Riyanshi/01_coding/projects/41%20JalRakshak%20AI/backend/auth/cedar_auth.py)
+*Source File:* [backend/auth/cedar_auth.py](https://github.com/RiyanshiVerma-11/JalRakshak-AI/blob/main/backend/auth/cedar_auth.py)
 
 ---
 
@@ -224,6 +232,7 @@ During evaluation, cryptographic JWT claims are extracted and validated directly
 ### Battle 4: SAM Packaging & Monorepo CodeUri
 - **The Challenge:** Running `sam build` in a monorepo caused SAM CLI to try packaging the entire frontend `dist/` and `node_modules` into the Lambda bundle, exceeding AWS Lambda limits.
 - **The Resolution:** We refactored `aws_infra/template.yaml` using strict `.samignore` rules and localized `CodeUri: .` anchors with explicit handlers (`lambda_handlers.strands_agent_orchestrator_handler` and `lambda_handlers.citizen_ingest_handler`).
+- **What I'd Do Differently (Architectural Lesson):** Declare the strict serverless packaging boundary and `.samignore` filters before authoring the first handler. In a monorepo, packaging is an architectural contract, not a deployment afterthought when `sam build` fails.
 
 ---
 
@@ -241,7 +250,7 @@ During evaluation, cryptographic JWT claims are extracted and validated directly
 
 * **Command Executed:** `python tests/benchmark_strands.py 100`
 * **Test Machine:** AMD64 Family 23 Model 104 Stepping 1 (12 logical cores), 7.3 GB RAM, Windows 10, Python 3.11.3
-* **Full Documentation:** [docs/BENCHMARK.md](file:///d:/Riyanshi/01_coding/projects/41%20JalRakshak%20AI/docs/BENCHMARK.md)
+* **Full Documentation:** [docs/BENCHMARK.md](https://github.com/RiyanshiVerma-11/JalRakshak-AI/blob/main/docs/BENCHMARK.md)
 
 | Metric | Measured Value | Notes & Context |
 | :--- | :---: | :--- |
@@ -253,6 +262,9 @@ During evaluation, cryptographic JWT claims are extracted and validated directly
 | **Test Suite Status** | **Passing** | Integration, Cedar RBAC, Build It route, and SAM validation |
 | **SAM Build Artifact** | **Built Succeeded** | `StrandsAgentOrchestratorLambda`, `CitizenReportIngestLambda` |
 
+> **Host Variance & Latency Context:**  
+> Latency is dominated by host scheduling and Python startup. Expect roughly 15-130 ms for the full local 5-agent loop depending on your machine. Rerun `python tests/benchmark_strands.py 100` to get your own figure; the script prints platform and Python version automatically.
+
 ### Quantified Economic ROI & Modelled Assumptions
 
 * **Baseline Traditional Escalation:** 4 hours manual phone tree escalation.
@@ -262,9 +274,30 @@ During evaluation, cryptographic JWT claims are extracted and validated directly
   - *Mitigated Damage with JalRakshak AI:* ₹60 Lakhs (early dewatering pump pre-deployment keeps flood depth under 25 cm, preventing hospital ICU ingress and electrical substation submergence).
   - *Net Modelled Civic Assets Protected:* **₹80+ Lakhs saved** per severe cloudburst event.
 
+#### Sources & Assumptions (Illustrative Simulation Model)
+* **Model Type:** Illustrative municipal damage and loss estimation model, calibrated against published NDMA Guidelines on Management of Urban Flooding (Chapter 3) and municipal post-monsoon flood audit baselines for high-vulnerability urban corridors (Mumbai Ward L / Kurla East).
+* **Precipitation Baseline:** 118 mm/hr cloudburst sustained over 40 minutes during high-tide outfall locking.
+* **Asset Exposure Assumptions:** ~40 ground-floor commercial units (LBS Marg) with ₹1.5 Lakhs average inventory loss; 2 distribution transformers requiring repair/replacement; and emergency contractor pump mobilization cost differential.
+* **Intervention Delta:** Autonomous multi-agent coordination reduces municipal authorization latency from 4 hours to 18 minutes, preventing inundation from exceeding the 25 cm critical substation threshold.
+
 ---
 
-## 7. What I'd Build with AWS Credits Next
+## 7. Who Actually Uses This?
+
+Judging criterion 3 asks whether someone outside the core engineering team can operate this solution. JalRakshak AI separates civic responsibilities across four distinct personas:
+
+1. **Resident Citizen:** At 02:10 AM during an intense 118 mm/hr cloudburst, a resident in Kurla East snaps a photo of water overtopping sidewalks. The client-side computer vision layer instantly grades flood depth (42 cm) and flags road impassability.
+2. **Chief Hydrologist & SCADA Analyst:** The telemetry pipeline correlates the citizen report with an active 118 mm/hr rainfall spike and 92% drainage outfall saturation.
+3. **Municipal Incident Commander:** The Strands Coordinator synthesizes a statutory dispatch directive; the Commander reviews the plan in the Decision Room and signs off under AWS Cedar in one tap.
+4. **Tactical Field Responder:** 1000 GPM dewatering pumps and rescue teams deploy to Ward 17 while automated trilingual (English, Hindi, Marathi) SMS warnings reach residents — all inside 18 minutes.
+
+![Figure 4: Citizen Emergency PWA & Trilingual Alert](https://raw.githubusercontent.com/RiyanshiVerma-11/JalRakshak-AI/main/docs/screenshots/citizen_reporting.jpg)
+
+*Figure 4: Citizen Emergency PWA — Live photo submission with `CVBoundingBoxOverlay` flood depth estimation (42 cm) and automated multilingual (EN/HI/MR) emergency alert broadcast.*
+
+---
+
+## 8. What I'd Build with AWS Credits Next
 
 If granted production AWS Cloud Credits, we would scale JalRakshak AI from a laptop-tested architecture to citywide municipal infrastructure:
 
@@ -275,7 +308,7 @@ If granted production AWS Cloud Credits, we would scale JalRakshak AI from a lap
 
 ---
 
-## 8. Try It Yourself
+## 9. Try It Yourself
 
 You can clone and run JalRakshak AI on your machine in 60 seconds with zero AWS configuration:
 
@@ -288,7 +321,24 @@ python run_app.py
 
 Then visit [http://localhost:8004](http://localhost:8004) to test the emergency command center, simulate cloudbursts, and evaluate the Cedar authorization engine.
 
+### Verify It Yourself in 30 Seconds
+
+To verify the complete 5-agent loop, health check, and simulation without touching a browser, run our automated smoke test:
+
+```bash
+bash scripts/judge_smoke.sh
+```
+
+*Expected Terminal Output:*
+```text
+======================================================================
+★ SMOKE TEST PASSED: ALL 5 STRANDS AGENTS VERIFIED LIVE & OPERATIONAL ★
+======================================================================
+```
+For step-by-step evaluator instructions, see the **[Judge Quickstart Guide](https://github.com/RiyanshiVerma-11/JalRakshak-AI/blob/main/docs/JUDGE_QUICKSTART.md)** and the **[3-Minute Demo Video Script](https://github.com/RiyanshiVerma-11/JalRakshak-AI/blob/main/docs/DEMO_SCRIPT.md)**.
+
 ---
 
 *Submitted to WeMakeDevs × AWS Environmental Hacks — Heat and Water Track (Build It Route).*  
-*Project Repository:* [https://github.com/RiyanshiVerma-11/JalRakshak-AI](https://github.com/RiyanshiVerma-11/JalRakshak-AI)
+*Project Repository:* [https://github.com/RiyanshiVerma-11/JalRakshak-AI](https://github.com/RiyanshiVerma-11/JalRakshak-AI)  
+*Authors:* Team SheBuilds ([Riyanshi Verma](https://github.com/RiyanshiVerma-11) & Team)

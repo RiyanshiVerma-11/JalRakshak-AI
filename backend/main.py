@@ -19,25 +19,6 @@ import copy
 import base64
 from datetime import datetime, timezone
 
-# Public judge-safe endpoints allowlist (Option ii / Task A5)
-PUBLIC_DEMO_ENDPOINTS = frozenset({
-    "/health",
-    "/api/health",
-    "/api/judge/overview",
-    "/api/demo/pipeline",
-    "/api/incidents/simulate",
-    "/api/resources",
-    "/api/aws/metrics",
-    "/api/citizen/reports",
-    "/api/telemetry/live",
-    "/api/rag/protocols",
-    "/api/wards",
-    "/api/auth/token",
-    "/api/citizen/report",
-    "/api/citizen/query",
-    "/api/copilot/chat",
-    "/api/v1/simulate/dynamic-telemetry",
-})
 
 from .data.state_store import state_store as db
 from .agents.strands_workflow import strands_orchestrator, get_strands_model_provider
@@ -60,6 +41,26 @@ from .auth.cedar_auth import (
     evaluate_cedar_policy_with_details,
     get_cedar_engine_name
 )
+
+# Judge-safe public demonstration endpoints allowlist (Task A5)
+PUBLIC_DEMO_ENDPOINTS = frozenset({
+    "/health",
+    "/api/health",
+    "/api/judge/overview",
+    "/api/demo/pipeline",
+    "/api/incidents/simulate",
+    "/api/resources",
+    "/api/aws/metrics",
+    "/api/citizen/reports",
+    "/api/telemetry/live",
+    "/api/rag/protocols",
+    "/api/wards",
+    "/api/auth/token",
+    "/api/citizen/report",
+    "/api/citizen/query",
+    "/api/copilot/chat",
+    "/api/v1/simulate/dynamic-telemetry",
+})
 
 app = FastAPI(
     title="JalRakshak AI - Climate Emergency Response Platform",
@@ -87,25 +88,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Judge-safe public demonstration endpoints allowlist (Task A5)
-PUBLIC_DEMO_ENDPOINTS = frozenset({
-    "/health",
-    "/api/health",
-    "/api/judge/overview",
-    "/api/demo/pipeline",
-    "/api/incidents/simulate",
-    "/api/resources",
-    "/api/aws/metrics",
-    "/api/citizen/reports",
-    "/api/telemetry/live",
-    "/api/rag/protocols",
-    "/api/wards",
-    "/api/auth/token",
-    "/api/citizen/report",
-    "/api/citizen/query",
-    "/api/copilot/chat",
-    "/api/v1/simulate/dynamic-telemetry",
-})
 
 # Request Models
 class SimulateRequest(BaseModel):

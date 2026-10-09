@@ -785,7 +785,9 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                   <span className="text-xs font-bold text-slate-300">Live Ward Incident Feed</span>
                   <button
                     onClick={fetchFeed}
-                    className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-mono"
+                    type="button"
+                    aria-label="Refresh live ward incident feed"
+                    className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-mono focus:outline-none focus:ring-1 focus:ring-cyan-400 rounded px-1"
                   >
                     <RefreshCw className={`h-3 w-3 ${isLoadingFeed ? 'animate-spin' : ''}`} />
                     <span>Refresh</span>
@@ -941,7 +943,9 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
           <div className="w-full max-w-2xl relative">
             <button
               onClick={() => setShowCVModal(false)}
-              className="absolute -top-10 right-0 p-2 text-slate-400 hover:text-white transition-all flex items-center gap-1 text-xs font-bold"
+              type="button"
+              aria-label="Close Diagnostic Modal"
+              className="absolute -top-10 right-0 p-2 text-slate-400 hover:text-white transition-all flex items-center gap-1 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded-lg"
             >
               <X className="h-4 w-4" />
               <span>Close Diagnostic</span>

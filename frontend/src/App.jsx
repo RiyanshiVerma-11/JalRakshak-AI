@@ -563,6 +563,7 @@ export default function App() {
                 setIsTourOpen(true);
               }}
               onOpenLogin={() => navigateWithGuard('login')}
+              onOpenCitizenPWA={() => navigateWithGuard('citizen')}
               onNavigateTab={(tab) => navigateWithGuard(tab)}
             />
           )}

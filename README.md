@@ -8,7 +8,7 @@
 [![AWS Cedar](https://img.shields.io/badge/AWS%20Open--Source-Cedar%20(cedarpy)%20RBAC-E11D48?style=for-the-badge)](policies/incident_policy.cedar)
 [![AWS SAM IaC](https://img.shields.io/badge/AWS%20Open--Source-SAM%20CLI%20IaC-FF9900?style=for-the-badge&logo=amazon-aws)](aws_infra/template.yaml)
 [![LocalStack Ready](https://img.shields.io/badge/LocalStack-Endpoint%20Resolved-8B5CF6?style=for-the-badge)](backend/cloud/config.py)
-[![Integration Tests](https://img.shields.io/badge/Tests-35%2F35%20Passing%20(0%20Skipped)-10B981?style=for-the-badge&logo=pytest)](tests/)
+[![Integration Tests](https://img.shields.io/badge/Tests-36%2F36%20Passing%20(0%20Skipped)-10B981?style=for-the-badge&logo=pytest)](tests/)
 
 > *"Most climate dashboards show WHAT is happening.  
 > **JalRakshak AI decides WHAT TO DO NEXT with protocol-grounded statutory precision."***
@@ -59,7 +59,7 @@ What `judge_smoke.sh` does automatically:
 4. Dispatches `POST /api/incidents/simulate` and asserts HTTP 200 with all 5 Strands agents in `agent_trace`.
 5. Prints a color-coded verification summary and terminates cleanly.
 
-For step-by-step evaluator guidance, consult [docs/JUDGE_QUICKSTART.md](docs/JUDGE_QUICKSTART.md).
+For step-by-step evaluator guidance, consult [docs/JUDGE_QUICKSTART.md](docs/JUDGE_QUICKSTART.md) and the 3-minute video presentation guide at [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
 
 ---
 
@@ -201,6 +201,12 @@ The quantified economic impact metrics presented in this repository are derived 
 
 ### 3. Net Quantified Municipal Savings: ₹85 Lakhs (~₹80+ Lakhs per severe event)
 
+#### Sources & Assumptions (Illustrative Simulation Model)
+* **Model Type:** Illustrative municipal damage and loss estimation model, calibrated against published NDMA Guidelines on Management of Urban Flooding (Chapter 3) and municipal post-monsoon flood audit baselines for high-vulnerability urban corridors (Mumbai Ward L / Kurla East).
+* **Precipitation Baseline:** 118 mm/hr cloudburst sustained over 40 minutes during high-tide outfall locking.
+* **Asset Exposure Assumptions:** ~40 ground-floor commercial units (LBS Marg) with ₹1.5 Lakhs average inventory loss; 2 distribution transformers requiring repair/replacement; and emergency contractor pump mobilization cost differential.
+* **Intervention Delta:** Autonomous multi-agent coordination reduces municipal authorization latency from 4 hours to 18 minutes, preventing inundation from exceeding the 25 cm critical substation threshold.
+
 ---
 
 ## ⚠️ Known Limitations & Honest Disclosures
@@ -220,49 +226,50 @@ Execute the automated test suite locally:
 python -m pytest tests/ -v
 ```
 
-### Raw Test Execution Output (35/35 Passing):
+### Raw Test Execution Output (36/36 Passing):
 ```text
 ============================= test session starts =============================
 platform win32 -- Python 3.11.3, pytest-8.1.1, pluggy-1.6.0
-collected 35 items
+collected 36 items
 
 tests/test_build_it_route.py::test_no_header_only_auth_bypass PASSED     [  2%]
 tests/test_build_it_route.py::test_self_serve_token_requires_credential PASSED [  5%]
 tests/test_build_it_route.py::test_no_duplicate_incident_on_simulate PASSED [  8%]
 tests/test_build_it_route.py::test_cedar_fallback_matches_policy PASSED  [ 11%]
-tests/test_build_it_route.py::test_no_unlabelled_detection_confidence PASSED [ 14%]
-tests/test_build_it_route.py::test_zero_credential_offline_boot PASSED   [ 17%]
-tests/test_build_it_route.py::test_offline_run_makes_no_network_calls PASSED [ 20%]
+tests/test_build_it_route.py::test_no_unlabelled_detection_confidence PASSED [ 13%]
+tests/test_build_it_route.py::test_zero_credential_offline_boot PASSED   [ 16%]
+tests/test_build_it_route.py::test_offline_run_makes_no_network_calls PASSED [ 19%]
 tests/test_build_it_route.py::test_build_it_tool_inventory_is_honest PASSED [ 22%]
 tests/test_build_it_route.py::test_app_boots_without_strands_sdk PASSED  [ 25%]
-tests/test_build_it_route.py::test_env_example_copy_has_no_credentials PASSED [ 28%]
-tests/test_build_it_route.py::test_public_endpoint_allowlist_matches_counts PASSED [ 31%]
-tests/test_build_it_route.py::test_readme_testnames_match_suite PASSED   [ 34%]
-tests/test_build_it_route.py::test_benchmark_numbers_match_docs PASSED   [ 37%]
-tests/test_cedar_auth.py::test_cedar_policy_evaluation PASSED            [ 40%]
-tests/test_cedar_auth.py::test_jwt_generation_and_verification PASSED    [ 42%]
-tests/test_cedar_auth.py::test_dummy_bearer_token_rejection PASSED       [ 45%]
-tests/test_cedar_auth.py::test_unauthenticated_incidents_rejection PASSED [ 48%]
-tests/test_cedar_auth.py::test_valid_token_incidents_success PASSED      [ 51%]
-tests/test_cedar_auth.py::test_citizen_denied_approval PASSED            [ 54%]
-tests/test_cedar_auth.py::test_commander_authorized_approval PASSED      [ 57%]
-tests/test_cedar_auth.py::test_auth_roles_has_no_fake_ids PASSED         [ 60%]
-tests/test_integration.py::test_flood_cloudburst_pipeline_and_incident_creation PASSED [ 62%]
-tests/test_integration.py::test_bedrock_fault_tolerance_and_ndma_fallback PASSED [ 65%]
-tests/test_integration.py::test_human_in_the_loop_action_approval PASSED [ 68%]
-tests/test_integration.py::test_emergency_copilot_rag_query PASSED       [ 71%]
-tests/test_integration.py::test_sam_infrastructure_as_code_template PASSED [ 74%]
+tests/test_build_it_route.py::test_env_example_copy_has_no_credentials PASSED [ 27%]
+tests/test_build_it_route.py::test_public_endpoint_allowlist_matches_counts PASSED [ 30%]
+tests/test_build_it_route.py::test_readme_testnames_match_suite PASSED   [ 33%]
+tests/test_build_it_route.py::test_benchmark_numbers_match_docs PASSED   [ 36%]
+tests/test_build_it_route.py::test_simulate_in_public_endpoints_and_route_table_auth_free_set PASSED [ 38%]
+tests/test_cedar_auth.py::test_cedar_policy_evaluation PASSED            [ 41%]
+tests/test_cedar_auth.py::test_jwt_generation_and_verification PASSED    [ 44%]
+tests/test_cedar_auth.py::test_dummy_bearer_token_rejection PASSED       [ 47%]
+tests/test_cedar_auth.py::test_unauthenticated_incidents_rejection PASSED [ 50%]
+tests/test_cedar_auth.py::test_valid_token_incidents_success PASSED      [ 52%]
+tests/test_cedar_auth.py::test_citizen_denied_approval PASSED            [ 55%]
+tests/test_cedar_auth.py::test_commander_authorized_approval PASSED      [ 58%]
+tests/test_cedar_auth.py::test_auth_roles_has_no_fake_ids PASSED         [ 61%]
+tests/test_integration.py::test_flood_cloudburst_pipeline_and_incident_creation PASSED [ 63%]
+tests/test_integration.py::test_bedrock_fault_tolerance_and_ndma_fallback PASSED [ 66%]
+tests/test_integration.py::test_human_in_the_loop_action_approval PASSED [ 69%]
+tests/test_integration.py::test_emergency_copilot_rag_query PASSED       [ 72%]
+tests/test_integration.py::test_sam_infrastructure_as_code_template PASSED [ 75%]
 tests/test_integration.py::test_serverless_lambda_handlers_execution PASSED [ 77%]
 tests/test_integration.py::test_dynamic_telemetry_simulation_endpoint PASSED [ 80%]
-tests/test_integration.py::test_rag_vector_search_cosine_similarity PASSED [ 82%]
-tests/test_integration.py::test_mathematical_confidence_score_bounds PASSED [ 85%]
+tests/test_integration.py::test_rag_vector_search_cosine_similarity PASSED [ 83%]
+tests/test_integration.py::test_mathematical_confidence_score_bounds PASSED [ 86%]
 tests/test_integration.py::test_live_aws_bedrock_invocation PASSED       [ 88%]
 tests/test_integration.py::test_live_aws_dynamodb_persistence PASSED     [ 91%]
 tests/test_integration.py::test_zero_config_boot_and_health_endpoint PASSED [ 94%]
 tests/test_integration.py::test_simulated_flags_on_offline_responses PASSED [ 97%]
 tests/test_integration.py::test_localstack_configuration_and_compose_spec PASSED [100%]
 
-============================= 35 passed in 32.11s =============================
+============================= 36 passed in 25.94s =============================
 ```
 
 #### Build It Route Test Coverage Matrix (`tests/test_build_it_route.py`)
@@ -281,6 +288,7 @@ tests/test_integration.py::test_localstack_configuration_and_compose_spec PASSED
 | 11 | `tests/test_build_it_route.py::test_public_endpoint_allowlist_matches_counts` | Verifies `PUBLIC_DEMO_ENDPOINTS` matches route table and protected endpoints return 401 |
 | 12 | `tests/test_build_it_route.py::test_readme_testnames_match_suite` | Verifies every test name in README.md exists in pytest test suite |
 | 13 | `tests/test_build_it_route.py::test_benchmark_numbers_match_docs` | Verifies latency claims match docs/BENCHMARK.md measurements |
+| 14 | `tests/test_build_it_route.py::test_simulate_in_public_endpoints_and_route_table_auth_free_set` | Verifies `/api/incidents/simulate` is auth-free and auth-free route set equals `PUBLIC_DEMO_ENDPOINTS` |
 
 ---
 

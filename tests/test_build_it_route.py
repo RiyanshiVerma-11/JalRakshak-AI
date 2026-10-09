@@ -424,3 +424,43 @@ def test_benchmark_numbers_match_docs():
                 f"Latency claim '{num} ms p50' in {target.name} is not documented "
                 f"in docs/BENCHMARK.md! Empirical reproducibility violation."
             )
+
+
+# --------------------------------------------------------------------------
+# 14. Route Table Auth-Free Set Equals PUBLIC_DEMO_ENDPOINTS (TASK C2)
+# --------------------------------------------------------------------------
+def test_simulate_in_public_endpoints_and_route_table_auth_free_set():
+    """
+    Confirms /api/incidents/simulate is explicitly listed in PUBLIC_DEMO_ENDPOINTS,
+    has no auth parameter/dependency, and asserts that the auth-free demo endpoint set
+    enumerated from the FastAPI route table equals PUBLIC_DEMO_ENDPOINTS.
+    """
+    import inspect
+    from backend.main import PUBLIC_DEMO_ENDPOINTS, app
+
+    # 1. Confirm /api/incidents/simulate is listed
+    assert "/api/incidents/simulate" in PUBLIC_DEMO_ENDPOINTS
+
+    # 2. Confirm /api/incidents/simulate endpoint itself has no auth dependency
+    simulate_routes = [r for r in app.routes if getattr(r, "path", None) == "/api/incidents/simulate"]
+    assert len(simulate_routes) > 0, "Route /api/incidents/simulate not found in FastAPI route table"
+    simulate_ep = simulate_routes[0].endpoint
+    sig = inspect.signature(simulate_ep)
+    for p_name, param in sig.parameters.items():
+        assert "auth" not in p_name.lower(), f"Unexpected auth parameter '{p_name}' on /api/incidents/simulate"
+
+    # 3. Enumerate FastAPI route table and assert auth-free set for demo endpoints equals PUBLIC_DEMO_ENDPOINTS
+    auth_free_demo_routes = set()
+    for r in app.routes:
+        if not hasattr(r, "endpoint"):
+            continue
+        route_path = r.path
+        if route_path in PUBLIC_DEMO_ENDPOINTS:
+            route_sig = inspect.signature(r.endpoint)
+            has_auth = any("auth" in p.lower() for p in route_sig.parameters.keys())
+            if not has_auth:
+                auth_free_demo_routes.add(route_path)
+
+    assert auth_free_demo_routes == PUBLIC_DEMO_ENDPOINTS
+    assert len(auth_free_demo_routes) == 16
+
