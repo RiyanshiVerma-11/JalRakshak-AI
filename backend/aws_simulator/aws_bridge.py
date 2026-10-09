@@ -145,8 +145,8 @@ def _bedrock_live(prompt: str, ward_name: str) -> Dict[str, Any]:
 
 
 def _bedrock_hybrid(prompt: str, ward_name: str) -> Dict[str, Any]:
-    lat = random.randint(1200, 1700)
-    time.sleep(lat / 1000.0)
+    lat = 0  # No artificial delay — report real execution time
+    t0 = time.time()
     p = prompt.lower()
     if any(k in p for k in ["flood", "rainfall", "cloudburst"]):
         txt = (f"CRITICAL FLOOD ADVISORY \u2014 {ward_name}: Telemetry confirms rainfall has breached NDMA orange alert threshold. "
@@ -168,6 +168,7 @@ def _bedrock_hybrid(prompt: str, ward_name: str) -> Dict[str, Any]:
                f"Per-capita deficit requires immediate tanker dispatch to informal settlements and dialysis clinics. "
                f"Enforce non-essential water bans per Jal Jeevan Mission Urban Water Security Framework.")
         inp, out = 158, 102
+    lat = int((time.time() - t0) * 1000)
     _log_bedrock(False, lat, inp, out)
     return {"narrative": txt, "model_id": _BEDROCK_MODEL_ID,
             "latency_ms": lat, "input_tokens": inp, "output_tokens": out, "live": False}
@@ -290,7 +291,7 @@ class AWSCloudBridge:
             "Subject":            subject,
             "Timestamp":          datetime.now().isoformat(),
             "Ward":               ward_id,
-            "SubscribersNotified": 18450,
+            "SubscribersNotified": "N/A (check SNS topic for live count)" if not result["live"] else "live",
             "LiveCloudDelivered": result["live"],
             "Channels":           ["SMS_GATEWAY_TRAI", "CIVIL_DEFENSE_WHATSAPP", "LOCAL_PA_SPEAKERS"],
             "EnglishSMS":         languages.get("english", message),
@@ -346,11 +347,11 @@ class AWSCloudBridge:
                 "AWS_Strands_Agents": {"status": "HEALTHY", "active_agents": 5,
                                        "orchestration_engine": "Strands Graph SDK"},
                 "Amazon_Bedrock":     {"status": "HEALTHY", "model": "Claude 3.5 Sonnet / Titan Embeddings"},
-                "Amazon_EventBridge": {"status": "ACTIVE",  "events_today": len(db.aws_event_bus) + 1420},
-                "Amazon_DynamoDB":    {"status": "ONLINE",  "tables": self.dynamodb_tables, "p99_latency_ms": 4.2},
-                "Amazon_S3":          {"status": "ONLINE",  "bucket": self.s3_bucket, "objects_stored": 284},
-                "Amazon_SNS":         {"status": "HEALTHY", "subscribers": 142000, "delivery_rate_pct": 99.8},
-                "AWS_Lambda":         {"status": "HEALTHY", "concurrency": "Auto-scaling", "avg_duration_ms": 128},
+                "Amazon_EventBridge": {"status": "ACTIVE",  "events_this_session": len(db.aws_event_bus)},
+                "Amazon_DynamoDB":    {"status": "ONLINE",  "tables": self.dynamodb_tables},
+                "Amazon_S3":          {"status": "ONLINE",  "bucket": self.s3_bucket},
+                "Amazon_SNS":         {"status": "HEALTHY", "topic_arn": self.sns_topic_arn},
+                "AWS_Lambda":         {"status": "HEALTHY", "concurrency": "Auto-scaling"},
             },
             "recent_events": db.aws_event_bus[:10],
         }

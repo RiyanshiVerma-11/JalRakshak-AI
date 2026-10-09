@@ -253,7 +253,7 @@ export default function LandingPageView({
               {/* 4 Crisp Key Metric Badges with Enhanced Border Contrast & Drop Shadow */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                 <div className="rounded-xl bg-white border border-slate-300/90 p-3 text-center shadow-sm hover:shadow-md hover:border-blue-300 transition-all">
-                  <span className="text-xl font-black text-blue-600 block">528 ms</span>
+                  <span className="text-xl font-black text-blue-600 block">Sub-Second</span>
                   <span className="text-[10px] text-slate-500 uppercase font-mono font-semibold">5-Agent DAG Latency</span>
                 </div>
                 <div className="rounded-xl bg-white border border-slate-300/90 p-3 text-center shadow-sm hover:shadow-md hover:border-emerald-300 transition-all">
@@ -506,7 +506,7 @@ export default function LandingPageView({
                   </div>
                 </div>
                 <span className="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded border border-emerald-300">
-                  ⚡ 528 MS RESPONSE
+                  ⚡ SUB-SECOND RESPONSE
                 </span>
               </div>
 
@@ -516,7 +516,7 @@ export default function LandingPageView({
                 <div className="rounded-xl bg-white border border-emerald-200/80 p-3.5 space-y-1 shadow-xs">
                   <strong className="text-emerald-900 font-bold block flex items-center gap-1.5">
                     <Check className="h-4 w-4 text-emerald-600" />
-                    1. 528ms Strands 5-Agent Directed Acyclic Graph (DAG)
+                    1. Sub-Second Strands 5-Agent Directed Acyclic Graph (DAG)
                   </strong>
                   <p className="text-slate-600 text-[11px] leading-relaxed">
                     Five specialized autonomous agents ingest 248 IoT telemetry points, correlate GIS flood risk polygons, scan municipal inventory, and synthesize action plans deterministically without hallucinations.
@@ -556,7 +556,7 @@ export default function LandingPageView({
               </div>
 
               <div className="rounded-xl bg-emerald-100/80 border border-emerald-300 p-3 text-center text-xs font-mono text-emerald-900">
-                Average Emergency Triage Time: <strong className="text-emerald-950 font-black">528 Milliseconds (98.8% Faster)</strong>
+                Average Emergency Triage Time: <strong className="text-emerald-950 font-black">Sub-Second (98%+ Faster)</strong>
               </div>
             </div>
 
@@ -565,7 +565,7 @@ export default function LandingPageView({
           {/* Quick Quantitative Impact Bar */}
           <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
-              <span className="text-xl sm:text-2xl font-black text-blue-600 block">45m ➔ 528ms</span>
+              <span className="text-xl sm:text-2xl font-black text-blue-600 block">45m ➔ Sub-Second</span>
               <span className="text-[11px] text-slate-500 font-medium">98.8% Reduction in Triage Time</span>
             </div>
             <div>

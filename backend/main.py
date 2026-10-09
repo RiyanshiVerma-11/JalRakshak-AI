@@ -666,6 +666,8 @@ def dynamic_telemetry(req: DynamicTelemetryRequest):
     }
 
 if __name__ == "__main__":
+    import os as _os
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8004)
-
+    _host = _os.environ.get("HOST", "0.0.0.0")
+    _port = int(_os.environ.get("PORT", "8004"))
+    uvicorn.run(app, host=_host, port=_port)

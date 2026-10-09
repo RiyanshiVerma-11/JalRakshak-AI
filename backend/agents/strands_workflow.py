@@ -44,7 +44,7 @@ class StrandsWorkflowOrchestrator:
         available_resources = db.get_resources()
 
         agent_trace = {}
-        t0 = time.time()
+        t0 = time.perf_counter()
         fallback_triggered = False
         degradation_reason = None
 
@@ -53,53 +53,57 @@ class StrandsWorkflowOrchestrator:
                 raise BedrockDegradationException("Amazon Bedrock throttling simulated (ThrottlingException: Rate exceeded for anthropic.claude-3-5-sonnet)")
 
             # Step 1: Agent 1 - Risk Detection
-            t_step = time.time()
+            t_step = time.perf_counter()
             risk_result = risk_agent.evaluate(category, ward_info, telemetry)
-            risk_latency = int((time.time() - t_step) * 1000) + 95
+            risk_latency = int((time.perf_counter() - t_step) * 1000)
             agent_trace["risk_agent"] = {
                 "status": "SUCCESS",
                 "agent_role": "Risk Detection Agent",
                 "severity": risk_result["severity"],
                 "confidence": risk_result["confidence"],
+                "latency_ms": risk_latency,
                 "execution_ms": risk_latency,
                 "aws_strands_node": "arn:aws:bedrock:ap-south-1:agent/risk-detection-01"
             }
 
             # Step 2: Agent 2 - Impact Assessment
-            t_step = time.time()
+            t_step = time.perf_counter()
             impact_result = impact_agent.assess(ward_info, risk_result, category)
-            impact_latency = int((time.time() - t_step) * 1000) + 110
+            impact_latency = int((time.perf_counter() - t_step) * 1000)
             agent_trace["impact_agent"] = {
                 "status": "SUCCESS",
                 "agent_role": "Impact Assessment Agent",
                 "exposed_population": impact_result["exposed_population"],
                 "critical_facilities": impact_result["hospitals_count"] + impact_result["schools_count"],
+                "latency_ms": impact_latency,
                 "execution_ms": impact_latency,
                 "aws_strands_node": "arn:aws:bedrock:ap-south-1:agent/impact-assessment-02"
             }
 
             # Step 3: Agent 3 - Resource & Response Matching
-            t_step = time.time()
+            t_step = time.perf_counter()
             resource_matches = resource_agent.match_resources(category, ward_info, available_resources)
-            resource_latency = int((time.time() - t_step) * 1000) + 85
+            resource_latency = int((time.perf_counter() - t_step) * 1000)
             agent_trace["resource_agent"] = {
                 "status": "SUCCESS",
                 "agent_role": "Resource & Response Agent",
                 "resources_matched": len(resource_matches),
+                "latency_ms": resource_latency,
                 "execution_ms": resource_latency,
                 "aws_strands_node": "arn:aws:bedrock:ap-south-1:agent/resource-response-03"
             }
 
             # Step 4: Agent 4 - Communication Agent (Amazon Bedrock Claude 3.5 Sonnet)
-            t_step = time.time()
+            t_step = time.perf_counter()
             alerts_data = communication_agent.generate_alerts(
                 ward_info["name"], category, risk_result["severity"], impact_result, telemetry
             )
-            comm_latency = alerts_data.get("_telemetry", {}).get("latency_ms", int((time.time() - t_step) * 1000) + 1280)
+            comm_latency = int((time.perf_counter() - t_step) * 1000)
             agent_trace["communication_agent"] = {
                 "status": "SUCCESS",
                 "agent_role": "Communication Agent (Amazon Bedrock)",
                 "languages_generated": ["en", "hi", "mr"],
+                "latency_ms": comm_latency,
                 "execution_ms": comm_latency,
                 "model": "anthropic.claude-3-5-sonnet",
                 "aws_strands_node": "arn:aws:bedrock:ap-south-1:agent/communication-claude-35-sonnet"
@@ -108,16 +112,17 @@ class StrandsWorkflowOrchestrator:
             alerts = {k: v for k, v in alerts_data.items() if not k.startswith("_")}
 
             # Step 5: Agent 5 - Coordinator Agent (Emergency Commander)
-            t_step = time.time()
+            t_step = time.perf_counter()
             coordinator_result = coordinator_agent.synthesize(
                 ward_info, category, telemetry, risk_result, impact_result, resource_matches, alerts
             )
-            coord_latency = int((time.time() - t_step) * 1000) + 140
+            coord_latency = int((time.perf_counter() - t_step) * 1000)
             agent_trace["coordinator_agent"] = {
                 "status": "SUCCESS",
                 "agent_role": "Coordinator Agent",
                 "actions_planned": len(coordinator_result["recommended_actions"]),
                 "sop_referenced": coordinator_result["rag_reference"]["sop_id"],
+                "latency_ms": coord_latency,
                 "execution_ms": coord_latency,
                 "aws_strands_node": "arn:aws:bedrock:ap-south-1:agent/coordinator-05"
             }
@@ -150,7 +155,7 @@ class StrandsWorkflowOrchestrator:
             coordinator_result = fallback_data["coordinator_result"]
             alerts = fallback_data["alerts"]
             agent_trace = fallback_data["agent_trace"]
-            total_latency_ms = int((time.time() - t0) * 1000) + 42  # Deterministic matrix executes in <50ms
+            total_latency_ms = int((time.perf_counter() - t0) * 1000)
             execution_mode = "DETERMINISTIC_NDMA_FALLBACK"
 
         # Create incident payload

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 import { 
   Activity, 
   Cpu, 
@@ -413,30 +415,30 @@ export default function SCADAAnalystDashboard({
                 </h3>
               </div>
               <span className="text-[10px] font-mono text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                528 ms Total DAG
+                Live Measured
               </span>
             </div>
 
             <div className="space-y-2 text-xs">
               <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200">
                 <span className="font-bold text-slate-800">1. Risk Detection Agent</span>
-                <span className="font-mono text-blue-700 font-bold">120 ms (Claude 3.5 Sonnet)</span>
+                <span className="font-mono text-blue-700 font-bold">Risk Detection (Measured)</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200">
                 <span className="font-bold text-slate-800">2. Impact Assessment Agent</span>
-                <span className="font-mono text-blue-700 font-bold">145 ms (GIS Spatial Intersect)</span>
+                <span className="font-mono text-blue-700 font-bold">Impact Assessment (Measured)</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200">
                 <span className="font-bold text-slate-800">3. Resource Allocation Agent</span>
-                <span className="font-mono text-blue-700 font-bold">95 ms (Depot Proximity Match)</span>
+                <span className="font-mono text-blue-700 font-bold">Resource Matching (Measured)</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200">
                 <span className="font-bold text-slate-800">4. Multilingual Comm Agent</span>
-                <span className="font-mono text-blue-700 font-bold">110 ms (EN/HI/MR Synthesis)</span>
+                <span className="font-mono text-blue-700 font-bold">Multilingual Comm (Measured)</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200">
                 <span className="font-bold text-slate-800">5. Coordinator Agent (RAG)</span>
-                <span className="font-mono text-blue-700 font-bold">180 ms (NDMA Vector Retrieval)</span>
+                <span className="font-mono text-blue-700 font-bold">Coordinator RAG (Measured)</span>
               </div>
             </div>
           </div>
@@ -459,11 +461,11 @@ export default function SCADAAnalystDashboard({
               </div>
               <div className="flex justify-between p-2 rounded-lg bg-slate-50 border border-slate-200">
                 <span className="text-slate-600">Inference Latency:</span>
-                <span className="text-emerald-600 font-bold">p99 = 245 ms</span>
+                <span className="text-emerald-600 font-bold">Real-time (measured per invocation)</span>
               </div>
               <div className="flex justify-between p-2 rounded-lg bg-slate-50 border border-slate-200">
                 <span className="text-slate-600">Invocation Cost:</span>
-                <span className="text-slate-900 font-bold">$0.0034 / execution</span>
+                <span className="text-slate-900 font-bold">On-demand pricing</span>
               </div>
             </div>
           </div>
@@ -492,7 +494,7 @@ export default function SCADAAnalystDashboard({
       </div>
 
       {/* ⚡ Custom Telemetry Injector — Live API Slider */}
-      <CustomTelemetryInjector apiBase="http://localhost:8004" />
+      <CustomTelemetryInjector apiBase={API_BASE} />
 
     </div>
   );
@@ -502,7 +504,7 @@ export default function SCADAAnalystDashboard({
 // ──────────────────────────────────────────────────────────────────────────
 //  CustomTelemetryInjector – live API-wired rainfall slider for judge demo
 // ──────────────────────────────────────────────────────────────────────────
-function CustomTelemetryInjector({ apiBase = 'http://localhost:8004' }) {
+function CustomTelemetryInjector({ apiBase = '' }) {
   const [rainfall, setRainfall]     = React.useState(118);
   const [tide, setTide]             = React.useState('HIGH');
   const [loading, setLoading]       = React.useState(false);

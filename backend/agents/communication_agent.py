@@ -157,7 +157,7 @@ class CommunicationAgent:
             hi = f"जल राहत सूचना: {ward_name} में नगर पालिका के जल टैंकर रवाना कर दिए गए हैं। टैंकर ट्रैकिंग व सहायता हेतु 1916 पर कॉल करें।"
             mr = f"पाणी टंचाई निवारण: {ward_name} मध्ये महापालिकेचे पाण्याचे टँकर पाठवण्यात आले आहेत. टँकर माहितीसाठी १९१६ वर संपर्क साधा."
 
-        latency_ms = int((time.time() - t_start) * 1000) + 1150
+        latency_ms = int((time.time() - t_start) * 1000)
         tokens_est = 278
 
         print(f"\033[96m[AMAZON BEDROCK ENGINE]\033[0m Region: {self.region} | Model: {self.model_id}")

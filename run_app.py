@@ -26,8 +26,10 @@ if __name__ == "__main__":
     print("[*] SOP RAG Knowledge Base: LOADED (NDMA Chapter 4)")
     print(f"[*] Amazon EventBridge & DynamoDB State Bus: INITIALIZED ({mode})")
     print("----------------------------------------------------------")
-    print("[*] Web Application live at: http://localhost:8004")
-    print("[*] API Documentation at:    http://localhost:8004/docs")
+    host = os.environ.get("HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT", "8004"))
+    print(f"[*] Web Application live at: http://localhost:{port}")
+    print(f"[*] API Documentation at:    http://localhost:{port}/docs")
     print("==========================================================")
     
-    uvicorn.run("backend.main:app", host="127.0.0.1", port=8004, reload=False)
+    uvicorn.run("backend.main:app", host=host, port=port, reload=False)
