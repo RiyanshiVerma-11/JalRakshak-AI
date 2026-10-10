@@ -241,6 +241,10 @@ export default function ActionPlanPanel({
             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-800">
               TACTICAL DECISION CENTER (NDMA Review & Sign-Off)
             </span>
+            <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-black tracking-wide uppercase bg-rose-950 text-rose-200 border border-rose-800" title="Statutory policy evaluation via AWS Cedar (cedarpy)">
+              <Lock className="h-2.5 w-2.5 text-rose-400" />
+              AWS Cedar RBAC: ACTIVE
+            </span>
             <span className={`rounded-full px-2 py-0.2 text-[10px] font-black tracking-wider uppercase border ${
               incident.severity === 'CRITICAL'
                 ? 'bg-rose-50 text-rose-700 border-rose-200'

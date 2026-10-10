@@ -1,225 +1,211 @@
-# 🎬 JalRakshak AI — Official 3-Minute Hackathon Demo Video Script
-
-**Target Hackathon:** WeMakeDevs × AWS "Environmental Hacks"  
-**Track:** Track 02 — Heat and Water  
-**Submission Route:** Build It (100% Local, Zero Cloud Credentials, No AWS Account / Credit Card / `.env` Required)  
-**Target Duration:** **2 minutes 52 seconds** (strictly adhering to the 3:00 hard submission ceiling)  
-**Target Delivery Pace:** ~135 words per minute (clear, authoritative, well-paced)  
-**Spoken Word Count:** ~390 words  
+# 🏆 JalRakshak AI — Winning Hackathon Video Pitch & Step-by-Step Screen Guide
+### WeMakeDevs × AWS Environmental Hacks • Track 02: Heat & Water • Route: Build It
+**Target Video Duration:** 2 Minutes 30 Seconds • **Mode:** 100% Local (Zero AWS Bill)
 
 ---
 
-## 📋 Pre-Recording Setup & Environment Checklist
+## 🖥️ Screen Setup (Before You Hit Record)
 
-Before hitting record in OBS Studio / Loom / Screen Studio:
-1. **Local Server Running:** Start `python run_app.py` in your primary terminal (`http://localhost:8004`).
-2. **Browser Window (1080p / 1920×1080):** Set browser zoom to 110% for crisp typography on 1080p monitors.
-3. **Pre-Staged Tabs:**
-   - **Tab 1:** `http://localhost:8004/` (Landing Page with "Continue as Judge" and "Citizen PWA" entrypoints).
-   - **Tab 2:** `http://localhost:8004/command-center` (Emergency Command Center in clean initial state).
-   - **Tab 3:** `http://localhost:8004/citizen` (Citizen Emergency PWA view with Kurla report pre-loaded).
-   - **Tab 4:** Split terminal or secondary window showing repository root for the 30-second judge smoke test.
-4. **Microphone:** Level checked at -6 dB peak, background noise gate enabled.
-5. **Cursor:** Set cursor size to Medium-Large with smooth click highlighting.
+Open your browser at **110% zoom** with these 3 pre-staged tabs:
+* **Tab 1:** `http://localhost:8004/` (Landing Page)
+* **Tab 2:** `http://localhost:8004/command-center` (Incident Command Center)
+* **Tab 3:** `http://localhost:8004/citizen` (Citizen Emergency PWA)
+* *(Optional)* Split screen or minimized terminal with `http://localhost:8004/api/health`
 
 ---
 
-## ⏱️ Scene-by-Scene Timeline & Teleprompter Script
-
-```
-0:00 ─── [0:00 - 0:25] Scene 1: The Problem & Build It Route (25s)
-0:25 ─── [0:25 - 0:50] Scene 2: Citizen Ingest & Multimodal CV (25s)
-0:50 ─── [0:50 - 1:20] Scene 3: Cloudburst Simulation & Explainability (30s)
-1:20 ─── [1:20 - 1:50] Scene 4: AWS Strands 5-Agent Collaborative DAG (30s)
-1:50 ─── [1:50 - 2:20] Scene 5: AWS Cedar (`cedarpy`) Statutory RBAC (30s)
-2:20 ─── [2:20 - 2:40] Scene 6: SCADA Telemetry & 48.6°C Heatwave (20s)
-2:40 ─── [2:40 - 2:52] Scene 7: Quantified ROI & 30-Second Verification (12s)
-```
+## 🎬 Scene-by-Scene Step-by-Step Action & Speaking Guide
 
 ---
 
-### 📍 [0:00 - 0:25] Scene 1: The Hook, The Crisis & The Build It Route (25s)
+### 📍 [0:00 - 0:25] Scene 1: The Problem & The AWS Build It Route
 
-* **Visual Setup:**
-  - Start on **Landing Page** (`http://localhost:8004/`).
-  - Mouse moves smoothly across the hero headline: *"Autonomous Climate & Water Emergency Command"*.
-  - Hover over the **"Build It Route (Zero Config)"** badge and the **"Continue as Judge (read-only)"** button.
-* **Teleprompter Voiceover:**
-  > "Every monsoon and summer across Indian metros like Mumbai, climate disasters strike low-lying wards. In just 40 minutes, a 118 millimeter-per-hour cloudburst inundates hospital basements, while May brings lethal 48.6°C wet-bulb heatwaves.
-  > 
-  > *[PAUSE 1s]*
-  > 
-  > Modern command centers don't lack sensors. The bottleneck is **operational decision latency**: municipal teams receive thousands of calls, but take 4 hours of bureaucratic coordination to deploy a single pump.
-  > 
-  > We built **JalRakshak AI** for the **Build It route**: 100% local, zero AWS credentials required, compressing statutory disaster response from 4 hours down to **18 minutes**."
+#### 🖱️ Step-by-Step Screen Actions:
+1. **Start Screen:** Open **Tab 1** (`http://localhost:8004/`).
+2. **Mouse Movement:**
+   - Move mouse across the top headline: *"Autonomous Climate & Water Emergency Command"*.
+   - **HOVER & CIRCLE:** Put mouse cursor directly over the cyan pill badge: **`Build It Route (Zero Config)`**.
+3. **Click Action:** Click the large blue button: **`Continue as Judge (read-only)`**.
+4. **Result:** Screen transitions smoothly into the Command Center (`/command-center`).
 
----
+#### 🎙️ What to Say (Spoken English):
+> *"Every monsoon, cities like Mumbai face the exact same tragedy: rain sensors scream that water is rising, but between that sensor alert and a water pump reaching the flooded street, there is a **4-hour bureaucratic delay**!  
+> Calls are made, officers argue on WhatsApp, roads get blocked, hospital basements drown, and citizens are left helpless.  
+> We built **JalRakshak AI** to compress that 4-hour delay down to just **18 minutes**!  
+> And as you can see right here, we built this 100% on the **AWS Build It track**: running completely locally on my laptop with zero AWS bills, zero credentials, and no cloud account needed!"*
 
-### 📍 [0:25 - 0:50] Scene 2: Citizen Ingest & Multimodal Computer Vision (25s)
-
-* **Visual Setup:**
-  - Click **"Citizen PWA"** tab or navigate to `/citizen`.
-  - Show the mobile-optimized emergency submission screen for **Kurla East (Ward L)**.
-  - Click **"Inspect CV Analysis"** to open the **`CVBoundingBoxOverlay`** modal.
-  - Hover over the green/cyan detection bounding boxes showing water depth (`42 cm`) and obstruction flags (`IMPASSABLE FOR LIGHT VEHICLES`).
-  - Toggle the language selector: English ➔ हिंदी ➔ मराठी to demonstrate live localized UI and emergency hotline `SOS 1077`.
-* **Teleprompter Voiceover:**
-  > "Disaster response starts on the ground. At 2:10 AM, a resident in Kurla East snaps a flooded roadway photo on our offline-ready Citizen Emergency PWA.
-  > 
-  > *[CLICK: Open CV Bounding Box Overlay]*
-  > 
-  > Our client-side multimodal computer vision layer instantly isolates curb landmarks, estimates water depth at 42 centimeters, and flags light vehicle impassability.
-  > 
-  > Localized municipal advisories are immediately presented in English, Hindi, and Marathi, with direct SOS 1077 integration, while streaming verified structured evidence directly into the central command queue."
+#### 🗣️ Hinglish Option:
+> *"Monsoon me Mumbai jaise cities me jab flood aata hai, toh sabse bada issue hota hai **4 ghante ka bureaucratic delay**! Sensors alert dete hain, par WhatsApp calls aur coordination me 4 ghante nikal jaate hain aur hospital basements doob jaate hain. Humne banaya hai **JalRakshak AI**, jo iss 4 ghante ke delay ko ghata kar sirf **18 minutes** kar deta hai! Aur yeh 100% **AWS Build It track** par bana hai: zero cloud bill, bina kisi AWS account ke mere laptop par offline chal raha hai!"*
 
 ---
 
-### 📍 [0:50 - 1:20] Scene 3: Cloudburst Simulation & Mathematical Explainability (30s)
+### 📍 [0:25 - 0:45] Scene 2: Ground Reality — Citizen Web App & Photo AI
 
-* **Visual Setup:**
-  - Switch smoothly to the **Emergency Command Center** (`/command-center`).
-  - In the top scenario bar, click the **"118mm Cloudburst"** simulation button.
-  - Show the live incident queue populate: Ward 17, Kurla West & East flagged as `CRITICAL (Severity 92)`.
-  - Zoom cursor in on the **Mathematical Explainability Scorecard** panel.
-  - Point to the itemized percentage weights and hydrological variables.
-* **Teleprompter Voiceover:**
-  > "In the Command Center, incoming telemetry triggers an active disaster state. Live rain gauges spike to 118 mm/hr while outfall saturation reaches 92%.
-  > 
-  > *[CLICK: Expand Explainability Scorecard]*
-  > 
-  > Municipal disaster boards cannot rely on black-box AI scores. JalRakshak computes hazard severity with complete mathematical transparency:
-  > - Rainfall surge exceeding drainage capacity by 162% (+38% weight)
-  > - Outfall D-17 throttled by Mithi River tidal locking (+25%)
-  > - 6 verified citizen CV reports (+21%)
-  > - Critical Bhabha Hospital ICU directly in the inundation perimeter (+16%)."
+#### 🖱️ Step-by-Step Screen Actions:
+1. **Switch Tab:** Click **Tab 3: Citizen PWA** (`http://localhost:8004/citizen`).
+2. **Point Mouse:** Show the mobile mockup showing **Kurla East (Ward L)** flood report.
+3. **Click Action:** Click the button: **`Inspect CV Analysis`** (or `Inspect Computer Vision Bounding Boxes`).
+4. **Modal Opens (`CVBoundingBoxOverlay`):**
+   - **POINT AT:** The green bounding box on the water: **`Water Depth: 42 cm`**.
+   - **POINT AT:** The warning box: **`IMPASSABLE FOR LIGHT VEHICLES`**.
+5. **Close Modal:** Click the top-right `✕` button to close the modal.
+6. **Quick Clicks:** Click the language buttons: **`English ➔ हिंदी ➔ मराठी`** and point to the red **`SOS 1077`** button.
 
----
+#### 🎙️ What to Say (Spoken English):
+> *"Disaster response starts with real citizens. A resident on a flooded street uploads a photo on our offline-ready Citizen PWA.  
+> Our computer vision instantly measures water depth at 42 centimeters, and flags the road as impassable for cars.  
+> The app pushes localized advisories in English, Hindi, and Marathi, with 1-tap SOS 1077 calling, and streams verified evidence straight into the command room."*
 
-### 📍 [1:20 - 1:50] Scene 4: AWS Strands 5-Agent Collaborative DAG (30s)
-
-* **Visual Setup:**
-  - Click **"Agent Trace"** in the sidebar or bottom drawer to expand the **5-Agent Collaborative DAG**.
-  - Highlight the sequential agent execution flow:
-    1. `Risk Detection Agent`
-    2. `Impact Assessment Agent`
-    3. `Resource & Response Agent`
-    4. `Multilingual Communication Agent`
-    5. `Coordinator Agent`
-  - Mouse hover over the tool execution badges (`@tool` invocations, TF-IDF RAG retrieval for NDMA Guidelines 2024, circuit breaker status: `CLOSED`).
-* **Teleprompter Voiceover:**
-  > "Orchestrating this is the official **AWS Strands Agents SDK** (`strands-agents`) executing a sequential 5-agent DAG:
-  > 1. The **Risk Detection Agent** evaluates hydrological saturation.
-  > 2. The **Impact Assessment Agent** correlates GIS hazard polygons with demographic registries.
-  > 3. The **Resource Agent** optimizes municipal depot routing, dispatching 1,000 GPM dewatering pumps in 18 minutes.
-  > 4. The **Multilingual Communication Agent** synthesizes ward-specific broadcasts in English, Hindi, and Marathi.
-  > 5. The **Coordinator Agent** retrieves statutory NDMA standard operating procedures using local TF-IDF RAG.
-  > 
-  > Our custom Strands Circuit Breaker monitors every invocation, achieving a lightning-fast local p50 latency of **62.14 milliseconds**."
+#### 🗣️ Hinglish Option:
+> *"Ground reality citizen se shuru hoti hai. Citizen flooded road ki photo upload karta hai. Hamara AI turant 42 centimeter water depth detect karta hai aur road ko impassable flag karta hai. App English, Hindi aur Marathi me alerts deta hai aur 1-tap me SOS 1077 connect karta hai."*
 
 ---
 
-### 📍 [1:50 - 2:20] Scene 5: Statutory Governance with AWS Cedar (`cedarpy`) (30s)
+### 📍 [0:45 - 1:10] Scene 3: 118mm Cloudburst & Mathematical Explainability
 
-* **Visual Setup:**
-  - Navigate to the **Action Plan Panel** on the right side of the Command Center.
-  - Point to the **AWS Cedar RBAC badge** displaying `cedarpy: ACTIVE (Rust Engine)`.
-  - Point out the 3 pending tactical actions:
-    - `[DISPATCH] 1000 GPM Dewatering Pump P-04`
-    - `[POWER GRID] Isolate Dadar Substation Transformer T-09`
-    - `[PUBLIC ADVISORY] Trilingual Ward Broadcast (SMS/CAP)`
-  - Click **"Approve & Execute All"** as authenticated `Incident Commander`.
-  - Trigger celebratory confetti animation, status change to `APPROVED`, and show the signed audit trail entry.
-* **Teleprompter Voiceover:**
-  > "Under India's Disaster Management Act 2005, an AI cannot legally dispatch municipal assets or isolate power transformers without statutory human authorization.
-  > 
-  > *[PAUSE 1s]*
-  > 
-  > JalRakshak enforces strict Human-in-the-Loop governance evaluated live by the official Rust-backed **AWS Cedar policy engine** (`cedarpy`). Only authenticated Incident Commanders with valid cryptographic JWTs can authorize tactical deployments.
-  > 
-  > *[CLICK: 'Approve & Execute All']*
-  > 
-  > With 1 click, the Commander signs off: dewatering pump P-04 is en route, Dadar power substation isolates against electrocution risk, and emergency broadcasts are transmitted."
+#### 🖱️ Step-by-Step Screen Actions:
+1. **Switch Tab:** Switch to **Tab 2: Command Center** (`http://localhost:8004/command-center`).
+2. **Click Action:** In the top disaster simulation bar, click: **`🌧️ 118mm Cloudburst`**.
+3. **Screen Response:**
+   - Left queue lights up red: **`Ward 17 (Kurla) - CRITICAL (Severity 92)`**.
+   - Map shows red flood polygons.
+4. **Click Action:** On the selected incident card or map panel, click: **`Mathematical Explainability Scorecard`** (or `Why Critical?`).
+5. **Scorecard Opens:** Move cursor down across the 4 itemized percentage bars:
+   - Point to: **`Rainfall Surge vs Drain Capacity (+38%)`**
+   - Point to: **`Tidal Locking Throttling Outfall D-17 (+25%)`**
+   - Point to: **`6 Verified Citizen CV Reports (+21%)`**
+   - Point to: **`Kurla Bhabha Hospital in Inundation Perimeter (+16%)`**
 
----
+#### 🎙️ What to Say (Spoken English):
+> *"Inside the Command Center, incoming rain gauges spike to 118 mm/hr.  
+> Emergency officers do not trust mysterious black-box AI scores. That's why JalRakshak provides full mathematical explainability right here on screen:  
+> - Rainfall is 162% over drain capacity (+38%)  
+> - Mithi river high tide is choking the main outfall (+25%)  
+> - 6 citizen photos corroborate the flood (+21%)  
+> - And critically, Kurla Bhabha Hospital is directly in the flood perimeter (+16%)."*
 
-### 📍 [2:20 - 2:40] Scene 6: Multi-Persona Command & Track 02 Heatwave (20s)
-
-* **Visual Setup:**
-  - Switch persona in the header dropdown to **Insp. Rajesh Yadav (Field Lead)**: show mobile tactical checklist and turn-by-turn flood bypass ETA.
-  - Switch to **Dr. Ananya Verma (SCADA Analyst)**: show hydraulic pressure sensor waveforms.
-  - Click **"48.6°C Wet-Bulb Heatwave"** scenario button to demonstrate full Track 02 (Heat & Water) capabilities.
-* **Teleprompter Voiceover:**
-  > "JalRakshak adapts to 4 distinct municipal personas:
-  > - Field Leads receive dynamic flood-bypass routes on mobile.
-  > - SCADA Analysts monitor pressure telemetry, catching negative 2.4 Bar cavitation drops before water mains rupture.
-  > - And for Track 02's Heat challenge, controllers can simulate lethal **48.6°C Wet-Bulb Heatwaves**, dispatching mobile misting bowsers and opening statutory cooling shelters under protocol `SOP-HEAT-04`."
+#### 🗣️ Hinglish Option:
+> *"Command Center me 118 mm/hr baarish aate hi Ward 17 critical mark ho jata hai. JalRakshak koi black-box score nahi deta, balki screen par exact math calculate karta hai: drain capacity 162% fail ho chuki hai, river high tide se block hai, 6 citizen photo proofs hain, aur Bhabha Hospital flood zone me hai!"*
 
 ---
 
-### 📍 [2:40 - 2:52] Scene 7: Quantified ROI & 30-Second Verification (12s)
+### 📍 [1:10 - 1:40] Scene 4: AWS Strands Agents SDK (5-Agent Collaborative DAG) ★ AWS TOOL 1
 
-* **Visual Setup:**
-  - Cut to terminal window running: `bash scripts/judge_smoke.sh`.
-  - Show the clean test progression, HTTP 200 verification, and the bright green banner:
-    `★ SMOKE TEST PASSED: ALL 5 STRANDS AGENTS VERIFIED LIVE & OPERATIONAL ★`.
-  - Cut back to Landing Page hero footer with GitHub link.
-* **Teleprompter Voiceover:**
-  > "Early 18-minute intervention saves over **₹80 Lakhs** per severe event based on NDMA flood audit baselines.
-  > 
-  > *[CUT TO TERMINAL: Smoke test completes in 4 seconds]*
-  > 
-  > Evaluators can verify the entire system in 30 seconds with zero cloud credentials by running `bash scripts/judge_smoke.sh`.
-  > 
-  > JalRakshak AI: turning environmental signals into life-saving civic action."
+#### 🖱️ Step-by-Step Screen Actions:
+1. **Navigate to DAG:**  
+   - Click the **`AWS Architecture`** tab in the sidebar (or click the bottom **`5-Agent Execution DAG`** drawer).
+2. **What Judges See On Screen:**
+   - The full interactive visual graph of 5 connected agents:
+     - `1. Risk Detection Agent` (Telemetry Analyzer)
+     - `2. Impact Assessment Agent` (Critical Facilities & 8,420 citizens)
+     - `3. Resource & Response Agent` (Pump Dispatcher)
+     - `4. Multilingual Communication Agent` (Alert Synthesizer)
+     - `5. Coordinator Agent` (NDMA SOP RAG)
+3. **Point Mouse At:**
+   - The individual agent latency badges: **`83ms`**, **`23ms`**, **`22ms`**.
+   - The total execution badge: **`Hybrid Pipeline: 62ms`** (or sub-second).
+   - The green circuit breaker pill: **`Circuit Breaker: CLOSED (Healthy)`**.
+
+#### 🎙️ What to Say (Spoken English):
+> *"Powering this entire decision workflow is our core AWS open-source tool: the **AWS Strands Agents SDK** (`strands-agents`).  
+> As you can clearly see on screen, 5 autonomous agents collaborate in a sequential DAG pipeline:  
+> 1. The **Risk Agent** evaluates sensor breaches.  
+> 2. The **Impact Agent** pinpoints 8,400 exposed citizens and hospital perimeters.  
+> 3. The **Resource Agent** dispatches the nearest 1,000 GPM pump in 18 minutes.  
+> 4. The **Communication Agent** drafts trilingual alerts in English, Hindi, and Marathi.  
+> 5. And the **Coordinator Agent** pulls official NDMA flood guidelines.  
+> Thanks to our custom Strands Circuit Breaker, all five agents execute in an astonishing **62 milliseconds**!"*
+
+#### 🗣️ Hinglish Option:
+> *"Isko chalata hai hamara pehla AWS tool: **AWS Strands Agents SDK**. Screen par 5-Agent DAG pipeline dekhiye: Risk measure karna, 8,400 logo ka impact dekhna, nearest pump dhoondhna, 3 languages me alerts likhna aur government disaster rules follow karna—aur yeh sab kuch sirf **62 milliseconds** me execute hota hai!"*
 
 ---
 
-## 📊 Quick-Reference Presenter Cheat Sheet
+### 📍 [1:40 - 2:05] Scene 5: AWS Cedar (`cedarpy`) Human-in-the-Loop ★ AWS TOOL 2
 
-| Time | Duration | Screen / Route | Primary Visual Action | Key Technical Buzzwords |
-| :--- | :--- | :--- | :--- | :--- |
-| **0:00 - 0:25** | 25s | `/` (Landing Page) | Hover "Build It" badge & "Judge Tour" | 118mm cloudburst, decision latency, Build It route, 18-min response |
-| **0:25 - 0:50** | 25s | `/citizen` | Open `CVBoundingBoxOverlay`, toggle languages | Multimodal CV, 42cm depth, impassable, English/Hindi/Marathi, SOS 1077 |
-| **0:50 - 1:20** | 30s | `/command-center` | Click "118mm Cloudburst", open Explainability | 92% outfall saturation, Mathematical Explainability, Bhabha Hospital |
-| **1:20 - 1:50** | 30s | `/command-center` | Expand 5-Agent Collaborative DAG trace | AWS Strands Agents SDK, 5-agent DAG, Circuit Breaker, 62.14 ms p50 |
-| **1:50 - 2:20** | 30s | `/command-center` | Click "Approve & Execute All", confetti | AWS Cedar (`cedarpy`), Human-in-the-Loop, Disaster Management Act 2005 |
-| **2:20 - 2:40** | 20s | `/field-ops` & `/scada` | Switch personas, click "48.6°C Heatwave" | Field Ops, SCADA cavitation, Track 02 Heatwave, misting bowsers |
-| **2:40 - 2:52** | 12s | Terminal | Run `bash scripts/judge_smoke.sh` | ₹80+ Lakhs ROI, 30-sec smoke test, zero-credential verified |
+#### 🖱️ Step-by-Step Screen Actions:
+1. **Navigate Back:** Click back to **`Command Center`** in the sidebar.
+2. **Look Right:** Look at the **Action Plan Panel / Tactical Decision Center** on the right side.
+3. **HOVER & HIGHLIGHT:** Put mouse cursor directly over the red pill badge:  
+   **`AWS Cedar RBAC: ACTIVE`** *(right next to TACTICAL DECISION CENTER)*.
+4. **Point Mouse At:** The 3 pending tactical actions:
+   - `[DISPATCH] 1000 GPM Dewatering Pump P-04`
+   - `[POWER GRID] Isolate Dadar Substation Transformer`
+   - `[PUBLIC ADVISORY] Trilingual Ward Broadcast`
+5. **CLICK ACTION:** Click the large gradient green button: **`APPROVE & EXECUTE ALL (3)`**.
+6. **Screen Response (THE WOW MOMENT):**
+   - 🎉 **Confetti explodes** across the screen!
+   - 🚨 Emergency alarm sound plays!
+   - Status badge turns to: **`PLAN FULLY AUTHORIZED & DISPATCHED`**.
+
+#### 🎙️ What to Say (Spoken English):
+> *"Under India's Disaster Management Act, an AI cannot legally dispatch heavy machinery or cut power lines without statutory human sign-off.  
+> That's where our second AWS tool comes in: the official **AWS Cedar policy engine** (`cedarpy`), active right here.  
+> Cedar enforces formal Role-Based Access Control. No asset moves until an authorized Incident Commander signs off.  
+> Watch what happens when the Commander authorizes the plan:  
+> *[CLICK: 'APPROVE & EXECUTE ALL']*  
+> Cedar validates the policy: pump P-04 is en route, the Dadar power grid isolates to prevent electrocution, and emergency broadcasts are fired!"*
+
+#### 🗣️ Hinglish Option:
+> *"Disaster Management Act ke mutabik AI bina officer permission ke heavy machinery nahi chala sakta. Isliye hum use karte hain **AWS Cedar policy engine** (`cedarpy`), jo screen par active dikh raha hai. Commander jab tak approve nahi karega, kuch move nahi hoga. Yahan dekhiye—Commander ne 'Approve All' dabaya, Cedar ne policy verify ki, pump dispatch ho gaya aur power substation cut-off ho gaya taaki kisi ko current na lage!"*
 
 ---
 
-## 📺 YouTube / Submission Video Metadata & Description
+### 📍 [2:05 - 2:20] Scene 6: AWS SAM CLI, LocalStack & Track 02 Heatwave ★ AWS TOOLS 3 & 4
 
-Copy and paste this directly into your hackathon video submission form / YouTube description:
+#### 🖱️ Step-by-Step Screen Actions:
+1. **Click Action:** Click **`AWS Architecture`** in the sidebar.
+2. **Point Mouse At:** The two cards on screen:
+   - Card 3: **`AWS SAM CLI`** *(Template: aws_infra/template.yaml)*
+   - Card 4: **`LocalStack`** *(Zero-Cloud Local Emulation)*
+3. **Click Action:** In the top disaster bar or sidebar drawer, click: **`🔥 48.6°C Heat Index`**.
+4. **Screen Response:**
+   - Incident switches to: **`SOP-HEAT-04 Extreme Heatwave Protocol`**.
+   - Actions update to: **`Dispatch Mobile Misting Water Bowsers`** and **`Unlock Designated Cooling Shelters`**.
 
-```markdown
-JalRakshak AI — Autonomous Urban Flood & Heat Emergency Decision-Support Platform
-Hackathon: WeMakeDevs × AWS "Environmental Hacks" (October 2026)
-Track: Track 02: Heat and Water
-Submission Route: Build It (100% Local, Zero Cloud Credentials, No AWS Account Required)
+#### 🎙️ What to Say (Spoken English):
+> *"For backend infrastructure, we used **AWS SAM CLI** and **LocalStack**—all our serverless event buses, DynamoDB tables, and Lambda handlers are defined in `template.yaml` and testable 100% offline.  
+> And since this is Track 02: Heat and Water:  
+> *[CLICK: 48.6°C Heat Index]*  
+> Watch the platform pivot during a severe summer heatwave! It immediately dispatches drinking water tankers and unlocks air-conditioned cooling centers under heat protocol SOP-04."*
 
-GitHub Repository: https://github.com/RiyanshiVerma-11/JalRakshak-AI
-Builder Center Post: https://github.com/RiyanshiVerma-11/JalRakshak-AI/blob/main/docs/AWS_BUILDER_CENTER_BLOG.md
-Team: SheBuilds (Riyanshi Verma & Team)
+#### 🗣️ Hinglish Option:
+> *"Backend setup ke liye hamare tools hain **AWS SAM CLI** aur **LocalStack**, jisme pura serverless setup `template.yaml` me likha hai. Aur kyunki yeh Heat & Water track hai, **48.6°C Heatwave** dabate hi system drinking water tankers aur cooling shelters unlock kar deta hai!"*
 
-⏱️ Chapters:
-00:00 - The Problem: Operational Decision Latency in Urban Disasters
-00:25 - Citizen Emergency PWA & Multimodal Computer Vision Overlay
-00:50 - 118mm Cloudburst Inundation & Mathematical Explainability
-01:20 - AWS Strands Agents SDK: 5-Agent Collaborative Execution DAG
-01:50 - AWS Cedar (cedarpy): Human-in-the-Loop Statutory Governance
-02:20 - Role Personas & Track 02 Heatwave Response (48.6°C Wet-Bulb)
-02:40 - Quantified ROI & 30-Second Evaluator Verification
+---
 
-🛠️ AWS Open-Source Tooling Used (Build It Route):
-- AWS Strands Agents SDK (strands-agents): 5-agent DAG orchestration with circuit breakers
-- AWS Cedar (cedarpy): Formal Rust-backed policy authorization
-- AWS SAM CLI: Serverless infrastructure-as-code for event buses and queues
-- LocalStack: Zero-cost offline AWS service emulation
+### 📍 [2:20 - 2:30] Scene 7: The Winning Close & 30-Second Verification
 
-Run it locally in 60 seconds (no AWS account or .env required):
-git clone https://github.com/RiyanshiVerma-11/JalRakshak-AI.git
-cd JalRakshak-AI
-pip install -r requirements.txt
-python run_app.py
-```
+#### 🖱️ Step-by-Step Screen Actions:
+1. **Show Terminal or Tab:** Show the terminal window running `python run_app.py` OR open a tab with `http://localhost:8004/api/health`.
+2. **Point Mouse At:** The JSON values:
+   - `"route": "Build It"`
+   - `"mode": "OFFLINE"`
+   - `"live_credentials": false`
+   - All 4 AWS tools showing `"status": "ACTIVE"`.
+3. **Final Shot:** Bring the full **Command Center** dashboard back into focus for the final 5 seconds.
+
+#### 🎙️ What to Say (Spoken English):
+> *"By taking action in 18 minutes instead of 4 hours, JalRakshak AI protects hospitals and saves over **₹80 Lakhs** per flood event.  
+> Judges can test this entire platform on their own laptop in 30 seconds by simply running `python run_app.py`—no AWS account, no credit card required.  
+> This is **JalRakshak AI**. Thank you!"*
+
+#### 🗣️ Hinglish Option:
+> *"18-minute response har flood me ₹80 Lakhs se zyada ka loss bachata hai. Judges ise 30 seconds me `python run_app.py` run karke zero credentials ke saath verify kar sakte hain. Thank you!"*
+
+---
+
+## ⚡ Quick Click Cheat-Sheet (Print or Keep on Phone During Recording)
+
+| Timestamp | Tab / Screen | Exact Button to Click | What to Point Mouse At |
+| :---: | :--- | :--- | :--- |
+| **0:10** | Tab 1 (`/`) | Hover only | Badge: `Build It Route (Zero Config)` |
+| **0:20** | Tab 1 (`/`) | Click `Continue as Judge` | Transitions into Command Center |
+| **0:30** | Tab 3 (`/citizen`) | Click `Inspect CV Analysis` | Green box: `Water Depth: 42 cm` & `Impassable` |
+| **0:40** | Tab 3 (`/citizen`) | Click `English ➔ हिंदी ➔ मराठी` | Shows trilingual UI + `SOS 1077` |
+| **0:50** | Tab 2 (`/command-center`) | Click `🌧️ 118mm Cloudburst` | Ward 17 turns red in queue |
+| **1:05** | Tab 2 (`/command-center`) | Click `Explainability Scorecard` | 4 math percentage bars (+38%, +25%, +21%, +16%) |
+| **1:20** | Tab 2 (Sidebar) | Click `AWS Architecture` / `5-Agent DAG` | 5 Agents linked on screen & `62ms` latency |
+| **1:50** | Tab 2 (`/command-center`) | Click `APPROVE & EXECUTE ALL` | Red badge: `AWS Cedar RBAC: ACTIVE` + Confetti 🎉 |
+| **2:10** | Tab 2 (Sidebar) | Click `🔥 48.6°C Heat Index` | Cards `SAM CLI` & `LocalStack` + Cooling Shelters |
+| **2:25** | Terminal / Browser | Show `/api/health` JSON | `mode: OFFLINE` & `live_credentials: false` |
