@@ -9,7 +9,8 @@ lifecycle and AWS Cedar decisions all execute for real; only the LLM inference i
 replaced by LocalDeterministicModel. Real inference runs via BedrockModel when
 AWS_EXECUTION_MODE=LIVE.
 """
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Header, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Header, Depends, Request
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -32,6 +33,7 @@ from .cloud.config import (
     get_aws_account_id,
     get_build_it_tools_inventory
 )
+from .cloud.health_html import render_health_dashboard_html
 from .rag.rag_engine import rag_engine
 from .copilot import copilot
 from .auth.cedar_auth import (
@@ -209,18 +211,20 @@ def issue_auth_token(req: TokenRequest):
 
 @app.get("/health")
 @app.get("/api/health")
-def read_health():
+def read_health(request: Request, format: Optional[str] = None):
     """
     Zero-config health and transparency inspection endpoint.
     Reports real execution mode, active Strands model provider, Cedar engine,
     and honest status of all subsystems for hackathon judging verification.
+    Returns a rich, user-friendly HTML dashboard when opened in a web browser,
+    while returning raw JSON for test suites, curl, and programmatic API clients.
     """
     backend_mode, reason = get_backend_mode_with_reason()
     has_creds = has_aws_credentials()
     cedar_engine = get_cedar_engine_name()
     model_provider = get_strands_model_provider()
 
-    return {
+    health_data = {
         "platform": "JalRakshak AI",
         "tagline": "Urban flood + heat emergency decision-support platform",
         "status": "HEALTHY",
@@ -249,6 +253,12 @@ def read_health():
         ),
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
+
+    accept_header = request.headers.get("accept", "")
+    if ("text/html" in accept_header) and (format != "json"):
+        return HTMLResponse(content=render_health_dashboard_html(health_data))
+
+    return health_data
 
 @app.get("/api/incidents")
 def get_incidents(
