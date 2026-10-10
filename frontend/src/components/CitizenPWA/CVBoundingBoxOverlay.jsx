@@ -152,8 +152,8 @@ export default function CVBoundingBoxOverlay({
         
         {/* Base Citizen Photo */}
         <img 
-          src={imageUrl || "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80"} 
-          alt="Citizen Ground Evidence" 
+          src={imageUrl || "/kurla_flood_evidence.jpg"} 
+          alt="Citizen Ground Evidence (Kurla East Flood)" 
           className={`w-full h-full object-cover transition-all duration-300 ${
             showHeatmap ? 'contrast-125 saturate-200 hue-rotate-15 filter' : ''
           }`}

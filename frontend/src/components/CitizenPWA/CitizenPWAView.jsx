@@ -628,7 +628,7 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                       <p className="text-xs font-bold text-slate-300 mb-0.5">Attach Proof of Hazard</p>
                       <p className="text-[10px] text-slate-500 mb-2.5">Drag photo here or choose an option below</p>
                       
-                      <div className="flex gap-2 justify-center">
+                      <div className="flex flex-wrap gap-2 justify-center">
                         <button
                           type="button"
                           aria-label="Upload photo file from storage"
@@ -637,6 +637,19 @@ export default function CitizenPWAView({ onReportSubmitted, currentUser, onOpenL
                         >
                           <Upload className="h-3.5 w-3.5" />
                           <span>Upload File</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          aria-label="Use Kurla flood demo photo"
+                          onClick={() => {
+                            setPreviewImage('/kurla_flood_evidence.jpg');
+                            setDescription(prev => prev || 'Severe road waterlogging near Kurla East CST junction. Water up to 42cm deep.');
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[11px] font-bold border border-emerald-500/40 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          <span>Use Kurla Flood Photo (Demo)</span>
                         </button>
 
                         <button
