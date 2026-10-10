@@ -1,7 +1,7 @@
 """
 JalRakshak AI — User-Friendly Health & Tool Inventory HTML Dashboard
-Renders an executive, modern, dark-themed HTML dashboard for browser requests to /api/health and /health,
-while preserving full raw JSON for API clients, scripts, and tests.
+Renders an executive, clean, light-themed HTML dashboard for browser requests to /api/health and /health,
+affirming the 100% Local 'Build It' route with zero cloud credentials, while preserving raw JSON for API clients.
 """
 import json
 
@@ -17,46 +17,96 @@ def render_health_dashboard_html(data: dict) -> str:
     cedar_engine = data.get("cedar_engine", "cedarpy")
     model_provider = data.get("model_provider", "LocalDeterministicModel")
     timestamp = data.get("timestamp", "")
-    reason = data.get("reason", "Zero-credential Build It mode")
+    reason = data.get("reason", "Zero-credential Build It mode (no AWS account required, running purely offline)")
 
+    # 4 Declared AWS Open-Source Tools Cards
     tools_html = ""
     for t in tools:
         t_name = t.get("tool", "")
         t_cat = t.get("category", "")
         t_status = t.get("status", "ACTIVE")
         t_evidence = t.get("evidence", "")
-        status_badge_class = "badge-green" if t_status == "ACTIVE" else "badge-purple"
+        badge_cls = "badge-green" if t_status == "ACTIVE" else "badge-purple"
         tools_html += f"""
-        <div class="card tool-card">
-          <div class="card-header">
+        <div class="tool-card">
+          <div class="card-top">
             <div>
               <span class="tool-cat">{t_cat}</span>
               <h3 class="tool-name">{t_name}</h3>
             </div>
-            <span class="badge {status_badge_class}">{t_status}</span>
+            <span class="badge {badge_cls}">{t_status}</span>
           </div>
-          <p class="tool-evidence"><code>{t_evidence}</code></p>
+          <div class="tool-evidence">
+            <code>{t_evidence}</code>
+          </div>
           <div class="card-footer">
-            <span class="route-tag">Route: {route}</span>
-            <span class="verified-tag">✓ Verified Locally</span>
+            <span class="footer-tag">Route: <strong>{route}</strong></span>
+            <span class="verified-tag">✓ Verified 100% Local</span>
           </div>
         </div>
         """
 
+    # Subsystem mapping with honest Build It labels (NO misleading "Live Cloud")
+    service_labels = {
+        "AWS_Strands_Agents": {
+            "title": "AWS Strands Agents SDK",
+            "desc": "5-Agent Collaborative DAG (Real Local SDK)",
+            "badge": "HEALTHY",
+            "badge_cls": "badge-green"
+        },
+        "Amazon_Bedrock": {
+            "title": "Amazon Bedrock (Claude 3.5)",
+            "desc": "LocalDeterministicModel (Zero Cloud API Calls)",
+            "badge": "OFFLINE",
+            "badge_cls": "badge-slate"
+        },
+        "Amazon_EventBridge": {
+            "title": "Amazon EventBridge",
+            "desc": "Local In-Memory Event Bus (Build It Emulation)",
+            "badge": "LOCAL",
+            "badge_cls": "badge-cyan"
+        },
+        "Amazon_DynamoDB": {
+            "title": "Amazon DynamoDB",
+            "desc": "Atomic InMemoryStateStore (4 Tables)",
+            "badge": "LOCAL",
+            "badge_cls": "badge-cyan"
+        },
+        "Amazon_S3": {
+            "title": "Amazon S3",
+            "desc": "Local Filesystem Evidence Lake",
+            "badge": "LOCAL",
+            "badge_cls": "badge-cyan"
+        },
+        "Amazon_SNS": {
+            "title": "Amazon SNS",
+            "desc": "Local Trilingual Broadcast Stream (EN/HI/MR)",
+            "badge": "LOCAL",
+            "badge_cls": "badge-cyan"
+        },
+        "Amazon_Rekognition": {
+            "title": "Amazon Rekognition",
+            "desc": "Local PIL Statistical Depth & Grate Vision",
+            "badge": "LOCAL PIL",
+            "badge_cls": "badge-purple"
+        }
+    }
+
     services_html = ""
-    for s_name, s_info in services.items():
-        s_status = s_info.get("status", "LOCAL")
-        s_sim = s_info.get("simulated", True)
-        badge_cls = "badge-cyan" if not s_sim else ("badge-green" if s_status == "HEALTHY" else "badge-purple")
-        sim_note = "Simulated / Local" if s_sim else "Live Cloud"
-        clean_name = s_name.replace("_", " ")
+    for s_name in services.keys():
+        meta = service_labels.get(s_name, {
+            "title": s_name.replace("_", " "),
+            "desc": "Local Build It Subsystem",
+            "badge": "LOCAL",
+            "badge_cls": "badge-cyan"
+        })
         services_html += f"""
         <div class="service-row">
-          <div class="service-name">
-            <strong>{clean_name}</strong>
-            <span class="service-sim">({sim_note})</span>
+          <div class="service-left">
+            <span class="service-title">{meta['title']}</span>
+            <span class="service-desc">{meta['desc']}</span>
           </div>
-          <span class="badge {badge_cls}">{s_status}</span>
+          <span class="badge {meta['badge_cls']}">{meta['badge']}</span>
         </div>
         """
 
@@ -69,17 +119,26 @@ def render_health_dashboard_html(data: dict) -> str:
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <style>
     :root {{
-      --bg: #090d16;
-      --card-bg: #111827;
-      --card-border: #1f293d;
-      --text-main: #f3f4f6;
-      --text-muted: #9ca3af;
-      --text-dim: #6b7280;
-      --cyan: #06b6d4;
-      --emerald: #10b981;
-      --rose: #f43f5e;
-      --purple: #a855f7;
-      --amber: #f59e0b;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --border-subtle: #edf2f7;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #64748b;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --emerald: #059669;
+      --emerald-bg: #ecfdf5;
+      --emerald-border: #a7f3d0;
+      --cyan: #0891b2;
+      --cyan-bg: #ecfeff;
+      --cyan-border: #a5f3fc;
+      --purple: #7c3aed;
+      --purple-bg: #f5f3ff;
+      --purple-border: #ddd6fe;
+      --slate-badge-bg: #f1f5f9;
+      --slate-badge-text: #475569;
     }}
     * {{ box-sizing: border-box; margin: 0; padding: 0; }}
     body {{
@@ -87,21 +146,23 @@ def render_health_dashboard_html(data: dict) -> str:
       background-color: var(--bg);
       color: var(--text-main);
       line-height: 1.5;
-      padding: 24px;
+      padding: 28px 20px;
       min-height: 100vh;
     }}
     .container {{
-      max-width: 1100px;
+      max-width: 1080px;
       margin: 0 auto;
     }}
+    
+    /* Top Header */
     header {{
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
       gap: 16px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
       margin-bottom: 24px;
     }}
     .brand {{
@@ -110,21 +171,21 @@ def render_health_dashboard_html(data: dict) -> str:
       gap: 12px;
     }}
     .brand-icon {{
-      font-size: 28px;
-      background: rgba(6, 182, 212, 0.15);
-      border: 1px solid rgba(6, 182, 212, 0.3);
-      padding: 8px 12px;
+      font-size: 26px;
+      background: #e0f2fe;
+      border: 1px solid #bae6fd;
+      padding: 6px 12px;
       border-radius: 12px;
     }}
     .brand h1 {{
       font-size: 20px;
       font-weight: 800;
-      letter-spacing: -0.5px;
-      color: #fff;
+      letter-spacing: -0.4px;
+      color: var(--text-main);
     }}
     .brand p {{
       font-size: 13px;
-      color: var(--text-muted);
+      color: var(--text-dim);
     }}
     .nav-actions {{
       display: flex;
@@ -140,34 +201,44 @@ def render_health_dashboard_html(data: dict) -> str:
       font-weight: 700;
       text-decoration: none;
       border-radius: 8px;
-      transition: all 0.2s;
+      transition: all 0.15s ease-in-out;
       cursor: pointer;
     }}
     .btn-primary {{
-      background: linear-gradient(135deg, #0284c7, #06b6d4);
-      color: #fff;
-      border: 1px solid #38bdf8;
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      color: #ffffff;
+      border: 1px solid #0284c7;
+      box-shadow: 0 1px 2px rgba(2, 132, 199, 0.2);
     }}
-    .btn-primary:hover {{ opacity: 0.9; transform: translateY(-1px); }}
+    .btn-primary:hover {{
+      background: linear-gradient(135deg, #0369a1, #0284c7);
+      transform: translateY(-1px);
+    }}
     .btn-secondary {{
-      background: #1e293b;
-      color: #cbd5e1;
-      border: 1px solid #334155;
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }}
-    .btn-secondary:hover {{ background: #334155; color: #fff; }}
+    .btn-secondary:hover {{
+      background: #f1f5f9;
+      color: #0f172a;
+      border-color: #cbd5e1;
+    }}
 
-    /* Overview Banner */
+    /* Key Metrics Banner */
     .status-banner {{
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }}
     .banner-stat {{
       background: var(--card-bg);
-      border: 1px solid var(--card-border);
+      border: 1px solid var(--border);
       border-radius: 12px;
       padding: 14px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }}
     .stat-label {{
       font-size: 11px;
@@ -180,7 +251,7 @@ def render_health_dashboard_html(data: dict) -> str:
     .stat-val {{
       font-size: 15px;
       font-weight: 800;
-      color: #fff;
+      color: var(--text-main);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -190,37 +261,55 @@ def render_health_dashboard_html(data: dict) -> str:
       height: 10px;
       border-radius: 50%;
       background: var(--emerald);
-      box-shadow: 0 0 10px var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
       animation: pulse 2s infinite;
     }}
     @keyframes pulse {{
-      0% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }}
-      70% {{ transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }}
-      100% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }}
+      0% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.6); }}
+      70% {{ transform: scale(1); box-shadow: 0 0 0 7px rgba(5, 150, 105, 0); }}
+      100% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }}
+    }}
+
+    /* Build It Route Guarantee Callout */
+    .route-callout {{
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      font-size: 12px;
+      color: #166534;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+    .route-callout strong {{
+      font-weight: 800;
     }}
 
     /* Badges */
     .badge {{
       display: inline-flex;
       align-items: center;
-      padding: 2px 8px;
+      padding: 3px 8px;
       border-radius: 6px;
       font-size: 10px;
       font-weight: 800;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
       text-transform: uppercase;
     }}
-    .badge-green {{ background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }}
-    .badge-cyan {{ background: rgba(6, 182, 212, 0.15); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.3); }}
-    .badge-purple {{ background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }}
+    .badge-green {{ background: var(--emerald-bg); color: var(--emerald); border: 1px solid var(--emerald-border); }}
+    .badge-cyan {{ background: var(--cyan-bg); color: var(--cyan); border: 1px solid var(--cyan-border); }}
+    .badge-purple {{ background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border); }}
+    .badge-slate {{ background: var(--slate-badge-bg); color: var(--slate-badge-text); border: 1px solid var(--border); }}
 
     /* Section Headings */
     .section-title {{
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 800;
       letter-spacing: 0.5px;
       text-transform: uppercase;
-      color: #cbd5e1;
+      color: #334155;
       margin-bottom: 12px;
       display: flex;
       align-items: center;
@@ -230,29 +319,31 @@ def render_health_dashboard_html(data: dict) -> str:
       content: "";
       width: 4px;
       height: 14px;
-      background: var(--cyan);
+      background: var(--primary);
       border-radius: 2px;
     }}
 
-    /* Grid layout */
+    /* 4 Declared AWS Open-Source Tools Grid */
     .tools-grid {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 12px;
       margin-bottom: 24px;
     }}
-    .card {{
+    .tool-card {{
       background: var(--card-bg);
-      border: 1px solid var(--card-border);
+      border: 1px solid var(--border);
       border-radius: 12px;
       padding: 16px;
-      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      transition: all 0.2s ease;
     }}
     .tool-card:hover {{
-      border-color: rgba(6, 182, 212, 0.4);
-      transform: translateY(-2px);
+      border-color: #94a3b8;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      transform: translateY(-1px);
     }}
-    .card-header {{
+    .card-top {{
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
@@ -260,26 +351,27 @@ def render_health_dashboard_html(data: dict) -> str:
     }}
     .tool-cat {{
       font-size: 10px;
-      color: var(--cyan);
+      color: var(--primary);
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       display: block;
+      margin-bottom: 2px;
     }}
     .tool-name {{
       font-size: 14px;
-      font-weight: 700;
-      color: #fff;
+      font-weight: 800;
+      color: var(--text-main);
     }}
     .tool-evidence {{
       font-size: 11px;
-      color: var(--text-muted);
+      color: #334155;
       margin-bottom: 12px;
       word-break: break-all;
-      background: rgba(0, 0, 0, 0.3);
+      background: #f1f5f9;
       padding: 6px 8px;
       border-radius: 6px;
-      border: 1px solid #1e293b;
+      border: 1px solid var(--border);
     }}
     .card-footer {{
       display: flex;
@@ -287,12 +379,12 @@ def render_health_dashboard_html(data: dict) -> str:
       font-size: 10px;
       color: var(--text-dim);
       font-weight: 600;
-      border-top: 1px solid #1e293b;
+      border-top: 1px solid var(--border);
       padding-top: 8px;
     }}
-    .verified-tag {{ color: #34d399; }}
+    .verified-tag {{ color: var(--emerald); font-weight: 700; }}
 
-    /* Two column section */
+    /* Two Column Subsystems Grid */
     .split-grid {{
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -302,27 +394,45 @@ def render_health_dashboard_html(data: dict) -> str:
     @media (max-width: 768px) {{
       .split-grid {{ grid-template-columns: 1fr; }}
     }}
+    .panel-box {{
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }}
     .service-row {{
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 12px;
+      padding: 8px 10px;
       border-radius: 8px;
-      background: rgba(0,0,0,0.25);
-      border: 1px solid #1e293b;
+      background: #f8fafc;
+      border: 1px solid var(--border);
       margin-bottom: 6px;
-      font-size: 12px;
     }}
-    .service-name strong {{ color: #e2e8f0; }}
-    .service-sim {{ color: var(--text-dim); font-size: 11px; margin-left: 4px; }}
+    .service-row:last-child {{ margin-bottom: 0; }}
+    .service-left {{
+      display: flex;
+      flex-direction: column;
+    }}
+    .service-title {{
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+    }}
+    .service-desc {{
+      font-size: 10px;
+      color: var(--text-dim);
+    }}
 
-    /* Raw JSON Drawer */
+    /* Raw JSON Section */
     .json-box {{
-      background: #020617;
-      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
       border-radius: 12px;
       padding: 16px;
-      margin-top: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }}
     .json-header {{
       display: flex;
@@ -330,30 +440,44 @@ def render_health_dashboard_html(data: dict) -> str:
       align-items: center;
       margin-bottom: 10px;
     }}
+    .json-header span {{
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }}
     pre {{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 11px;
-      color: #94a3b8;
-      background: #000;
-      padding: 12px;
+      color: #1e293b;
+      background: #f1f5f9;
+      padding: 14px;
       border-radius: 8px;
       overflow-x: auto;
-      max-height: 280px;
-      line-height: 1.4;
-      border: 1px solid #1e293b;
+      max-height: 260px;
+      line-height: 1.45;
+      border: 1px solid var(--border);
+    }}
+    
+    footer {{
+      margin-top: 24px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
     }}
   </style>
 </head>
 <body>
   <div class="container">
     
-    <!-- Top Navigation Header -->
+    <!-- Top Header -->
     <header>
       <div class="brand">
         <span class="brand-icon">🌊</span>
         <div>
-          <h1>JalRakshak AI — Health & Tool Inventory</h1>
-          <p>Zero-Credential Build It Transparency Portal • Mumbai Ward-17 Engine</p>
+          <h1>JalRakshak AI — System Health & Tool Inventory</h1>
+          <p>AWS Open-Source Build It Route • 100% Local Offline Decision Engine</p>
         </div>
       </div>
       <div class="nav-actions">
@@ -376,7 +500,7 @@ def render_health_dashboard_html(data: dict) -> str:
 
       <div class="banner-stat">
         <div class="stat-label">Execution Mode</div>
-        <div class="stat-val" style="color: var(--cyan);">
+        <div class="stat-val" style="color: var(--primary);">
           <span>{mode}</span>
         </div>
       </div>
@@ -396,48 +520,66 @@ def render_health_dashboard_html(data: dict) -> str:
       </div>
     </div>
 
-    <!-- Reason Callout -->
-    <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 10px; padding: 12px 16px; margin-bottom: 24px; font-size: 12px; color: #cbd5e1;">
-      <strong style="color: var(--cyan);">Build It Guarantee:</strong> {reason}
+    <!-- Build It Guarantee Callout -->
+    <div class="route-callout">
+      <span>🛡️</span>
+      <div>
+        <strong>Build It Guarantee:</strong> {reason} (Zero cloud credentials, zero credit card, 100% offline-ready).
+      </div>
     </div>
 
-    <!-- 4 Declared AWS Open-Source Tools -->
+    <!-- 4 Declared AWS Open-Source Tools (Build It Route) -->
     <h2 class="section-title">4 Declared AWS Open-Source Tools (Build It Route)</h2>
     <div class="tools-grid">
       {tools_html}
     </div>
 
-    <!-- Subsystems & Services Breakdown -->
+    <!-- Two-Column Subsystem Breakdown -->
     <div class="split-grid">
       <div>
         <h2 class="section-title">Execution Subsystems</h2>
-        <div class="card" style="padding: 12px;">
+        <div class="panel-box">
           <div class="service-row">
-            <div class="service-name"><strong>Agent Orchestration</strong></div>
+            <div class="service-left">
+              <span class="service-title">Agentic DAG Orchestrator</span>
+              <span class="service-desc">5-Agent sequential state machine</span>
+            </div>
             <span class="badge badge-green">AWS Strands SDK (5 Agents)</span>
           </div>
           <div class="service-row">
-            <div class="service-name"><strong>Model Provider</strong></div>
+            <div class="service-left">
+              <span class="service-title">Model Provider</span>
+              <span class="service-desc">Local Deterministic Model (Zero cloud cost)</span>
+            </div>
             <span class="badge badge-cyan">{model_provider}</span>
           </div>
           <div class="service-row">
-            <div class="service-name"><strong>Statutory Policy Engine</strong></div>
+            <div class="service-left">
+              <span class="service-title">Statutory Policy Engine</span>
+              <span class="service-desc">Rust-backed incident authorization</span>
+            </div>
             <span class="badge badge-purple">AWS Cedar ({cedar_engine})</span>
           </div>
           <div class="service-row">
-            <div class="service-name"><strong>Knowledge Base RAG</strong></div>
-            <span class="badge badge-green">TF-IDF Vector RAG (NDMA 2024)</span>
+            <div class="service-left">
+              <span class="service-title">Disaster Protocols RAG</span>
+              <span class="service-desc">NDMA 2024 & NHAP statutory guidelines</span>
+            </div>
+            <span class="badge badge-green">TF-IDF Vector RAG</span>
           </div>
           <div class="service-row">
-            <div class="service-name"><strong>Persistence State Store</strong></div>
-            <span class="badge badge-cyan">InMemoryStateStore (Atomic)</span>
+            <div class="service-left">
+              <span class="service-title">State Persistence</span>
+              <span class="service-desc">Atomic thread-safe memory store</span>
+            </div>
+            <span class="badge badge-cyan">InMemoryStateStore</span>
           </div>
         </div>
       </div>
 
       <div>
         <h2 class="section-title">AWS Service Emulation & Fallbacks</h2>
-        <div class="card" style="padding: 12px;">
+        <div class="panel-box">
           {services_html}
         </div>
       </div>
@@ -446,9 +588,7 @@ def render_health_dashboard_html(data: dict) -> str:
     <!-- Developer Raw JSON Drawer -->
     <div class="json-box">
       <div class="json-header">
-        <span style="font-size: 12px; font-weight: 700; color: #94a3b8;">
-          Raw JSON API Payload (for tests, curl & evaluator scripts)
-        </span>
+        <span>Raw JSON Payload (for automated evaluator scripts & tests)</span>
         <button onclick="copyJson()" class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;" id="copyBtn">
           📋 Copy JSON
         </button>
@@ -456,8 +596,8 @@ def render_health_dashboard_html(data: dict) -> str:
       <pre id="jsonContent">{json_str}</pre>
     </div>
 
-    <footer style="margin-top: 24px; text-align: center; font-size: 11px; color: var(--text-dim); border-top: 1px solid var(--card-border); padding-top: 16px;">
-      JalRakshak AI • WeMakeDevs × AWS Environmental Hacks • Track 02: Heat and Water • Last Checked: {timestamp}
+    <footer>
+      JalRakshak AI • WeMakeDevs × AWS Environmental Hacks • Track 02: Heat and Water • Timestamp: {timestamp}
     </footer>
 
   </div>
