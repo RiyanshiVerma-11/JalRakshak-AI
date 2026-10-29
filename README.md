@@ -1,5 +1,7 @@
 # 🌊 JalRakshak AI — Urban Flood & Heat Emergency Decision-Support Platform
 
+[![XERJ Corpus Hub contributor](https://hub.xerj.org/contributors/RiyanshiVerma-11/badge.svg)](https://hub.xerj.org/contributors/RiyanshiVerma-11)
+
 **What this is:** JalRakshak AI is an autonomous, protocol-grounded multi-agent emergency decision-support platform for urban flooding and extreme heatwaves.  
 **Hackathon Track:** Heat and Water  
 **Submission Route:** Build It (100% Local with AWS Open-Source Tooling — Zero AWS Account / Zero Card / Zero Bill / Zero `.env` Required)
